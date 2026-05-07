@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from llm_client import chat_completion
 from item_system import Inventory, buy_item, sell_item, get_item_info, ITEMS_DB
+from player_profile import player as player_profile
 
 MAX_HISTORY = 10
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -98,7 +99,7 @@ class NPCAgent:
 
         # 物品系统：NPC 商店库存和玩家背包
         self.shop_inventory = self._init_shop_inventory()
-        self.player_inventory = Inventory(gold=self.cfg.get("default_gold", 100))
+        self.acquired_inventory = Inventory(gold=0)  # 从玩家处收购的物品，独立存放
 
         self._load()
 
@@ -118,8 +119,8 @@ class NPCAgent:
             "mood": self.mood,
             "affinity": self.affinity,
             "history": self.history,
-            "player_inventory": self.player_inventory.to_save(),
             "shop_inventory": self.shop_inventory.to_save(),
+            "acquired_inventory": self.acquired_inventory.to_save(),
         }
         with open(self._save_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -133,10 +134,10 @@ class NPCAgent:
             self.mood = data.get("mood", self.mood)
             self.affinity = data.get("affinity", self.affinity)
             self.history = data.get("history", [])
-            if "player_inventory" in data:
-                self.player_inventory = Inventory.from_save(data["player_inventory"])
             if "shop_inventory" in data:
                 self.shop_inventory = Inventory.from_save(data["shop_inventory"])
+            if "acquired_inventory" in data:
+                self.acquired_inventory = Inventory.from_save(data["acquired_inventory"])
         except (json.JSONDecodeError, KeyError):
             pass
 
@@ -167,7 +168,7 @@ class NPCAgent:
         ]
 
     def _try_trade(self, trade_action: dict | None) -> str | None:
-        """尝试执行交易，返回结果消息或 None。"""
+        """尝试执行交易，使用全局玩家背包，返回结果消息或 None。"""
         if not trade_action:
             return None
 
@@ -178,16 +179,43 @@ class NPCAgent:
         if not item_id:
             return None
 
-        if action == "buy":
-            result = buy_item(self.player_inventory, self.shop_inventory, item_id, quantity)
-        elif action == "sell":
-            result = sell_item(self.player_inventory, self.shop_inventory, item_id, quantity)
-        else:
+        item_info = ITEMS_DB.get(item_id)
+        if not item_info:
             return None
 
-        if result.success:
-            self._save()
-        return result.message
+        if action == "buy":
+            buy_price = item_info["buy_price"]
+            if buy_price <= 0:
+                return "这个东西不卖的。"
+            total = buy_price * quantity
+            npc_qty = self.shop_inventory.get_quantity(item_id)
+            if npc_qty < quantity:
+                return f"俺这里只剩 {npc_qty} 个{item_info['name']}了。"
+            if player_profile.gold < total:
+                return f"你的金币不够！需要 {total} 金币，你只有 {player_profile.gold}。"
+            player_profile.spend_gold(total)
+            player_profile.add_item(item_id, quantity)
+            self.shop_inventory.gold += total
+            self.shop_inventory.remove_item(item_id, quantity)
+            return f"好嘞！{quantity} 个{item_info['name']}，收你 {total} 金币。"
+
+        elif action == "sell":
+            sell_price = item_info["sell_price"]
+            if sell_price <= 0:
+                return "这东西俺不收。"
+            total = sell_price * quantity
+            player_qty = player_profile.get_item_quantity(item_id)
+            if player_qty < quantity:
+                return f"你没有那么多{item_info['name']}。你只有 {player_qty} 个。"
+            if self.shop_inventory.gold < total:
+                return "俺手头紧，没那么多金币收你的货。"
+            player_profile.add_gold(total)
+            player_profile.remove_item(item_id, quantity)
+            self.shop_inventory.gold -= total
+            self.acquired_inventory.add_item(item_id, quantity)
+            return f"行！{quantity} 个{item_info['name']}，给你 {total} 金币。"
+
+        return None
 
     def chat(self, player_input: str) -> dict:
         messages = self._build_messages(player_input)
@@ -232,8 +260,8 @@ class NPCAgent:
             "mood": self.mood,
             "affinity": self.affinity,
             "trade": trade_action is not None and trade_message is not None,
-            "player_inventory": self.player_inventory.to_list(),
-            "player_gold": self.player_inventory.gold,
+            "player_inventory": player_profile.get_inventory(),
+            "player_gold": player_profile.gold,
             "shop_inventory": self.shop_inventory.to_list(),
             "shop_gold": self.shop_inventory.gold,
         }
@@ -245,6 +273,6 @@ class NPCAgent:
             "mood": self.mood,
             "affinity": self.affinity,
             "personality": self.cfg.get("personality_params", {}),
-            "player_gold": self.player_inventory.gold,
+            "player_gold": player_profile.gold,
             "shop_gold": self.shop_inventory.gold,
         }

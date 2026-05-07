@@ -77,6 +77,22 @@ body {
   font-weight: bold;
 }
 
+#dialogue-shop-btn {
+  background: #f0c060;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#dialogue-shop-btn:hover {
+  background: #ffdb70;
+}
+
 #dialogue-close {
   margin-left: auto;
   background: none;
@@ -448,16 +464,16 @@ body {
   background: #42A5F5;
 }
 
-/* NPC 商店选择面板 */
-#npc-shop-select {
+/* NPC 交互选项面板 */
+#npc-interact-panel {
   display: none;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px;
+  width: 280px;
   background: rgba(20, 20, 40, 0.95);
-  border: 2px solid #2196F3;
+  border: 2px solid #f0c060;
   border-radius: 6px;
   color: #eee;
   font-size: 13px;
@@ -465,69 +481,31 @@ body {
   flex-direction: column;
 }
 
-#npc-shop-select.active {
+#npc-interact-panel.active {
   display: flex;
 }
 
-#npc-shop-select .panel-header {
-  border-bottom-color: rgba(33, 150, 243, 0.3);
-}
-
-#npc-shop-select .panel-title {
-  color: #2196F3;
-}
-
-.npc-shop-card {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 4px;
-  padding: 12px;
-  cursor: pointer;
+.npc-interact-actions {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
 }
 
-.npc-shop-card:hover {
-  background: rgba(33, 150, 243, 0.2);
-  border-color: #2196F3;
-}
-
-.npc-shop-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: bold;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.npc-shop-icon.blacksmith {
-  background: #8b4513;
-}
-
-.npc-shop-icon.merchant {
-  background: #6a4a8a;
-}
-
-.npc-shop-info {
-  flex: 1;
-}
-
-.npc-shop-name {
-  font-weight: bold;
+.btn-interact {
+  background: rgba(240, 192, 96, 0.15);
+  border: 1px solid rgba(240, 192, 96, 0.4);
   color: #f0c060;
+  border-radius: 4px;
+  padding: 10px;
   font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
 }
 
-.npc-shop-role {
-  color: #aaa;
-  font-size: 12px;
-  margin-top: 2px;
+.btn-interact:hover {
+  background: rgba(240, 192, 96, 0.3);
 }
 
 /* 玩家信息面板 */

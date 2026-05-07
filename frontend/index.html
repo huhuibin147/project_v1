@@ -31,6 +31,7 @@
           好感度: <span id="npc-affinity">50</span>/100
         </span>
         <span id="intent-badge"></span>
+        <button id="dialogue-shop-btn" onclick="openShopFromDialogue()">商店</button>
         <button id="dialogue-close" onclick="closeDialogue()">×</button>
       </div>
       <div id="dialogue-messages"></div>
@@ -46,19 +47,21 @@
       <div class="panel-header">
         <span class="panel-title">背包</span>
         <span class="panel-gold">金币: <span id="inventory-gold">0</span></span>
-        <button class="btn-open-shop" id="btn-npc-shop" onclick="showNpcShopSelect()">商店</button>
         <button class="panel-close" onclick="closeInventory()">×</button>
       </div>
       <div id="inventory-items" class="items-grid"></div>
     </div>
 
-    <!-- NPC 商店选择面板 -->
-    <div id="npc-shop-select">
+    <!-- NPC 交互选项面板 -->
+    <div id="npc-interact-panel">
       <div class="panel-header">
-        <span class="panel-title">选择商店</span>
-        <button class="panel-close" onclick="hideNpcShopSelect()">×</button>
+        <span class="panel-title" id="npc-interact-title">NPC</span>
+        <button class="panel-close" onclick="closeNpcInteract()">×</button>
       </div>
-      <div id="npc-shop-list" class="items-grid"></div>
+      <div class="npc-interact-actions">
+        <button class="btn-interact" onclick="interactTalk()">对话</button>
+        <button class="btn-interact" onclick="interactShop()">商店</button>
+      </div>
     </div>
 
     <!-- 商店面板 -->

@@ -34,6 +34,16 @@ function closeDialogue() {
   document.getElementById("dialogue-panel").classList.remove("active");
 }
 
+function openShopFromDialogue() {
+  if (!activeNpcId) {
+    console.error("openShopFromDialogue: activeNpcId is null");
+    return;
+  }
+  console.log("openShopFromDialogue: opening shop for", activeNpcId);
+  closeDialogue();
+  openShop(activeNpcId);
+}
+
 function addNPCMessage(npcId, text) {
   const state = getDialogueState(npcId);
   state.messages.push({ role: "npc", text });
@@ -121,10 +131,8 @@ async function sendMessage() {
 
     showIntentBadge(data.intent);
 
-    // 交易意图 → 显示打开商店按钮
-    if (data.intent === "trade") {
-      showShopButton(activeNpcId);
-    }
+    // 交易意图已不自动弹出商店按钮，玩家可通过接近NPC的交互面板选择商店
+
   } catch (e) {
     addNPCMessage(activeNpcId, `（${npc ? npc.name : "NPC"}挠了挠头）俺刚才走神了，你说啥来着？`);
     console.error("对话请求失败:", e);
@@ -152,20 +160,6 @@ function showIntentBadge(intent) {
   badge.style.backgroundColor = colors[intent] || "#999";
   badge.style.display = "inline-block";
   setTimeout(() => { badge.style.display = "none"; }, 2000);
-}
-
-function showShopButton(npcId) {
-  const container = document.getElementById("dialogue-messages");
-  const div = document.createElement("div");
-  div.className = "dialogue-msg system";
-  div.innerHTML = `<button class="btn-open-shop" onclick="openShopFromDialogue('${npcId}')">打开商店</button>`;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
-
-function openShopFromDialogue(npcId) {
-  closeDialogue();
-  openShop(npcId);
 }
 
 // 事件绑定

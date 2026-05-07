@@ -30,6 +30,11 @@ async function fetchPlayerInfo() {
     const data = await resp.json();
     Object.assign(playerInfo, data);
     updatePlayerHUD();
+    // 同步金币到背包显示
+    if (data.gold !== undefined) {
+      inventoryState.gold = data.gold;
+      updateGoldDisplay();
+    }
   } catch (e) {
     console.error("获取玩家信息失败:", e);
   }

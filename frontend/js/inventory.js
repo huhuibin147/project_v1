@@ -3,7 +3,6 @@
 let inventoryOpen = false;
 let shopOpen = false;
 let shopNpcId = null; // 当前商店所属 NPC
-let npcShopSelectOpen = false;
 
 const inventoryState = {
   items: [],
@@ -18,12 +17,12 @@ const shopState = {
 
 // ===== 数据获取 =====
 
-async function fetchInventory(npcId) {
+async function fetchInventory() {
   try {
-    const resp = await fetch(`/api/inventory?npc_id=${npcId || activeNpcId || "blacksmith"}`);
+    const resp = await fetch("/api/inventory");
     const data = await resp.json();
-    inventoryState.items = data.items;
-    inventoryState.gold = data.gold;
+    inventoryState.items = data.items || [];
+    inventoryState.gold = data.gold || 0;
     updateGoldDisplay();
   } catch (e) {
     console.error("获取背包失败:", e);
@@ -47,13 +46,12 @@ async function fetchShop(npcId) {
 function openInventory() {
   if (dialogueOpen) return;
   inventoryOpen = true;
-  fetchInventory(activeNpcId || "blacksmith").then(() => renderInventory());
+  fetchInventory().then(() => renderInventory());
   document.getElementById("inventory-panel").classList.add("active");
 }
 
 function closeInventory() {
   inventoryOpen = false;
-  hideNpcShopSelect();
   document.getElementById("inventory-panel").classList.remove("active");
 }
 
@@ -90,7 +88,7 @@ function openShop(npcId) {
   shopOpen = true;
   shopNpcId = npcId || activeNpcId || "blacksmith";
   fetchShop(shopNpcId).then(() => {
-    fetchInventory(shopNpcId).then(() => renderShop());
+    fetchInventory().then(() => renderShop());
   });
   document.getElementById("shop-panel").classList.add("active");
 }
@@ -195,39 +193,6 @@ function updateGoldDisplay() {
   if (el) el.textContent = inventoryState.gold;
 }
 
-// ===== NPC 商店选择 =====
-
-function showNpcShopSelect() {
-  npcShopSelectOpen = true;
-  const container = document.getElementById("npc-shop-list");
-  container.innerHTML = "";
-
-  for (const npc of npcs) {
-    const div = document.createElement("div");
-    div.className = "npc-shop-card";
-    div.onclick = () => {
-      hideNpcShopSelect();
-      closeInventory();
-      openShop(npc.npc_id);
-    };
-    div.innerHTML = `
-      <div class="npc-shop-icon ${npc.npc_id}">${npc.name[0]}</div>
-      <div class="npc-shop-info">
-        <div class="npc-shop-name">${npc.name}</div>
-        <div class="npc-shop-role">${npc.role || ""}</div>
-      </div>
-    `;
-    container.appendChild(div);
-  }
-
-  document.getElementById("npc-shop-select").classList.add("active");
-}
-
-function hideNpcShopSelect() {
-  npcShopSelectOpen = false;
-  document.getElementById("npc-shop-select").classList.remove("active");
-}
-
 // ===== 事件绑定 =====
 
 document.addEventListener("keydown", (e) => {
@@ -240,7 +205,7 @@ document.addEventListener("keydown", (e) => {
     }
   }
   if (e.key === "Escape") {
-    if (npcShopSelectOpen) hideNpcShopSelect();
+    if (npcInteractOpen) closeNpcInteract();
     else if (shopOpen) closeShop();
     else if (inventoryOpen) closeInventory();
   }

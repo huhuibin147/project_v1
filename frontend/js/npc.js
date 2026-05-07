@@ -3,6 +3,8 @@
 // NPC 列表，启动时从接口加载
 let npcs = [];
 let activeNpcId = null; // 当前正在对话的 NPC
+let interactNpcId = null; // 当前交互选项对应的 NPC
+let npcInteractOpen = false;
 
 // NPC 默认位置（在地图上的瓦片坐标）
 const npcPositions = {
@@ -112,9 +114,9 @@ function drawNPC(ctx, npc) {
   ctx.fillText(npc.name, x + s / 2, y - 4);
 
   // 交互提示
-  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcShopSelectOpen) {
+  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen) {
     npc.showPrompt = true;
-    const prompt = "按 E 对话";
+    const prompt = "按 E 交互";
     const pw = ctx.measureText(prompt).width + 10;
     ctx.fillStyle = "rgba(255,200,0,0.9)";
     ctx.fillRect(x + s / 2 - pw / 2, y - 28, pw, 14);
@@ -132,16 +134,45 @@ function drawAllNpcs(ctx) {
   }
 }
 
-// E 键交互：找最近的 NPC
+// E 键交互：找最近的 NPC，弹出选项面板
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcShopSelectOpen) {
+  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen) {
     const nearest = getNearestNpc();
     if (nearest) {
-      activeNpcId = nearest.npc_id;
-      openDialogue(nearest);
+      openNpcInteract(nearest);
     }
   }
 });
+
+function openNpcInteract(npc) {
+  interactNpcId = npc.npc_id;
+  activeNpcId = npc.npc_id;
+  npcInteractOpen = true;
+  document.getElementById("npc-interact-title").textContent = npc.name;
+  document.getElementById("npc-interact-panel").classList.add("active");
+}
+
+function closeNpcInteract() {
+  npcInteractOpen = false;
+  interactNpcId = null;
+  document.getElementById("npc-interact-panel").classList.remove("active");
+}
+
+function interactTalk() {
+  if (!interactNpcId) return;
+  const npc = npcs.find(n => n.npc_id === interactNpcId);
+  if (npc) {
+    closeNpcInteract();
+    activeNpcId = npc.npc_id;
+    openDialogue(npc);
+  }
+}
+
+function interactShop() {
+  if (!interactNpcId) return;
+  closeNpcInteract();
+  openShop(interactNpcId);
+}
 
 // 启动时获取 NPC 列表
 async function fetchAllNpcs() {

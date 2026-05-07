@@ -31,6 +31,10 @@ class PlayerProfile:
         self.defense = cls["base_defense"]
         self.speed = cls["base_speed"]
 
+        # 统一钱包与背包
+        self.gold = 0
+        self.inventory = []  # [{item_id, quantity}]
+
         self._load()
 
     def _save(self):
@@ -47,6 +51,8 @@ class PlayerProfile:
             "defense": self.defense,
             "speed": self.speed,
             "status_effects": self.status_effects,
+            "gold": self.gold,
+            "inventory": self.inventory,
         }
         with open(SAVE_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -69,6 +75,8 @@ class PlayerProfile:
             self.defense = data.get("defense", self.defense)
             self.speed = data.get("speed", self.speed)
             self.status_effects = data.get("status_effects", [])
+            self.gold = data.get("gold", 0)
+            self.inventory = data.get("inventory", [])
         except (json.JSONDecodeError, KeyError):
             self._save()
 
@@ -148,10 +156,69 @@ class PlayerProfile:
             "defense": self.defense,
             "speed": self.speed,
             "status_effects": self.status_effects,
+            "gold": self.gold,
         }
 
     def get_classes(self) -> dict:
         return self.classes
+
+    # ===== 统一背包与金币操作 =====
+
+    def get_inventory(self) -> list[dict]:
+        """返回带物品详情的背包列表。"""
+        from item_system import ITEMS_DB
+        result = []
+        for item in self.inventory:
+            item_id = item["item_id"]
+            info = ITEMS_DB.get(item_id, {})
+            result.append({
+                "item_id": item_id,
+                "name": info.get("name", item_id),
+                "type": info.get("type", "unknown"),
+                "description": info.get("description", ""),
+                "quantity": item["quantity"],
+                "buy_price": info.get("buy_price", 0),
+                "sell_price": info.get("sell_price", 0),
+            })
+        return result
+
+    def get_item_quantity(self, item_id: str) -> int:
+        for item in self.inventory:
+            if item["item_id"] == item_id:
+                return item["quantity"]
+        return 0
+
+    def add_item(self, item_id: str, quantity: int = 1):
+        for item in self.inventory:
+            if item["item_id"] == item_id:
+                item["quantity"] += quantity
+                self._save()
+                return
+        self.inventory.append({"item_id": item_id, "quantity": quantity})
+        self._save()
+
+    def remove_item(self, item_id: str, quantity: int = 1) -> bool:
+        for item in self.inventory:
+            if item["item_id"] == item_id:
+                if item["quantity"] < quantity:
+                    return False
+                item["quantity"] -= quantity
+                if item["quantity"] == 0:
+                    self.inventory.remove(item)
+                self._save()
+                return True
+        return False
+
+    def add_gold(self, amount: int):
+        self.gold += amount
+        self._save()
+
+    def spend_gold(self, amount: int) -> bool:
+        if self.gold < amount:
+            return False
+        self.gold -= amount
+        self._save()
+        return True
 
 
 # 全局单例

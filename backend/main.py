@@ -38,6 +38,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from npc_agent import NPCAgent, NPC_CONFIG_FILE
 from player_profile import player as player_profile
+from item_system import Inventory, buy_item, sell_item, get_item_info, ITEMS_DB
 
 app = FastAPI(title="LLM NPC Game")
 
@@ -140,12 +141,11 @@ async def npc_config(npc_id: str = "blacksmith"):
 
 
 @app.get("/api/inventory")
-async def get_inventory(npc_id: str = "blacksmith"):
-    """获取玩家背包（每个 NPC 独立存档，背包数据跟着 NPC 走）。"""
-    npc = get_npc(npc_id)
+async def get_inventory():
+    """获取玩家全局背包与金币。"""
     return {
-        "items": npc.player_inventory.to_list(),
-        "gold": npc.player_inventory.gold,
+        "items": player_profile.get_inventory(),
+        "gold": player_profile.gold,
     }
 
 
@@ -162,20 +162,56 @@ async def get_shop(npc_id: str = "blacksmith"):
 
 @app.post("/api/trade")
 async def trade(req: TradeRequest):
-    """直接交易接口。"""
-    from item_system import buy_item, sell_item
+    """直接交易接口（使用全局玩家背包与金币）。"""
+    from item_system import ITEMS_DB
     npc = get_npc(req.npc_id)
+    item_info = ITEMS_DB.get(req.item_id)
+    if not item_info:
+        return {"success": False, "message": "未知物品。"}
+
     if req.action == "buy":
-        result = buy_item(npc.player_inventory, npc.shop_inventory, req.item_id, req.quantity)
+        buy_price = item_info["buy_price"]
+        if buy_price <= 0:
+            return {"success": False, "message": "这个东西不卖的。"}
+        total = buy_price * req.quantity
+        npc_qty = npc.shop_inventory.get_quantity(req.item_id)
+        if npc_qty < req.quantity:
+            return {"success": False, "message": f"库存不足，只剩 {npc_qty} 个。"}
+        if player_profile.gold < total:
+            return {"success": False, "message": f"你的金币不够！需要 {total}，你只有 {player_profile.gold}。"}
+
+        # 执行购买
+        player_profile.spend_gold(total)
+        player_profile.add_item(req.item_id, req.quantity)
+        npc.shop_inventory.gold += total
+        npc.shop_inventory.remove_item(req.item_id, req.quantity)
+        message = f"好嘞！{req.quantity} 个{item_info['name']}，收你 {total} 金币。"
+
     elif req.action == "sell":
-        result = sell_item(npc.player_inventory, npc.shop_inventory, req.item_id, req.quantity)
+        sell_price = item_info["sell_price"]
+        if sell_price <= 0:
+            return {"success": False, "message": "这东西俺不收。"}
+        total = sell_price * req.quantity
+        player_qty = player_profile.get_item_quantity(req.item_id)
+        if player_qty < req.quantity:
+            return {"success": False, "message": f"你没有那么多{item_info['name']}。你只有 {player_qty} 个。"}
+        if npc.shop_inventory.gold < total:
+            return {"success": False, "message": "俺手头紧，没那么多金币收你的货。"}
+
+        # 执行出售
+        player_profile.add_gold(total)
+        player_profile.remove_item(req.item_id, req.quantity)
+        npc.shop_inventory.gold -= total
+        npc.acquired_inventory.add_item(req.item_id, req.quantity)
+        message = f"行！{req.quantity} 个{item_info['name']}，给你 {total} 金币。"
     else:
         return {"success": False, "message": "未知交易类型"}
+
     return {
-        "success": result.success,
-        "message": result.message,
-        "player_inventory": npc.player_inventory.to_list(),
-        "player_gold": npc.player_inventory.gold,
+        "success": True,
+        "message": message,
+        "player_inventory": player_profile.get_inventory(),
+        "player_gold": player_profile.gold,
         "shop_inventory": npc.shop_inventory.to_list(),
         "shop_gold": npc.shop_inventory.gold,
     }

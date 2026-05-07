@@ -67,7 +67,7 @@ function drawHUD(ctx) {
 
 // 启动
 fetchAllNpcs().then(() => {
-  fetchInventory("blacksmith");
+  fetchInventory();
 });
 fetchPlayerInfo();
 requestAnimationFrame(gameLoop);
