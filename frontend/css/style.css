@@ -179,14 +179,43 @@ body {
   border-radius: 3px;
 }
 
-/* HUD 金币 */
-#hud-gold-bar {
+/* HUD 顶部状态条 */
+#hud-bar {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#hud-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.7);
+  padding: 3px 10px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+}
+
+#hud-level {
+  color: #f0c060;
+  font-weight: bold;
+}
+
+#hud-hp {
+  color: #66BB6A;
+}
+
+#hud-gold-bar {
   background: rgba(0,0,0,0.7);
   color: #f0c060;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 4px;
   font-size: 14px;
   font-weight: bold;
@@ -417,4 +446,259 @@ body {
 
 .btn-open-shop:hover {
   background: #42A5F5;
+}
+
+/* NPC 商店选择面板 */
+#npc-shop-select {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  background: rgba(20, 20, 40, 0.95);
+  border: 2px solid #2196F3;
+  border-radius: 6px;
+  color: #eee;
+  font-size: 13px;
+  z-index: 110;
+  flex-direction: column;
+}
+
+#npc-shop-select.active {
+  display: flex;
+}
+
+#npc-shop-select .panel-header {
+  border-bottom-color: rgba(33, 150, 243, 0.3);
+}
+
+#npc-shop-select .panel-title {
+  color: #2196F3;
+}
+
+.npc-shop-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.npc-shop-card:hover {
+  background: rgba(33, 150, 243, 0.2);
+  border-color: #2196F3;
+}
+
+.npc-shop-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.npc-shop-icon.blacksmith {
+  background: #8b4513;
+}
+
+.npc-shop-icon.merchant {
+  background: #6a4a8a;
+}
+
+.npc-shop-info {
+  flex: 1;
+}
+
+.npc-shop-name {
+  font-weight: bold;
+  color: #f0c060;
+  font-size: 14px;
+}
+
+.npc-shop-role {
+  color: #aaa;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* 玩家信息面板 */
+#player-info-panel {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 340px;
+  background: rgba(20, 20, 40, 0.95);
+  border: 2px solid #6bafff;
+  border-radius: 6px;
+  color: #eee;
+  font-size: 13px;
+  z-index: 100;
+  flex-direction: column;
+}
+
+#player-info-panel.active {
+  display: flex;
+}
+
+#player-info-panel .panel-header {
+  border-bottom-color: rgba(107, 175, 255, 0.3);
+}
+
+#player-info-panel .panel-title {
+  color: #6bafff;
+}
+
+.pi-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pi-basic {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pi-avatar {
+  width: 42px;
+  height: 42px;
+  background: rgba(107, 175, 255, 0.15);
+  border: 2px solid #6bafff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #6bafff;
+}
+
+.pi-name-area {
+  flex: 1;
+}
+
+.pi-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.pi-class {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.pi-level-badge {
+  background: rgba(240, 192, 96, 0.2);
+  color: #f0c060;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.pi-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pi-section-title {
+  font-size: 12px;
+  color: #888;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 4px;
+}
+
+.pi-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pi-bar-label {
+  width: 30px;
+  font-size: 11px;
+  color: #aaa;
+  font-weight: bold;
+}
+
+.pi-bar {
+  flex: 1;
+  height: 14px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.pi-bar-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.3s;
+}
+
+.pi-bar-fill.hp {
+  background: #4CAF50;
+}
+
+.pi-bar-fill.exp {
+  background: #FF9800;
+}
+
+.pi-bar-text {
+  width: 70px;
+  text-align: right;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.pi-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.pi-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pi-stat-label {
+  font-size: 11px;
+  color: #888;
+}
+
+.pi-stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #f0c060;
+}
+
+.effect-tag {
+  display: inline-block;
+  background: rgba(244, 67, 54, 0.2);
+  color: #EF5350;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  margin-right: 4px;
+}
+
+.no-effects {
+  color: #555;
+  font-size: 12px;
 }

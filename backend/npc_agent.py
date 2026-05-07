@@ -16,17 +16,17 @@ INTENT_OPTIONS = """
 
 RESPONSE_FORMAT = """
 请严格按以下 JSON 格式回复（不要输出 JSON 以外的内容）：
-{
+{{
   "reply": "你的对话回复（1-3句话，保持角色一致性）",
   "intent": "chat 或 quest 或 trade 或 unknown",
   "mood": "当前你的情绪",
   "affinity_change": 好感度变化整数值(-10 到 +10),
-  "trade_action": null 或 {"action": "buy" 或 "sell", "item_id": "物品ID", "quantity": 数量}
-}
+  "trade_action": null 或 {{"action": "buy" 或 "sell", "item_id": "物品ID", "quantity": 数量}}
+}}
 
 trade_action 说明：
-- 当玩家明确要购买某样物品时，填 {"action": "buy", "item_id": "物品ID", "quantity": 数量}
-- 当玩家明确要出售某样物品时，填 {"action": "sell", "item_id": "物品ID", "quantity": 数量}
+- 当玩家明确要购买某样物品时，填 {{"action": "buy", "item_id": "物品ID", "quantity": 数量}}
+- 当玩家明确要出售某样物品时，填 {{"action": "sell", "item_id": "物品ID", "quantity": 数量}}
 - 如果不是交易意图，填 null
 - item_id 必须是以下物品之一：{item_ids}
 """
@@ -41,7 +41,8 @@ def load_npc_config(npc_id: str) -> dict:
 
 
 def build_system_prompt(cfg: dict, mood: str, affinity: int,
-                        history_text: str, shop_info: str) -> str:
+                        history_text: str, shop_info: str,
+                        shop_item_ids: list[str]) -> str:
     p = cfg["personality"]
 
     pp = cfg.get("personality_params", {})
@@ -58,8 +59,8 @@ def build_system_prompt(cfg: dict, mood: str, affinity: int,
             parts.append(f"幽默感={pp['humor']}")
         params_desc = f"\n性格参数：{', '.join(parts)}"
 
-    # 构建可用物品 ID 列表
-    item_ids = ", ".join(ITEMS_DB.keys())
+    # 只列出该 NPC 自己卖的物品 ID
+    item_ids = ", ".join(shop_item_ids) if shop_item_ids else "（无商品）"
 
     prompt = f"""你是{cfg['name']}，身份是{cfg['role']}，位于{cfg['location']}。
 性格：{p['traits']}，喜欢用"{p['pronoun']}"自称。
@@ -73,6 +74,9 @@ def build_system_prompt(cfg: dict, mood: str, affinity: int,
 
 你的商店信息：
 {shop_info}
+
+注意：你只卖上面列出的物品。如果玩家要买你没有的东西，请告诉他你这里没有。
+你也可以收购玩家手里的物品，但价格要合理。
 
 玩家和你的对话历史：
 {history_text if history_text else "（第一次对话）"}
@@ -153,7 +157,10 @@ class NPCAgent:
             history_text += f"{role}：{h['content']}\n"
 
         shop_info = self._get_shop_info()
-        system = build_system_prompt(self.cfg, self.mood, self.affinity, history_text, shop_info)
+        # 只传入该 NPC 商店实际有的物品 ID
+        shop_item_ids = [item["item_id"] for item in self.shop_inventory.items]
+        system = build_system_prompt(self.cfg, self.mood, self.affinity,
+                                     history_text, shop_info, shop_item_ids)
         return [
             {"role": "system", "content": system},
             {"role": "user", "content": player_input},
@@ -241,7 +248,3 @@ class NPCAgent:
             "player_gold": self.player_inventory.gold,
             "shop_gold": self.shop_inventory.gold,
         }
-
-
-# 全局单例
-npc = NPCAgent("blacksmith")

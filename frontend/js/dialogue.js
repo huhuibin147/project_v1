@@ -1,25 +1,32 @@
-// 对话 UI 与 API 调用
+// 对话 UI 与 API 调用（支持多 NPC）
 
 let dialogueOpen = false;
 
-const dialogueUI = {
-  messages: [],       // { role: "player"|"npc", text: "" }
-  inputText: "",
-  loading: false,
-};
+// 每个 NPC 独立的对话记录
+const dialogueHistory = {};  // { npcId: { messages: [], loading: false } }
 
-function openDialogue() {
+function getDialogueState(npcId) {
+  if (!dialogueHistory[npcId]) {
+    dialogueHistory[npcId] = { messages: [], loading: false };
+  }
+  return dialogueHistory[npcId];
+}
+
+function openDialogue(npc) {
   dialogueOpen = true;
-  dialogueUI.inputText = "";
+  activeNpcId = npc.npc_id;
+  const state = getDialogueState(npc.npc_id);
+
   document.getElementById("dialogue-panel").classList.add("active");
+  document.getElementById("dialogue-title").textContent = npc.name;
   document.getElementById("dialogue-input").focus();
 
-  // 如果是第一次打开，显示 NPC 的开场白（从配置加载）
-  if (dialogueUI.messages.length === 0 && npcState.greeting) {
-    addNPCMessage(npcState.greeting);
+  // 第一次打开，显示开场白
+  if (state.messages.length === 0 && npc.greeting) {
+    state.messages.push({ role: "npc", text: npc.greeting });
   }
 
-  renderDialogue();
+  renderDialogue(npc.npc_id);
 }
 
 function closeDialogue() {
@@ -27,26 +34,29 @@ function closeDialogue() {
   document.getElementById("dialogue-panel").classList.remove("active");
 }
 
-function addNPCMessage(text) {
-  dialogueUI.messages.push({ role: "npc", text });
-  renderDialogue();
+function addNPCMessage(npcId, text) {
+  const state = getDialogueState(npcId);
+  state.messages.push({ role: "npc", text });
+  renderDialogue(npcId);
 }
 
-function addPlayerMessage(text) {
-  dialogueUI.messages.push({ role: "player", text });
-  renderDialogue();
+function addPlayerMessage(npcId, text) {
+  const state = getDialogueState(npcId);
+  state.messages.push({ role: "player", text });
+  renderDialogue(npcId);
 }
 
-function renderDialogue() {
+function renderDialogue(npcId) {
   const container = document.getElementById("dialogue-messages");
+  const state = getDialogueState(npcId);
+  const npc = npcs.find(n => n.npc_id === npcId);
   container.innerHTML = "";
 
-  // 只显示最近的消息
-  const recent = dialogueUI.messages.slice(-10);
+  const recent = state.messages.slice(-10);
   for (const msg of recent) {
     const div = document.createElement("div");
     div.className = `dialogue-msg ${msg.role}`;
-    const label = msg.role === "npc" ? npcState.name : "你";
+    const label = msg.role === "npc" ? (npc ? npc.name : "NPC") : "你";
     const color = msg.role === "npc" ? "#f0c060" : "#60a0f0";
     div.innerHTML = `<span style="color:${color};font-weight:bold">${label}：</span>${escapeHTML(msg.text)}`;
     container.appendChild(div);
@@ -54,9 +64,11 @@ function renderDialogue() {
 
   container.scrollTop = container.scrollHeight;
 
-  // 更新状态显示
-  document.getElementById("npc-mood").textContent = npcState.mood;
-  document.getElementById("npc-affinity").textContent = npcState.affinity;
+  // 更新状态
+  if (npc) {
+    document.getElementById("npc-mood").textContent = npc.mood;
+    document.getElementById("npc-affinity").textContent = npc.affinity;
+  }
 }
 
 function escapeHTML(str) {
@@ -66,29 +78,37 @@ function escapeHTML(str) {
 }
 
 async function sendMessage() {
+  if (!activeNpcId) return;
+  const state = getDialogueState(activeNpcId);
+  const npc = npcs.find(n => n.npc_id === activeNpcId);
+
   const input = document.getElementById("dialogue-input");
   const text = input.value.trim();
-  if (!text || dialogueUI.loading) return;
+  if (!text || state.loading) return;
 
   input.value = "";
-  addPlayerMessage(text);
+  addPlayerMessage(activeNpcId, text);
 
-  dialogueUI.loading = true;
+  state.loading = true;
   const loadingEl = document.getElementById("dialogue-loading");
-  loadingEl.textContent = `${npcState.name}正在思考...`;
+  loadingEl.textContent = `${npc ? npc.name : "NPC"}正在思考...`;
   loadingEl.style.display = "block";
 
   try {
     const resp = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text }),
+      body: JSON.stringify({ message: text, npc_id: activeNpcId }),
     });
     const data = await resp.json();
 
-    addNPCMessage(data.reply);
-    npcState.mood = data.mood;
-    npcState.affinity = data.affinity;
+    addNPCMessage(activeNpcId, data.reply);
+
+    // 更新 NPC 状态
+    if (npc) {
+      npc.mood = data.mood;
+      npc.affinity = data.affinity;
+    }
 
     // 更新金币和背包
     if (data.player_gold !== undefined) {
@@ -99,18 +119,17 @@ async function sendMessage() {
       inventoryState.items = data.player_inventory;
     }
 
-    // 根据意图添加视觉反馈
     showIntentBadge(data.intent);
 
-    // 如果是交易意图，显示打开商店按钮
+    // 交易意图 → 显示打开商店按钮
     if (data.intent === "trade") {
-      showShopButton();
+      showShopButton(activeNpcId);
     }
   } catch (e) {
-    addNPCMessage(`（${npcState.name}挠了挠头）俺刚才走神了，你说啥来着？`);
+    addNPCMessage(activeNpcId, `（${npc ? npc.name : "NPC"}挠了挠头）俺刚才走神了，你说啥来着？`);
     console.error("对话请求失败:", e);
   } finally {
-    dialogueUI.loading = false;
+    state.loading = false;
     document.getElementById("dialogue-loading").style.display = "none";
   }
 }
@@ -132,8 +151,21 @@ function showIntentBadge(intent) {
   badge.textContent = labels[intent] || "未知";
   badge.style.backgroundColor = colors[intent] || "#999";
   badge.style.display = "inline-block";
-
   setTimeout(() => { badge.style.display = "none"; }, 2000);
+}
+
+function showShopButton(npcId) {
+  const container = document.getElementById("dialogue-messages");
+  const div = document.createElement("div");
+  div.className = "dialogue-msg system";
+  div.innerHTML = `<button class="btn-open-shop" onclick="openShopFromDialogue('${npcId}')">打开商店</button>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function openShopFromDialogue(npcId) {
+  closeDialogue();
+  openShop(npcId);
 }
 
 // 事件绑定
@@ -142,21 +174,6 @@ document.getElementById("dialogue-input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-function showShopButton() {
-  const container = document.getElementById("dialogue-messages");
-  const div = document.createElement("div");
-  div.className = "dialogue-msg system";
-  div.innerHTML = '<button class="btn-open-shop" onclick="openShopFromDialogue()">打开商店</button>';
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
-
-function openShopFromDialogue() {
-  closeDialogue();
-  openShop();
-}
-
-// ESC 关闭对话
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && dialogueOpen) {
     closeDialogue();

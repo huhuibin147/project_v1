@@ -1,77 +1,119 @@
-// NPC 渲染与交互
+// 多 NPC 系统
 
-const npcState = {
-  name: "...",
-  greeting: "",
-  x: 4 * TILE_SIZE,
-  y: 4 * TILE_SIZE,
-  width: TILE_SIZE,
-  height: TILE_SIZE,
-  mood: "平静",
-  affinity: 50,
-  interactRange: 2,
-  showPrompt: false,
+// NPC 列表，启动时从接口加载
+let npcs = [];
+let activeNpcId = null; // 当前正在对话的 NPC
+
+// NPC 默认位置（在地图上的瓦片坐标）
+const npcPositions = {
+  blacksmith: { col: 4, row: 5 },
+  merchant:   { col: 18, row: 5 },
 };
 
-function isPlayerNearNPC() {
-  const dx = Math.abs(player.x - npcState.x);
-  const dy = Math.abs(player.y - npcState.y);
-  return dx <= npcState.interactRange * TILE_SIZE &&
-         dy <= npcState.interactRange * TILE_SIZE;
+function initNpcs(npcList) {
+  npcs = npcList.map(cfg => ({
+    npc_id: cfg.npc_id,
+    name: cfg.name,
+    role: cfg.role,
+    greeting: cfg.greeting,
+    x: (npcPositions[cfg.npc_id]?.col || 4) * TILE_SIZE,
+    y: (npcPositions[cfg.npc_id]?.row || 5) * TILE_SIZE,
+    mood: "平静",
+    affinity: 50,
+    interactRange: 2,
+    showPrompt: false,
+  }));
 }
 
-function drawNPC(ctx) {
-  const x = Math.round(npcState.x);
-  const y = Math.round(npcState.y);
+function isPlayerNearNpc(npc) {
+  const dx = Math.abs(player.x - npc.x);
+  const dy = Math.abs(player.y - npc.y);
+  return dx <= npc.interactRange * TILE_SIZE &&
+         dy <= npc.interactRange * TILE_SIZE;
+}
+
+function getNearestNpc() {
+  let nearest = null;
+  let minDist = Infinity;
+  for (const npc of npcs) {
+    const dx = player.x - npc.x;
+    const dy = player.y - npc.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < minDist && dist <= npc.interactRange * TILE_SIZE * 1.5) {
+      minDist = dist;
+      nearest = npc;
+    }
+  }
+  return nearest;
+}
+
+function drawNPC(ctx, npc) {
+  const x = Math.round(npc.x);
+  const y = Math.round(npc.y);
   const s = TILE_SIZE;
   const p = s / 8;
   const time = Date.now() / 1000;
   const breathe = Math.sin(time * 2) * 1;
 
+  // 根据 NPC 类型选择颜色
+  const isBlacksmith = npc.npc_id === "blacksmith";
+  const bodyColor = isBlacksmith ? "#8b4513" : "#6a4a8a";   // 铁匠棕色/商人紫色
+  const bodyLight = isBlacksmith ? "#a0522d" : "#8a6aaa";
+  const hairColor = isBlacksmith ? "#4a3728" : "#3a2a2a";
+  const skinColor = "#d4a574";
+
   // 阴影
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fillRect(x + p * 2, y + s - p * 2, p * 4, p * 1);
 
-  // 身体（围裙）
-  ctx.fillStyle = "#8b4513";
+  // 身体
+  ctx.fillStyle = bodyColor;
   ctx.fillRect(x + p * 2, y + p * 3 + breathe, p * 4, p * 4);
-  // 围裙高光
-  ctx.fillStyle = "#a0522d";
+  ctx.fillStyle = bodyLight;
   ctx.fillRect(x + p * 3, y + p * 4 + breathe, p * 2, p * 3);
 
   // 头部
-  ctx.fillStyle = "#d4a574";
+  ctx.fillStyle = skinColor;
   ctx.fillRect(x + p * 2, y + p * 1 + breathe, p * 4, p * 3);
 
-  // 头发/胡子
-  ctx.fillStyle = "#4a3728";
+  // 头发
+  ctx.fillStyle = hairColor;
   ctx.fillRect(x + p * 2, y + p * 0 + breathe, p * 4, p * 2);
-  // 胡子
-  ctx.fillRect(x + p * 3, y + p * 3 + breathe, p * 2, p * 1);
 
-  // 眼睛 - 根据朝向
+  if (isBlacksmith) {
+    // 铁匠：胡子
+    ctx.fillRect(x + p * 3, y + p * 3 + breathe, p * 2, p * 1);
+    // 锤子
+    ctx.fillStyle = "#666";
+    ctx.fillRect(x + p * 6, y + p * 3 + breathe, p, p * 3);
+    ctx.fillStyle = "#8b6b4a";
+    ctx.fillRect(x + p * 6, y + p * 2 + breathe, p * 2, p * 2);
+  } else {
+    // 商人：围裙
+    ctx.fillStyle = "#e8d8b0";
+    ctx.fillRect(x + p * 3, y + p * 5 + breathe, p * 2, p * 2);
+    // 头巾
+    ctx.fillStyle = "#d4a060";
+    ctx.fillRect(x + p * 2, y + p * 0 + breathe, p * 4, p * 1);
+  }
+
+  // 眼睛
   ctx.fillStyle = "#333";
   ctx.fillRect(x + p * 3, y + p * 2 + breathe, p, p);
   ctx.fillRect(x + p * 5, y + p * 2 + breathe, p, p);
 
-  // 锤子（右手）
-  ctx.fillStyle = "#666";
-  ctx.fillRect(x + p * 6, y + p * 3 + breathe, p, p * 3);
-  ctx.fillStyle = "#8b6b4a";
-  ctx.fillRect(x + p * 6, y + p * 2 + breathe, p * 2, p * 2);
-
   // 名字标签
   ctx.fillStyle = "rgba(0,0,0,0.6)";
-  const nameWidth = ctx.measureText(npcState.name).width + 10;
+  ctx.font = "10px monospace";
+  const nameWidth = ctx.measureText(npc.name).width + 10;
   ctx.fillRect(x + s / 2 - nameWidth / 2, y - 14, nameWidth, 14);
   ctx.fillStyle = "#fff";
-  ctx.font = "10px monospace";
   ctx.textAlign = "center";
-  ctx.fillText(npcState.name, x + s / 2, y - 4);
+  ctx.fillText(npc.name, x + s / 2, y - 4);
 
   // 交互提示
-  if (isPlayerNearNPC() && !dialogueOpen) {
-    npcState.showPrompt = true;
+  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcShopSelectOpen) {
+    npc.showPrompt = true;
     const prompt = "按 E 对话";
     const pw = ctx.measureText(prompt).width + 10;
     ctx.fillStyle = "rgba(255,200,0,0.9)";
@@ -80,38 +122,51 @@ function drawNPC(ctx) {
     ctx.font = "bold 10px monospace";
     ctx.fillText(prompt, x + s / 2, y - 18);
   } else {
-    npcState.showPrompt = false;
+    npc.showPrompt = false;
   }
 }
 
-// E 键交互
+function drawAllNpcs(ctx) {
+  for (const npc of npcs) {
+    drawNPC(ctx, npc);
+  }
+}
+
+// E 键交互：找最近的 NPC
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "e" && isPlayerNearNPC() && !dialogueOpen) {
-    openDialogue();
+  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcShopSelectOpen) {
+    const nearest = getNearestNpc();
+    if (nearest) {
+      activeNpcId = nearest.npc_id;
+      openDialogue(nearest);
+    }
   }
 });
 
-// 获取 NPC 配置（启动时调用一次）
-async function fetchNPCConfig() {
+// 启动时获取 NPC 列表
+async function fetchAllNpcs() {
   try {
-    const resp = await fetch("/api/npc/config");
+    const resp = await fetch("/api/npcs");
     const data = await resp.json();
-    npcState.name = data.name;
-    npcState.greeting = data.greeting;
-    // 更新对话面板标题
-    document.getElementById("dialogue-title").textContent = data.name;
+    initNpcs(data);
+    return data;
   } catch (e) {
-    console.error("获取 NPC 配置失败:", e);
+    console.error("获取 NPC 列表失败:", e);
+    return [];
   }
 }
 
-// 获取 NPC 状态
-async function fetchNPCStatus() {
+// 获取指定 NPC 的状态
+async function fetchNPCStatus(npcId) {
   try {
-    const resp = await fetch("/api/npc/status");
+    const resp = await fetch(`/api/npc/status?npc_id=${npcId}`);
     const data = await resp.json();
-    npcState.mood = data.mood;
-    npcState.affinity = data.affinity;
+    const npc = npcs.find(n => n.npc_id === npcId);
+    if (npc) {
+      npc.mood = data.mood;
+      npc.affinity = data.affinity;
+    }
+    return data;
   } catch (e) {
     console.error("获取 NPC 状态失败:", e);
   }

@@ -32,7 +32,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function updatePlayer() {
-  if (dialogueOpen) return; // 对话中不允许移动
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcShopSelectOpen) return; // 面板打开时不允许移动
 
   let dx = 0, dy = 0;
 

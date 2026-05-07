@@ -8,23 +8,36 @@
 
 ### 2.1 物品（Item）
 
-每个物品有唯一 ID、类型、名称、描述和价格。
+物品定义在 `config/items.json` 中，是全局的物品字典。每个 NPC 的商店从这个字典中选取自己要卖的物品。
 
 | 字段 | 说明 |
 |------|------|
 | `id` | 唯一标识，如 `iron_sword` |
 | `name` | 显示名称，如「铁剑」 |
-| `type` | 类型：weapon / armor / consumable / tool / material |
+| `type` | 类型：weapon / armor / consumable / food / tool / material |
 | `description` | 物品描述 |
 | `buy_price` | 商店售价（玩家买入价），0 表示不可购买 |
 | `sell_price` | 收购价（玩家卖出价），0 表示不可出售 |
 | `stackable` | 是否可叠加 |
 
-### 2.2 背包（Inventory）
+### 2.2 NPC 商店（per-NPC 隔离）
 
-玩家和 NPC 各自拥有一个背包，包含：
+每个 NPC 在 `config/npcs.json` 中定义自己的商店，包括：
+- 商店名称
+- 初始金币
+- 初始库存（只包含该 NPC 卖的物品）
+
+**物品不是全局共享的**——铁匠卖武器，杂货婆卖日用品，各自独立。
+
+LLM Prompt 中只注入该 NPC 商店实际有的物品 ID，确保 NPC 不会卖自己没有的东西。
+
+### 2.3 背包（Inventory）
+
+玩家和 NPC 各自拥有独立的背包，包含：
 - `items`：物品列表 `[{item_id, quantity}]`
 - `gold`：金币数量
+
+每个 NPC 的存档独立：`data/{npc_id}_save.json`，包含该 NPC 对应的玩家背包和商店库存。
 
 ### 2.3 交易（Trade）
 
@@ -106,13 +119,16 @@
 
 ### 4.2 商店面板交易
 
-玩家按 I 打开背包，或在对话中点击「打开商店」按钮，通过 UI 直接交易。
+玩家可通过两种方式打开商店：
+
+**方式一：对话触发**。对话意图为 `trade` 时，对话面板出现「打开商店」按钮，点击后直接打开该 NPC 的商店。
+
+**方式二：背包入口**。按 I 打开背包，点击右上角「商店」按钮，弹出 NPC 选择面板，选择想访问的 NPC 即可打开对应商店。
 
 **流程**：
-1. 对话意图为 `trade` 时，对话面板出现「打开商店」按钮
-2. 点击按钮，关闭对话，打开商店面板
-3. 点击「购买」或「出售」按钮直接交易
-4. 交易结果实时显示
+1. 通过对话或背包入口打开商店面板
+2. 点击「购买」或「出售」按钮直接交易
+3. 交易结果实时显示
 
 ## 五、数据持久化
 
@@ -144,9 +160,15 @@ NPC 和玩家的数据保存在 `data/{npc_id}_save.json`：
 
 ## 六、API 接口
 
-### GET /api/inventory
+所有涉及 NPC 的接口都需要传 `npc_id` 参数（默认 `blacksmith`），实现 NPC 隔离。
 
-获取玩家背包。
+### GET /api/npcs
+
+获取所有可用 NPC 列表。
+
+### GET /api/inventory?npc_id=xxx
+
+获取玩家背包（每个 NPC 独立存档）。
 
 **响应**：
 ```json
@@ -158,9 +180,9 @@ NPC 和玩家的数据保存在 `data/{npc_id}_save.json`：
 }
 ```
 
-### GET /api/shop
+### GET /api/shop?npc_id=xxx
 
-获取 NPC 商店库存。
+获取指定 NPC 商店库存。
 
 **响应**：
 ```json
@@ -180,37 +202,20 @@ NPC 和玩家的数据保存在 `data/{npc_id}_save.json`：
 {
   "action": "buy",
   "item_id": "iron_sword",
-  "quantity": 1
-}
-```
-
-**响应**：
-```json
-{
-  "success": true,
-  "message": "好嘞！1 个铁剑，收你 80 金币。",
-  "player_inventory": [...],
-  "player_gold": 120,
-  "shop_inventory": [...],
-  "shop_gold": 580
+  "quantity": 1,
+  "npc_id": "blacksmith"
 }
 ```
 
 ### POST /api/chat
 
-对话接口（扩展版），响应新增交易相关字段：
+对话接口（扩展版），需要传 `npc_id`。
 
+**请求**：
 ```json
 {
-  "reply": "行！铁剑 80 金币，给你！",
-  "intent": "trade",
-  "mood": "高兴",
-  "affinity": 55,
-  "trade": true,
-  "player_inventory": [...],
-  "player_gold": 120,
-  "shop_inventory": [...],
-  "shop_gold": 580
+  "message": "我想买把铁剑",
+  "npc_id": "blacksmith"
 }
 ```
 
@@ -233,24 +238,43 @@ NPC 和玩家的数据保存在 `data/{npc_id}_save.json`：
 |----|------|------|--------|
 | health_potion | 生命药水 | 30 | 15 |
 | antidote | 解毒药 | 25 | 12 |
+| bandage | 绷带 | 8 | 4 |
+
+### 食物
+| ID | 名称 | 售价 | 收购价 |
+|----|------|------|--------|
+| bread | 面包 | 5 | 2 |
+| dried_meat | 肉干 | 12 | 6 |
+| wine | 米酒 | 20 | 10 |
 
 ### 工具
 | ID | 名称 | 售价 | 收购价 |
 |----|------|------|--------|
 | torch | 火把 | 10 | 5 |
 | rope | 绳索 | 15 | 7 |
+| candle | 蜡烛 | 5 | 2 |
 
-### 材料（仅可出售）
+### 材料（仅可出售给对应 NPC）
 | ID | 名称 | 收购价 |
 |----|------|--------|
 | wolf_pelt | 狼皮 | 20 |
 | iron_ore | 铁矿石 | 15 |
+| cloth | 棉布 | 7 |
+| herb | 草药 | 10 |
+| mushroom | 蘑菇 | 8 |
+
+### NPC 商店分配
+
+| NPC | 商店名 | 卖什么 |
+|-----|--------|--------|
+| 铁匠老王 | 老王铁匠铺 | 武器、防具、工具、药水 |
+| 刘婶 | 刘婶杂货铺 | 食物、布料、绷带、蜡烛、工具 |
 
 ## 八、前端操作
 
 | 按键 | 功能 |
 |------|------|
-| I | 打开/关闭背包面板 |
+| I | 打开/关闭背包面板（含商店入口） |
 | E | 与 NPC 对话 |
 | ESC | 关闭当前面板 |
 

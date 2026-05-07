@@ -1,7 +1,9 @@
-// 物品系统：背包、商店、交易 UI
+// 物品系统：背包、商店、交易 UI（支持多 NPC）
 
 let inventoryOpen = false;
 let shopOpen = false;
+let shopNpcId = null; // 当前商店所属 NPC
+let npcShopSelectOpen = false;
 
 const inventoryState = {
   items: [],
@@ -16,9 +18,9 @@ const shopState = {
 
 // ===== 数据获取 =====
 
-async function fetchInventory() {
+async function fetchInventory(npcId) {
   try {
-    const resp = await fetch("/api/inventory");
+    const resp = await fetch(`/api/inventory?npc_id=${npcId || activeNpcId || "blacksmith"}`);
     const data = await resp.json();
     inventoryState.items = data.items;
     inventoryState.gold = data.gold;
@@ -28,9 +30,9 @@ async function fetchInventory() {
   }
 }
 
-async function fetchShop() {
+async function fetchShop(npcId) {
   try {
-    const resp = await fetch("/api/shop");
+    const resp = await fetch(`/api/shop?npc_id=${npcId}`);
     const data = await resp.json();
     shopState.name = data.name;
     shopState.items = data.items;
@@ -45,12 +47,13 @@ async function fetchShop() {
 function openInventory() {
   if (dialogueOpen) return;
   inventoryOpen = true;
-  fetchInventory().then(() => renderInventory());
+  fetchInventory(activeNpcId || "blacksmith").then(() => renderInventory());
   document.getElementById("inventory-panel").classList.add("active");
 }
 
 function closeInventory() {
   inventoryOpen = false;
+  hideNpcShopSelect();
   document.getElementById("inventory-panel").classList.remove("active");
 }
 
@@ -83,16 +86,18 @@ function renderInventory() {
 
 // ===== 商店面板 =====
 
-function openShop() {
+function openShop(npcId) {
   shopOpen = true;
-  fetchShop().then(() => {
-    fetchInventory().then(() => renderShop());
+  shopNpcId = npcId || activeNpcId || "blacksmith";
+  fetchShop(shopNpcId).then(() => {
+    fetchInventory(shopNpcId).then(() => renderShop());
   });
   document.getElementById("shop-panel").classList.add("active");
 }
 
 function closeShop() {
   shopOpen = false;
+  shopNpcId = null;
   document.getElementById("shop-panel").classList.remove("active");
 }
 
@@ -138,11 +143,12 @@ function getPlayerItemQty(itemId) {
 // ===== 交易 =====
 
 async function doTrade(action, itemId, quantity = 1) {
+  if (!shopNpcId) return;
   try {
     const resp = await fetch("/api/trade", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, item_id: itemId, quantity }),
+      body: JSON.stringify({ action, item_id: itemId, quantity, npc_id: shopNpcId }),
     });
     const data = await resp.json();
 
@@ -177,6 +183,7 @@ function getTypeLabel(type) {
     weapon: "武器",
     armor: "防具",
     consumable: "消耗品",
+    food: "食物",
     tool: "工具",
     material: "材料",
   };
@@ -188,10 +195,42 @@ function updateGoldDisplay() {
   if (el) el.textContent = inventoryState.gold;
 }
 
+// ===== NPC 商店选择 =====
+
+function showNpcShopSelect() {
+  npcShopSelectOpen = true;
+  const container = document.getElementById("npc-shop-list");
+  container.innerHTML = "";
+
+  for (const npc of npcs) {
+    const div = document.createElement("div");
+    div.className = "npc-shop-card";
+    div.onclick = () => {
+      hideNpcShopSelect();
+      closeInventory();
+      openShop(npc.npc_id);
+    };
+    div.innerHTML = `
+      <div class="npc-shop-icon ${npc.npc_id}">${npc.name[0]}</div>
+      <div class="npc-shop-info">
+        <div class="npc-shop-name">${npc.name}</div>
+        <div class="npc-shop-role">${npc.role || ""}</div>
+      </div>
+    `;
+    container.appendChild(div);
+  }
+
+  document.getElementById("npc-shop-select").classList.add("active");
+}
+
+function hideNpcShopSelect() {
+  npcShopSelectOpen = false;
+  document.getElementById("npc-shop-select").classList.remove("active");
+}
+
 // ===== 事件绑定 =====
 
 document.addEventListener("keydown", (e) => {
-  // I 键打开/关闭背包
   if (e.key.toLowerCase() === "i" && !dialogueOpen) {
     if (inventoryOpen) {
       closeInventory();
@@ -200,9 +239,9 @@ document.addEventListener("keydown", (e) => {
       openInventory();
     }
   }
-  // ESC 关闭背包或商店
   if (e.key === "Escape") {
-    if (inventoryOpen) closeInventory();
-    if (shopOpen) closeShop();
+    if (npcShopSelectOpen) hideNpcShopSelect();
+    else if (shopOpen) closeShop();
+    else if (inventoryOpen) closeInventory();
   }
 });

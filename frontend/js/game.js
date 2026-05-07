@@ -3,10 +3,9 @@
 const canvas = document.getElementById("game-canvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = MAP_COLS * TILE_SIZE;   // 800
-canvas.height = MAP_ROWS * TILE_SIZE;  // 576
+canvas.width = MAP_COLS * TILE_SIZE;
+canvas.height = MAP_ROWS * TILE_SIZE;
 
-// 关闭图像平滑，保持像素风
 ctx.imageSmoothingEnabled = false;
 
 let lastTime = 0;
@@ -28,35 +27,47 @@ function update(dt) {
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 绘制地图
   drawMap(ctx);
 
-  // 绘制 NPC（在玩家之前或之后，根据 Y 坐标决定遮挡）
-  if (npcState.y <= player.y) {
-    drawNPC(ctx);
-    drawPlayer(ctx);
-  } else {
-    drawPlayer(ctx);
-    drawNPC(ctx);
+  // 收集所有可绘制对象（NPC + 玩家），按 Y 坐标排序实现遮挡
+  const drawables = [];
+
+  for (const npc of npcs) {
+    drawables.push({ type: "npc", y: npc.y, data: npc });
+  }
+  drawables.push({ type: "player", y: player.y, data: player });
+
+  drawables.sort((a, b) => a.y - b.y);
+
+  for (const obj of drawables) {
+    if (obj.type === "npc") {
+      drawNPC(ctx, obj.data);
+    } else {
+      drawPlayer(ctx);
+    }
   }
 
-  // HUD 信息
   drawHUD(ctx);
 }
 
 function drawHUD(ctx) {
-  // 左上角操作提示
+  const hudBarEl = document.getElementById("hud-bar");
+  const hudBottom = hudBarEl ? hudBarEl.getBoundingClientRect().bottom - canvas.getBoundingClientRect().top : 0;
+  const startY = Math.max(hudBottom + 6, 40);
+
   ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(8, 8, 180, 50);
+  ctx.fillRect(8, startY, 200, 52);
   ctx.fillStyle = "#fff";
   ctx.font = "11px monospace";
   ctx.textAlign = "left";
-  ctx.fillText("WASD/方向键 移动", 16, 22);
-  ctx.fillText("E 与NPC对话  I 背包", 16, 38);
-  ctx.fillText("ESC 关闭面板", 16, 52);
+  ctx.fillText("WASD/方向键 移动", 16, startY + 14);
+  ctx.fillText("E 对话  I 背包  P 角色", 16, startY + 28);
+  ctx.fillText("靠近NPC按E开始冒险吧", 16, startY + 42);
 }
 
-// 启动游戏
-fetchNPCConfig();
-fetchInventory();
+// 启动
+fetchAllNpcs().then(() => {
+  fetchInventory("blacksmith");
+});
+fetchPlayerInfo();
 requestAnimationFrame(gameLoop);

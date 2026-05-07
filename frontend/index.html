@@ -10,10 +10,16 @@
   <div id="game-container">
     <canvas id="game-canvas"></canvas>
 
-    <!-- HUD 金币显示 -->
-    <div id="hud-gold-bar">
-      <span class="gold-icon">金</span>
-      <span id="hud-gold">0</span>
+    <!-- HUD 玩家状态条 -->
+    <div id="hud-bar">
+      <div id="hud-player">
+        <span id="hud-level">Lv.1</span>
+        <span id="hud-hp">120/120</span>
+      </div>
+      <div id="hud-gold-bar">
+        <span class="gold-icon">金</span>
+        <span id="hud-gold">0</span>
+      </div>
     </div>
 
     <!-- 对话面板 -->
@@ -40,9 +46,19 @@
       <div class="panel-header">
         <span class="panel-title">背包</span>
         <span class="panel-gold">金币: <span id="inventory-gold">0</span></span>
+        <button class="btn-open-shop" id="btn-npc-shop" onclick="showNpcShopSelect()">商店</button>
         <button class="panel-close" onclick="closeInventory()">×</button>
       </div>
       <div id="inventory-items" class="items-grid"></div>
+    </div>
+
+    <!-- NPC 商店选择面板 -->
+    <div id="npc-shop-select">
+      <div class="panel-header">
+        <span class="panel-title">选择商店</span>
+        <button class="panel-close" onclick="hideNpcShopSelect()">×</button>
+      </div>
+      <div id="npc-shop-list" class="items-grid"></div>
     </div>
 
     <!-- 商店面板 -->
@@ -58,6 +74,63 @@
       <div id="trade-message" class="trade-message" style="display:none"></div>
       <div id="shop-items" class="items-grid"></div>
     </div>
+
+    <!-- 玩家信息面板 -->
+    <div id="player-info-panel">
+      <div class="panel-header">
+        <span class="panel-title">角色信息</span>
+        <button class="panel-close" onclick="closePlayerInfo()">×</button>
+      </div>
+      <div class="pi-body">
+        <div class="pi-basic">
+          <div class="pi-avatar" id="pi-avatar-icon">剑</div>
+          <div class="pi-name-area">
+            <div class="pi-name" id="pi-name">冒险者</div>
+            <div class="pi-class" id="pi-class">战士</div>
+          </div>
+          <div class="pi-level-badge">Lv.<span id="pi-level">1</span></div>
+        </div>
+
+        <div class="pi-section">
+          <div class="pi-bar-row">
+            <span class="pi-bar-label">HP</span>
+            <div class="pi-bar">
+              <div class="pi-bar-fill hp" id="pi-hp-bar" style="width:100%"></div>
+            </div>
+            <span class="pi-bar-text" id="pi-hp-text">120 / 120</span>
+          </div>
+          <div class="pi-bar-row">
+            <span class="pi-bar-label">EXP</span>
+            <div class="pi-bar">
+              <div class="pi-bar-fill exp" id="pi-exp-bar" style="width:0%"></div>
+            </div>
+            <span class="pi-bar-text" id="pi-exp-text">0 / 100</span>
+          </div>
+        </div>
+
+        <div class="pi-section">
+          <div class="pi-stats">
+            <div class="pi-stat">
+              <span class="pi-stat-label">攻击</span>
+              <span class="pi-stat-value" id="pi-attack">15</span>
+            </div>
+            <div class="pi-stat">
+              <span class="pi-stat-label">防御</span>
+              <span class="pi-stat-value" id="pi-defense">12</span>
+            </div>
+            <div class="pi-stat">
+              <span class="pi-stat-label">速度</span>
+              <span class="pi-stat-value" id="pi-speed">8</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pi-section">
+          <div class="pi-section-title">状态效果</div>
+          <div id="pi-effects"><span class="no-effects">无</span></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="/static/js/map.js"></script>
@@ -65,6 +138,7 @@
   <script src="/static/js/npc.js"></script>
   <script src="/static/js/dialogue.js"></script>
   <script src="/static/js/inventory.js"></script>
+  <script src="/static/js/player_info.js"></script>
   <script src="/static/js/game.js"></script>
 </body>
 </html>

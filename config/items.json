@@ -88,5 +88,77 @@
     "buy_price": 0,
     "sell_price": 15,
     "stackable": true
+  },
+  "bread": {
+    "id": "bread",
+    "name": "面包",
+    "type": "food",
+    "description": "刚出炉的面包，能填饱肚子。",
+    "buy_price": 5,
+    "sell_price": 2,
+    "stackable": true
+  },
+  "dried_meat": {
+    "id": "dried_meat",
+    "name": "肉干",
+    "type": "food",
+    "description": "风干的肉条，适合长途旅行携带。",
+    "buy_price": 12,
+    "sell_price": 6,
+    "stackable": true
+  },
+  "wine": {
+    "id": "wine",
+    "name": "米酒",
+    "type": "food",
+    "description": "村里自酿的米酒，味道醇厚。",
+    "buy_price": 20,
+    "sell_price": 10,
+    "stackable": true
+  },
+  "cloth": {
+    "id": "cloth",
+    "name": "棉布",
+    "type": "material",
+    "description": "柔软的棉布，可以做衣服或绷带。",
+    "buy_price": 15,
+    "sell_price": 7,
+    "stackable": true
+  },
+  "bandage": {
+    "id": "bandage",
+    "name": "绷带",
+    "type": "consumable",
+    "description": "简易的止血绷带。",
+    "buy_price": 8,
+    "sell_price": 4,
+    "stackable": true
+  },
+  "candle": {
+    "id": "candle",
+    "name": "蜡烛",
+    "type": "tool",
+    "description": "照明用的蜡烛。",
+    "buy_price": 5,
+    "sell_price": 2,
+    "stackable": true
+  },
+  "herb": {
+    "id": "herb",
+    "name": "草药",
+    "type": "material",
+    "description": "山里采的草药，可以入药。",
+    "buy_price": 0,
+    "sell_price": 10,
+    "stackable": true
+  },
+  "mushroom": {
+    "id": "mushroom",
+    "name": "蘑菇",
+    "type": "food",
+    "description": "森林里采的蘑菇，味道鲜美。",
+    "buy_price": 0,
+    "sell_price": 8,
+    "stackable": true
   }
 }

@@ -50,5 +50,59 @@
     },
 
     "default_gold": 200
+  },
+
+  "merchant": {
+    "id": "merchant",
+    "name": "杂货婆刘婶",
+    "role": "日用品商人",
+    "location": "青石村杂货铺",
+
+    "personality": {
+      "traits": "热情健谈，爱唠叨，精明但不刻薄",
+      "pronoun": "我",
+      "style": "日常口语，亲切唠叨，偶尔八卦",
+      "likes": "勤快的年轻人、会过日子的人",
+      "dislikes": "好吃懒做的人、赊账不还的人"
+    },
+
+    "backstory": "刘婶在青石村开杂货铺十几年了，卖些日用百货、吃食草药。她消息灵通，村里大大小小的事都知道。丈夫早年进山采药再也没回来，她一个人把铺子撑起来，村里人都敬重她。",
+
+    "greeting": "哟，小伙子来啦！看看我这铺子，吃的用的都有，价格公道！",
+
+    "default_mood": "热情",
+    "default_affinity": 55,
+
+    "personality_params": {
+      "friendliness": 0.9,
+      "courage": 0.4,
+      "greed": 0.4,
+      "humor": 0.6
+    },
+
+    "intents": {
+      "chat": "闲聊、打听消息、问村里的事",
+      "quest": "帮刘婶跑腿、找东西、传话",
+      "trade": "买日用品、卖山货草药",
+      "unknown": "无法判断意图"
+    },
+
+    "shop": {
+      "name": "刘婶杂货铺",
+      "gold": 300,
+      "inventory": [
+        {"item_id": "bread", "quantity": 30},
+        {"item_id": "dried_meat", "quantity": 15},
+        {"item_id": "wine", "quantity": 10},
+        {"item_id": "cloth", "quantity": 20},
+        {"item_id": "bandage", "quantity": 25},
+        {"item_id": "health_potion", "quantity": 5},
+        {"item_id": "candle", "quantity": 30},
+        {"item_id": "rope", "quantity": 10},
+        {"item_id": "torch", "quantity": 15}
+      ]
+    },
+
+    "default_gold": 200
   }
 }
