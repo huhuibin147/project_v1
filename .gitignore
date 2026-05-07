@@ -1,0 +1,21 @@
+# LLM 配置（包含 API Key，禁止上传）
+config.json
+
+# 日志文件
+logs/
+
+# NPC 存档数据
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

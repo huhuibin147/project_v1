@@ -1,0 +1,92 @@
+{
+  "iron_sword": {
+    "id": "iron_sword",
+    "name": "铁剑",
+    "type": "weapon",
+    "description": "一把坚固的铁剑，适合初级冒险者。",
+    "buy_price": 80,
+    "sell_price": 40,
+    "stackable": false
+  },
+  "steel_sword": {
+    "id": "steel_sword",
+    "name": "精钢剑",
+    "type": "weapon",
+    "description": "用精钢打造的利剑，锋利无比。",
+    "buy_price": 200,
+    "sell_price": 100,
+    "stackable": false
+  },
+  "iron_dagger": {
+    "id": "iron_dagger",
+    "name": "铁匕首",
+    "type": "weapon",
+    "description": "轻便的匕首，适合快速攻击。",
+    "buy_price": 50,
+    "sell_price": 25,
+    "stackable": false
+  },
+  "iron_shield": {
+    "id": "iron_shield",
+    "name": "铁盾",
+    "type": "armor",
+    "description": "厚实的铁盾，能挡住不少伤害。",
+    "buy_price": 120,
+    "sell_price": 60,
+    "stackable": false
+  },
+  "health_potion": {
+    "id": "health_potion",
+    "name": "生命药水",
+    "type": "consumable",
+    "description": "恢复少量生命值。",
+    "buy_price": 30,
+    "sell_price": 15,
+    "stackable": true
+  },
+  "antidote": {
+    "id": "antidote",
+    "name": "解毒药",
+    "type": "consumable",
+    "description": "解除中毒状态。",
+    "buy_price": 25,
+    "sell_price": 12,
+    "stackable": true
+  },
+  "torch": {
+    "id": "torch",
+    "name": "火把",
+    "type": "tool",
+    "description": "照亮黑暗的洞穴。",
+    "buy_price": 10,
+    "sell_price": 5,
+    "stackable": true
+  },
+  "rope": {
+    "id": "rope",
+    "name": "绳索",
+    "type": "tool",
+    "description": "结实的麻绳，用途广泛。",
+    "buy_price": 15,
+    "sell_price": 7,
+    "stackable": true
+  },
+  "wolf_pelt": {
+    "id": "wolf_pelt",
+    "name": "狼皮",
+    "type": "material",
+    "description": "从野狼身上剥下的皮毛。",
+    "buy_price": 0,
+    "sell_price": 20,
+    "stackable": true
+  },
+  "iron_ore": {
+    "id": "iron_ore",
+    "name": "铁矿石",
+    "type": "material",
+    "description": "可以用来锻造武器的矿石。",
+    "buy_price": 0,
+    "sell_price": 15,
+    "stackable": true
+  }
+}

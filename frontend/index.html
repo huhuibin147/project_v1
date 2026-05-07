@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>青石村 - LLM NPC 冒险</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD 金币显示 -->
+    <div id="hud-gold-bar">
+      <span class="gold-icon">金</span>
+      <span id="hud-gold">0</span>
+    </div>
+
+    <!-- 对话面板 -->
+    <div id="dialogue-panel">
+      <div id="dialogue-header">
+        <span id="dialogue-title">NPC</span>
+        <span id="npc-status">
+          情绪: <span id="npc-mood">平静</span> |
+          好感度: <span id="npc-affinity">50</span>/100
+        </span>
+        <span id="intent-badge"></span>
+        <button id="dialogue-close" onclick="closeDialogue()">×</button>
+      </div>
+      <div id="dialogue-messages"></div>
+      <div id="dialogue-loading">正在思考...</div>
+      <div id="dialogue-input-area">
+        <input type="text" id="dialogue-input" placeholder="输入你想说的话..." autocomplete="off">
+        <button id="dialogue-send">发送</button>
+      </div>
+    </div>
+
+    <!-- 背包面板 -->
+    <div id="inventory-panel">
+      <div class="panel-header">
+        <span class="panel-title">背包</span>
+        <span class="panel-gold">金币: <span id="inventory-gold">0</span></span>
+        <button class="panel-close" onclick="closeInventory()">×</button>
+      </div>
+      <div id="inventory-items" class="items-grid"></div>
+    </div>
+
+    <!-- 商店面板 -->
+    <div id="shop-panel">
+      <div class="panel-header">
+        <span id="shop-title" class="panel-title">商店</span>
+        <span class="panel-info">
+          商店金币: <span id="shop-gold">0</span> |
+          你的金币: <span id="player-gold-shop">0</span>
+        </span>
+        <button class="panel-close" onclick="closeShop()">×</button>
+      </div>
+      <div id="trade-message" class="trade-message" style="display:none"></div>
+      <div id="shop-items" class="items-grid"></div>
+    </div>
+  </div>
+
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/player.js"></script>
+  <script src="/static/js/npc.js"></script>
+  <script src="/static/js/dialogue.js"></script>
+  <script src="/static/js/inventory.js"></script>
+  <script src="/static/js/game.js"></script>
+</body>
+</html>
