@@ -17,6 +17,8 @@
 - **玩家名字显示**：玩家角色头顶显示自定义名字
 - **游戏菜单**：右上角菜单按钮，包含背包、角色信息、保存游戏、返回主菜单
 - **像素风渲染**：Canvas 逐像素绘制，无外部资源依赖
+- **地图系统**：数据驱动的瓦片地图，支持摄像机滚动、多区域切换、交互物件
+- **交互物件**：宝箱、传送门、采集点、装饰物等可交互物件
 
 ## 快速开始
 
@@ -32,7 +34,7 @@ pip install -r requirements.txt
 首次运行自动生成配置文件：
 
 ```bash
-python main.py
+python3.11 main.py
 ```
 
 按提示编辑 `config.json`，填入 API 信息：
@@ -50,10 +52,12 @@ python main.py
 ### 3. 启动游戏
 
 ```bash
-python main.py
+python3.11 main.py
 ```
 
 浏览器打开 `http://localhost:8000`。
+
+按 `Ctrl + C` 停止服务。
 
 ## 操作指南
 
@@ -77,7 +81,11 @@ project_v1/
 ├── config/
 │   ├── npcs.json               # NPC 定义（属性、性格、商店）
 │   ├── items.json              # 物品定义（名称、类型、价格）
-│   └── player_default.json     # 玩家默认属性和职业配置
+│   ├── player_default.json     # 玩家默认属性和职业配置
+│   ├── tiles.json              # 瓦片类型定义
+│   └── maps/                   # 地图数据
+│       ├── village.json        #   村庄地图
+│       └── forest.json         #   森林地图
 ├── data/
 │   ├── save_1/                 # 存档槽 1
 │   │   ├── player.json         #   玩家数据
@@ -96,7 +104,7 @@ project_v1/
     ├── index.html
     ├── css/style.css
     └── js/
-        ├── map.js              # 瓦片地图
+        ├── map.js              # 地图系统（瓦片、摄像机、物件）
         ├── player.js           # 玩家控制
         ├── npc.js              # NPC 渲染与交互
         ├── dialogue.js         # 对话系统
@@ -120,6 +128,25 @@ project_v1/
 - [物品系统设计](item_system.md) — 物品/背包/交易系统设计
 - [LLM NPC Agent 设计](llm_npc_agent.md) — NPC Agent 完整设计方案
 - [AI Agent 游戏思路](ai_agent_game_ideas.md) — AI Agent 游戏方向项目思路
+- [地图系统设计](map_system_design.md) — 地图系统设计方案
+
+## 地图系统
+
+当前支持的地图：
+
+| 地图 | 名称 | 尺寸 | 说明 |
+|------|------|------|------|
+| village | 青石村 | 25x18 | 起始村庄，有铁匠铺和杂货铺 |
+| forest | 森林 | 40x30 | 村庄北方的森林区域 |
+
+交互物件类型：
+
+| 类型 | 说明 | 交互方式 |
+|------|------|----------|
+| portal | 传送门 | 踩上去自动触发 |
+| chest | 宝箱 | 按 E 打开 |
+| gather | 采集点 | 按 E 采集 |
+| decoration | 装饰物 | 按 E 查看 |
 
 ## 当前 NPC
 

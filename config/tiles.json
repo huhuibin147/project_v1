@@ -1,0 +1,17 @@
+{
+  "0":  {"name": "草地",   "color": "#4a8c3f", "walkable": true,  "detail": "grass"},
+  "1":  {"name": "泥土路", "color": "#c4a66a", "walkable": true,  "detail": "dirt_road"},
+  "2":  {"name": "房屋墙", "color": "#8b6b4a", "walkable": false, "detail": "brick_wall"},
+  "3":  {"name": "屋顶",   "color": "#a0522d", "walkable": false, "detail": "roof"},
+  "4":  {"name": "树木",   "color": "#2d5a1e", "walkable": false, "detail": "tree"},
+  "5":  {"name": "水面",   "color": "#3b7dd8", "walkable": false, "detail": "water"},
+  "6":  {"name": "木地板", "color": "#7a6b5a", "walkable": true,  "detail": "wood_floor"},
+  "7":  {"name": "栅栏",   "color": "#9e8b6e", "walkable": false, "detail": "fence"},
+  "8":  {"name": "石头",   "color": "#888888", "walkable": false, "detail": "stone"},
+  "9":  {"name": "木地板2","color": "#8a7a5a", "walkable": true,  "detail": "wood_floor2"},
+  "10": {"name": "石板路", "color": "#9a9a8a", "walkable": true,  "detail": "stone_road"},
+  "11": {"name": "沙地",   "color": "#d4b86a", "walkable": true,  "detail": "sand"},
+  "12": {"name": "雪地",   "color": "#e8e8f0", "walkable": true,  "detail": "snow"},
+  "13": {"name": "岩壁",   "color": "#5a5a5a", "walkable": false, "detail": "cave_wall"},
+  "14": {"name": "岩地",   "color": "#6a6a5a", "walkable": true,  "detail": "cave_floor"}
+}

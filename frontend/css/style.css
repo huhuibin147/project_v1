@@ -1113,3 +1113,27 @@ body {
   background: rgba(244, 67, 54, 0.3);
   border-color: #EF5350;
 }
+
+/* 交互消息 */
+.interact-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #f0c060;
+  padding: 12px 24px;
+  border: 2px solid #f0c060;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 200;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}

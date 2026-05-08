@@ -10,8 +10,11 @@ let helpVisible = false; // 帮助提示显示状态
 function initCanvas() {
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
-  canvas.width = MAP_COLS * TILE_SIZE;
-  canvas.height = MAP_ROWS * TILE_SIZE;
+  // 画布大小固定为 800x576（25x18 瓦片）
+  canvas.width = 800;
+  canvas.height = 576;
+  camera.viewportWidth = canvas.width;
+  camera.viewportHeight = canvas.height;
   ctx.imageSmoothingEnabled = false;
 }
 
@@ -29,12 +32,18 @@ function gameLoop(timestamp) {
 
 function update(dt) {
   updatePlayer();
+  updateCamera();
+  checkPortalAutoTransfer();
 }
 
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  ctx.save();
+  ctx.translate(-camera.x, -camera.y);
+
   drawMap(ctx);
+  drawObjects(ctx);
 
   // 收集所有可绘制对象（NPC + 玩家），按 Y 坐标排序实现遮挡
   const drawables = [];
@@ -54,6 +63,7 @@ function render() {
     }
   }
 
+  ctx.restore();
   drawHUD(ctx);
 }
 
@@ -62,42 +72,106 @@ function drawHUD(ctx) {
   if (helpVisible) {
     const helpText1 = "WASD/方向键 移动  |  E 与NPC交互  |  I 背包  |  P 角色信息  |  O 菜单";
     const helpText2 = "靠近NPC按E开始冒险吧";
-    
+
     ctx.font = "bold 13px monospace";
     const width1 = ctx.measureText(helpText1).width;
     const width2 = ctx.measureText(helpText2).width;
     const maxWidth = Math.max(width1, width2) + 40;
     const boxHeight = 60;
-    
+
     // 居中位置
     const boxX = (canvas.width - maxWidth) / 2;
     const boxY = (canvas.height - boxHeight) / 2;
-    
+
     // 背景
     ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
     ctx.strokeStyle = "#f0c060";
     ctx.lineWidth = 2;
     ctx.fillRect(boxX, boxY, maxWidth, boxHeight);
     ctx.strokeRect(boxX, boxY, maxWidth, boxHeight);
-    
+
     // 文字
     ctx.fillStyle = "#f0c060";
     ctx.textAlign = "center";
     ctx.fillText(helpText1, canvas.width / 2, boxY + 25);
-    
+
     ctx.fillStyle = "#fff";
     ctx.font = "12px monospace";
     ctx.fillText(helpText2, canvas.width / 2, boxY + 45);
+  }
+
+  // 绘制地图名称
+  if (currentMap) {
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(8, 8, ctx.measureText(currentMap.name).width + 16, 20);
+    ctx.fillStyle = "#f0c060";
+    ctx.font = "bold 12px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(currentMap.name, 16, 22);
+  }
+}
+
+// 检测传送门自动触发
+let portalCooldown = 0;
+function checkPortalAutoTransfer() {
+  if (portalCooldown > 0) {
+    portalCooldown--;
+    return;
+  }
+
+  const portal = checkPortalCollision();
+  if (portal) {
+    const props = portal.properties;
+    if (props?.target_map) {
+      portalCooldown = 60; // 冷却 60 帧
+      transferToMap(props.target_map, props.target_x, props.target_y);
+    }
+  }
+}
+
+// 地图切换
+async function transferToMap(targetMap, targetX, targetY) {
+  try {
+    const resp = await fetch("/api/map/transfer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        target_map: targetMap,
+        target_x: targetX,
+        target_y: targetY,
+      }),
+    });
+    const data = await resp.json();
+    if (resp.ok && data.success) {
+      // 更新地图
+      currentMap = data.map_data;
+      mapObjects = currentMap.objects || [];
+      // 更新玩家位置
+      setPlayerPosition(targetX, targetY);
+      // 重新加载 NPC
+      await fetchAllNpcs();
+      // 同步玩家信息
+      Object.assign(playerInfo, data.player_info);
+      updatePlayerHUD();
+    }
+  } catch (e) {
+    console.error("地图切换失败:", e);
   }
 }
 
 // 开始游戏（由开始界面调用）
 async function startGame() {
   initCanvas();
+  await initMapSystem();
   gameStarted = true;
 
-  // 先加载玩家信息（含位置），再加载 NPC
+  // 先加载玩家信息（含位置），再加载地图和 NPC
   await fetchPlayerInfo();
+
+  // 加载当前地图
+  const mapId = playerInfo.current_map || "village";
+  await loadMap(mapId);
+
   await fetchAllNpcs();
   fetchInventory();
 

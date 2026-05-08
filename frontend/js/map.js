@@ -1,133 +1,360 @@
-// 地图数据与渲染
-// 瓦片类型：0=草地 1=泥土路 2=房屋墙 3=屋顶 4=树木 5=水面 6=铁匠铺地板 7=栅栏 8=石头 9=杂货铺地板
+// 地图系统 - 数据驱动 + 摄像机 + 交互物件
 
 const TILE_SIZE = 32;
-const MAP_COLS = 25;
-const MAP_ROWS = 18;
 
-// 地图数据 (25x18)
-const mapData = [
-  [4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
-  [4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,4],
-  [4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4],
-  [4,0,0,2,2,2,0,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,4],
-  [4,0,0,2,6,2,0,0,0,1,1,1,1,1,0,0,0,2,9,2,0,0,0,0,4],
-  [4,0,0,2,6,2,0,0,0,1,0,0,0,1,0,0,0,2,2,2,0,0,0,0,4],
-  [4,0,0,2,2,2,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,4],
-  [4,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,4,0,0,4],
-  [4,0,0,0,1,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,4],
-  [4,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4],
-  [4,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,2,2,2,0,0,0,0,4],
-  [4,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,2,3,2,0,0,0,0,4],
-  [4,0,0,0,0,0,7,7,0,1,0,0,0,0,0,0,0,2,2,2,0,0,0,0,4],
-  [4,0,0,0,0,0,7,7,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,4],
-  [4,0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,1,0,0,0,0,0,4],
-  [4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,4],
-  [4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4],
-  [4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
-];
+// 当前地图数据
+let currentMap = null;
+let tileConfig = null;
+let mapObjects = [];
 
-// 碰撞数据：true 表示不可通行
-const collisionMap = mapData.map(row =>
-  row.map(tile => [2, 3, 4, 5, 7, 8].includes(tile))
-);
-
-const tileColors = {
-  0: "#4a8c3f", // 草地
-  1: "#c4a66a", // 泥土路
-  2: "#8b6b4a", // 房屋墙
-  3: "#a0522d", // 屋顶
-  4: "#2d5a1e", // 树木
-  5: "#3b7dd8", // 水面
-  6: "#7a6b5a", // 铁匠铺地板
-  7: "#9e8b6e", // 栅栏
-  8: "#888888", // 石头
-  9: "#8a7a5a", // 杂货铺地板
+// 摄像机系统
+const camera = {
+  x: 0,
+  y: 0,
+  viewportWidth: 0,
+  viewportHeight: 0,
 };
 
+// 瓦片渲染器注册表
+const tileRenderers = {};
+
+// 注册瓦片渲染器
+function registerTileRenderer(name, renderer) {
+  tileRenderers[name] = renderer;
+}
+
+// 加载瓦片配置
+async function loadTileConfig() {
+  try {
+    const resp = await fetch("/api/map/tiles");
+    if (!resp.ok) throw new Error("加载瓦片配置失败");
+    tileConfig = await resp.json();
+  } catch (e) {
+    console.error("加载瓦片配置失败:", e);
+    // 使用默认配置
+    tileConfig = {};
+  }
+}
+
+// 加载地图数据
+async function loadMap(mapId) {
+  try {
+    const resp = await fetch(`/api/map/${mapId}`);
+    if (!resp.ok) throw new Error(`加载地图 ${mapId} 失败`);
+    currentMap = await resp.json();
+    mapObjects = currentMap.objects || [];
+    return currentMap;
+  } catch (e) {
+    console.error("加载地图失败:", e);
+    return null;
+  }
+}
+
+// 更新摄像机
+function updateCamera() {
+  if (!currentMap) return;
+
+  const mapPixelWidth = currentMap.width * TILE_SIZE;
+  const mapPixelHeight = currentMap.height * TILE_SIZE;
+
+  // 目标：玩家居中
+  let targetX = player.x + PLAYER_SIZE / 2 - camera.viewportWidth / 2;
+  let targetY = player.y + PLAYER_SIZE / 2 - camera.viewportHeight / 2;
+
+  // 边界钳制
+  if (mapPixelWidth > camera.viewportWidth) {
+    targetX = Math.max(0, Math.min(targetX, mapPixelWidth - camera.viewportWidth));
+  } else {
+    targetX = -(camera.viewportWidth - mapPixelWidth) / 2;
+  }
+
+  if (mapPixelHeight > camera.viewportHeight) {
+    targetY = Math.max(0, Math.min(targetY, mapPixelHeight - camera.viewportHeight));
+  } else {
+    targetY = -(camera.viewportHeight - mapPixelHeight) / 2;
+  }
+
+  camera.x = targetX;
+  camera.y = targetY;
+}
+
+// 绘制地图（带视口裁剪）
 function drawMap(ctx) {
-  for (let row = 0; row < MAP_ROWS; row++) {
-    for (let col = 0; col < MAP_COLS; col++) {
-      const tile = mapData[row][col];
+  if (!currentMap || !tileConfig) return;
+
+  const ground = currentMap.layers?.ground;
+  if (!ground) return;
+
+  const startCol = Math.max(0, Math.floor(camera.x / TILE_SIZE));
+  const endCol = Math.min(currentMap.width, Math.ceil((camera.x + camera.viewportWidth) / TILE_SIZE) + 1);
+  const startRow = Math.max(0, Math.floor(camera.y / TILE_SIZE));
+  const endRow = Math.min(currentMap.height, Math.ceil((camera.y + camera.viewportHeight) / TILE_SIZE) + 1);
+
+  for (let row = startRow; row < endRow; row++) {
+    for (let col = startCol; col < endCol; col++) {
+      const tileId = ground[row]?.[col];
+      if (tileId === undefined) continue;
+
+      const tileInfo = tileConfig[String(tileId)];
+      if (!tileInfo) continue;
+
       const x = col * TILE_SIZE;
       const y = row * TILE_SIZE;
 
       // 基础色
-      ctx.fillStyle = tileColors[tile] || "#000";
+      ctx.fillStyle = tileInfo.color || "#000";
       ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
 
       // 像素细节
-      drawTileDetail(ctx, tile, x, y);
+      const detailName = tileInfo.detail;
+      if (detailName && tileRenderers[detailName]) {
+        tileRenderers[detailName](ctx, x, y);
+      }
     }
   }
 }
 
-function drawTileDetail(ctx, tile, x, y) {
-  const s = TILE_SIZE;
-  const p = s / 8; // 像素单元
+// 绘制交互物件
+function drawObjects(ctx) {
+  if (!currentMap) return;
 
-  if (tile === 0) {
-    // 草地 - 随机深色草点
+  for (const obj of mapObjects) {
+    const x = obj.x * TILE_SIZE;
+    const y = obj.y * TILE_SIZE;
+
+    if (obj.type === "chest") {
+      drawChest(ctx, x, y, obj.state?.opened);
+    } else if (obj.type === "portal") {
+      drawPortal(ctx, x, y);
+    } else if (obj.type === "gather") {
+      drawGatherPoint(ctx, x, y);
+    } else if (obj.type === "decoration") {
+      drawDecoration(ctx, x, y, obj.properties?.sprite);
+    }
+  }
+}
+
+// 宝箱绘制
+function drawChest(ctx, x, y, opened) {
+  const p = TILE_SIZE / 8;
+  if (opened) {
+    // 打开的宝箱
+    ctx.fillStyle = "#8b6914";
+    ctx.fillRect(x + p, y + p * 4, p * 6, p * 3);
+    ctx.fillStyle = "#a67c00";
+    ctx.fillRect(x + p, y + p * 2, p * 6, p * 2);
+    ctx.fillStyle = "#666";
+    ctx.fillRect(x + p * 3, y + p * 3, p * 2, p);
+  } else {
+    // 关闭的宝箱
+    ctx.fillStyle = "#8b6914";
+    ctx.fillRect(x + p, y + p * 3, p * 6, p * 4);
+    ctx.fillStyle = "#a67c00";
+    ctx.fillRect(x + p, y + p * 2, p * 6, p * 2);
+    ctx.fillStyle = "#ffd700";
+    ctx.fillRect(x + p * 3, y + p * 4, p * 2, p * 2);
+  }
+}
+
+// 传送门绘制
+function drawPortal(ctx, x, y) {
+  const p = TILE_SIZE / 8;
+  const time = Date.now() / 1000;
+  const alpha = 0.5 + Math.sin(time * 3) * 0.3;
+
+  ctx.fillStyle = `rgba(100, 200, 255, ${alpha})`;
+  ctx.fillRect(x + p, y + p, p * 6, p * 6);
+  ctx.fillStyle = `rgba(150, 230, 255, ${alpha * 0.7})`;
+  ctx.fillRect(x + p * 2, y + p * 2, p * 4, p * 4);
+  ctx.fillStyle = `rgba(200, 240, 255, ${alpha * 0.5})`;
+  ctx.fillRect(x + p * 3, y + p * 3, p * 2, p * 2);
+}
+
+// 采集点绘制
+function drawGatherPoint(ctx, x, y) {
+  const p = TILE_SIZE / 8;
+  ctx.fillStyle = "#4a8c3f";
+  ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
+  ctx.fillStyle = "#6abf5a";
+  ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+  ctx.fillStyle = "#8ee07a";
+  ctx.fillRect(x + p * 3, y + p * 2, p, p);
+}
+
+// 装饰物绘制
+function drawDecoration(ctx, x, y, sprite) {
+  const p = TILE_SIZE / 8;
+  if (sprite === "sign") {
+    // 告示牌
+    ctx.fillStyle = "#8b6914";
+    ctx.fillRect(x + p * 3, y + p * 4, p * 2, p * 4);
+    ctx.fillStyle = "#a67c00";
+    ctx.fillRect(x + p * 1, y + p * 1, p * 6, p * 4);
+    ctx.fillStyle = "#333";
+    ctx.fillRect(x + p * 2, y + p * 2, p * 4, p);
+    ctx.fillRect(x + p * 2, y + p * 4, p * 3, p);
+  }
+}
+
+// 碰撞检测
+function isWalkable(col, row) {
+  if (!currentMap) return false;
+  if (col < 0 || col >= currentMap.width || row < 0 || row >= currentMap.height) return false;
+
+  const ground = currentMap.layers?.ground;
+  if (!ground) return false;
+
+  const tileId = ground[row]?.[col];
+  if (tileId === undefined) return false;
+
+  const tileInfo = tileConfig?.[String(tileId)];
+  if (!tileInfo) return false;
+
+  return tileInfo.walkable !== false;
+}
+
+// 检测玩家所在位置的传送门
+function checkPortalCollision() {
+  if (!currentMap) return null;
+
+  const playerTileX = Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE);
+  const playerTileY = Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE);
+
+  for (const obj of mapObjects) {
+    if (obj.type === "portal" && obj.x === playerTileX && obj.y === playerTileY) {
+      return obj;
+    }
+  }
+  return null;
+}
+
+// 获取玩家附近的可交互物件
+function getNearbyInteractableObject() {
+  if (!currentMap) return null;
+
+  const playerTileX = Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE);
+  const playerTileY = Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE);
+
+  for (const obj of mapObjects) {
+    if (obj.type === "portal") continue; // 传送门自动触发，不参与 E 键交互
+    const dx = Math.abs(obj.x - playerTileX);
+    const dy = Math.abs(obj.y - playerTileY);
+    if (dx <= 1 && dy <= 1) {
+      return obj;
+    }
+  }
+  return null;
+}
+
+// 初始化瓦片渲染器
+function initTileRenderers() {
+  const p = TILE_SIZE / 8;
+
+  registerTileRenderer("grass", (ctx, x, y) => {
     ctx.fillStyle = "#3d7a33";
     const seed = (x * 7 + y * 13) % 100;
     if (seed < 30) ctx.fillRect(x + p * 2, y + p * 3, p, p);
     if (seed < 50) ctx.fillRect(x + p * 5, y + p * 6, p, p);
     if (seed < 70) ctx.fillRect(x + p * 1, y + p * 6, p, p);
-  } else if (tile === 1) {
-    // 泥土路 - 车辙痕迹
+  });
+
+  registerTileRenderer("dirt_road", (ctx, x, y) => {
     ctx.fillStyle = "#b89a5a";
     ctx.fillRect(x + p * 1, y + p * 3, p * 2, p);
     ctx.fillRect(x + p * 5, y + p * 5, p * 2, p);
-  } else if (tile === 2) {
-    // 房屋墙 - 砖块纹理
+  });
+
+  registerTileRenderer("brick_wall", (ctx, x, y) => {
     ctx.fillStyle = "#7a5c3a";
-    ctx.fillRect(x, y + p * 3, s, p);
-    ctx.fillRect(x, y + p * 7, s, p);
+    ctx.fillRect(x, y + p * 3, TILE_SIZE, p);
+    ctx.fillRect(x, y + p * 7, TILE_SIZE, p);
     ctx.fillRect(x + p * 4, y, p, p * 3);
     ctx.fillRect(x + p * 4, y + p * 4, p, p * 3);
-  } else if (tile === 3) {
-    // 屋顶 - 瓦片纹理
+  });
+
+  registerTileRenderer("roof", (ctx, x, y) => {
     ctx.fillStyle = "#8b4513";
     for (let i = 0; i < 4; i++) {
       ctx.fillRect(x + i * p * 2, y + (i % 2) * p * 2, p * 2, p * 2);
     }
-  } else if (tile === 4) {
-    // 树木 - 树冠和树干
+  });
+
+  registerTileRenderer("tree", (ctx, x, y) => {
     ctx.fillStyle = "#1a3d0f";
     ctx.fillRect(x + p * 2, y, p * 4, p * 3);
     ctx.fillRect(x + p * 1, y + p * 1, p * 6, p * 2);
     ctx.fillStyle = "#5a3a1a";
     ctx.fillRect(x + p * 3, y + p * 3, p * 2, p * 3);
-    // 高光
     ctx.fillStyle = "#3a7a2a";
     ctx.fillRect(x + p * 3, y + p * 1, p * 2, p);
-  } else if (tile === 5) {
-    // 水面 - 波纹
+  });
+
+  registerTileRenderer("water", (ctx, x, y) => {
     ctx.fillStyle = "#5a9ae8";
     ctx.fillRect(x + p * 1, y + p * 2, p * 3, p);
     ctx.fillRect(x + p * 4, y + p * 5, p * 3, p);
-  } else if (tile === 7) {
-    // 栅栏
+  });
+
+  registerTileRenderer("wood_floor", (ctx, x, y) => {
+    // 无额外细节
+  });
+
+  registerTileRenderer("fence", (ctx, x, y) => {
     ctx.fillStyle = "#7a6b4e";
     ctx.fillRect(x + p * 1, y + p * 1, p * 2, p * 6);
     ctx.fillRect(x + p * 5, y + p * 1, p * 2, p * 6);
-    ctx.fillRect(x + p * 0, y + p * 2, s, p);
-    ctx.fillRect(x + p * 0, y + p * 5, s, p);
-  } else if (tile === 8) {
-    // 石头
+    ctx.fillRect(x + p * 0, y + p * 2, TILE_SIZE, p);
+    ctx.fillRect(x + p * 0, y + p * 5, TILE_SIZE, p);
+  });
+
+  registerTileRenderer("stone", (ctx, x, y) => {
     ctx.fillStyle = "#666";
     ctx.fillRect(x + p * 2, y + p * 2, p * 4, p * 4);
     ctx.fillStyle = "#aaa";
     ctx.fillRect(x + p * 3, y + p * 2, p * 2, p);
-  } else if (tile === 9) {
-    // 杂货铺地板 - 木纹
+  });
+
+  registerTileRenderer("wood_floor2", (ctx, x, y) => {
     ctx.fillStyle = "#7a6a4a";
-    ctx.fillRect(x + p * 0, y + p * 3, s, p);
-    ctx.fillRect(x + p * 0, y + p * 7, s, p);
-  }
+    ctx.fillRect(x + p * 0, y + p * 3, TILE_SIZE, p);
+    ctx.fillRect(x + p * 0, y + p * 7, TILE_SIZE, p);
+  });
+
+  registerTileRenderer("stone_road", (ctx, x, y) => {
+    ctx.fillStyle = "#8a8a7a";
+    ctx.fillRect(x + p * 0, y + p * 4, TILE_SIZE, p);
+    ctx.fillRect(x + p * 4, y + p * 0, p, TILE_SIZE);
+  });
+
+  registerTileRenderer("sand", (ctx, x, y) => {
+    ctx.fillStyle = "#c4a85a";
+    const seed = (x * 11 + y * 7) % 100;
+    if (seed < 20) ctx.fillRect(x + p * 2, y + p * 5, p, p);
+    if (seed < 40) ctx.fillRect(x + p * 6, y + p * 2, p, p);
+  });
+
+  registerTileRenderer("snow", (ctx, x, y) => {
+    ctx.fillStyle = "#fff";
+    const seed = (x * 13 + y * 11) % 100;
+    if (seed < 30) ctx.fillRect(x + p * 3, y + p * 4, p, p);
+    if (seed < 50) ctx.fillRect(x + p * 6, y + p * 1, p, p);
+  });
+
+  registerTileRenderer("cave_wall", (ctx, x, y) => {
+    ctx.fillStyle = "#4a4a4a";
+    ctx.fillRect(x + p * 1, y + p * 2, p * 3, p * 2);
+    ctx.fillRect(x + p * 5, y + p * 5, p * 2, p * 2);
+  });
+
+  registerTileRenderer("cave_floor", (ctx, x, y) => {
+    ctx.fillStyle = "#5a5a4a";
+    const seed = (x * 9 + y * 13) % 100;
+    if (seed < 15) ctx.fillRect(x + p * 3, y + p * 3, p, p);
+  });
 }
 
-function isWalkable(col, row) {
-  if (col < 0 || col >= MAP_COLS || row < 0 || row >= MAP_ROWS) return false;
-  return !collisionMap[row][col];
+// 初始化地图系统
+async function initMapSystem() {
+  initTileRenderers();
+  await loadTileConfig();
 }

@@ -6,25 +6,29 @@ let activeNpcId = null; // 当前正在对话的 NPC
 let interactNpcId = null; // 当前交互选项对应的 NPC
 let npcInteractOpen = false;
 
-// NPC 默认位置（在地图上的瓦片坐标）
-const npcPositions = {
-  blacksmith: { col: 4, row: 5 },
-  merchant:   { col: 18, row: 5 },
-};
-
 function initNpcs(npcList) {
-  npcs = npcList.map(cfg => ({
-    npc_id: cfg.npc_id,
-    name: cfg.name,
-    role: cfg.role,
-    greeting: cfg.greeting,
-    x: (npcPositions[cfg.npc_id]?.col || 4) * TILE_SIZE,
-    y: (npcPositions[cfg.npc_id]?.row || 5) * TILE_SIZE,
-    mood: "平静",
-    affinity: 50,
-    interactRange: 2,
-    showPrompt: false,
-  }));
+  // 从当前地图配置获取 NPC 位置
+  const mapNpcs = currentMap?.npcs || [];
+  const npcPositionMap = {};
+  for (const mn of mapNpcs) {
+    npcPositionMap[mn.npc_id] = { x: mn.x, y: mn.y };
+  }
+
+  npcs = npcList.map(cfg => {
+    const pos = npcPositionMap[cfg.npc_id] || { x: 4, y: 5 };
+    return {
+      npc_id: cfg.npc_id,
+      name: cfg.name,
+      role: cfg.role,
+      greeting: cfg.greeting,
+      x: pos.x * TILE_SIZE,
+      y: pos.y * TILE_SIZE,
+      mood: "平静",
+      affinity: 50,
+      interactRange: 2,
+      showPrompt: false,
+    };
+  });
 }
 
 function isPlayerNearNpc(npc) {
@@ -134,12 +138,19 @@ function drawAllNpcs(ctx) {
   }
 }
 
-// E 键交互：找最近的 NPC，弹出选项面板
+// E 键交互：找最近的 NPC 或物件
 document.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen) {
+    // 优先检查 NPC
     const nearest = getNearestNpc();
     if (nearest) {
       openNpcInteract(nearest);
+      return;
+    }
+    // 其次检查地图物件
+    const nearObj = getNearbyInteractableObject();
+    if (nearObj) {
+      interactWithObject(nearObj);
     }
   }
   
@@ -210,4 +221,55 @@ async function fetchNPCStatus(npcId) {
   } catch (e) {
     console.error("获取 NPC 状态失败:", e);
   }
+}
+
+// 与地图物件交互
+async function interactWithObject(obj) {
+  if (!currentMap) return;
+
+  try {
+    const resp = await fetch("/api/map/object/interact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        map_id: currentMap.id,
+        object_id: obj.id,
+        action: "interact",
+      }),
+    });
+    const data = await resp.json();
+    if (resp.ok && data.success) {
+      // 更新物件状态
+      if (data.type === "chest") {
+        obj.state = { opened: true };
+        // 更新地图物件列表中的状态
+        const mapObj = mapObjects.find(o => o.id === obj.id);
+        if (mapObj) mapObj.state = { opened: true };
+      }
+      // 显示交互结果
+      if (data.message) {
+        showInteractMessage(data.message);
+      }
+      // 如果获得物品，刷新背包
+      if (data.items) {
+        fetchInventory();
+      }
+    }
+  } catch (e) {
+    console.error("物件交互失败:", e);
+  }
+}
+
+// 显示交互消息
+function showInteractMessage(message) {
+  // 创建临时消息元素
+  const msgEl = document.createElement("div");
+  msgEl.className = "interact-message";
+  msgEl.textContent = message;
+  document.getElementById("game-container").appendChild(msgEl);
+
+  // 2 秒后移除
+  setTimeout(() => {
+    msgEl.remove();
+  }, 2000);
 }

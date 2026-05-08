@@ -389,6 +389,117 @@ async def save_position(req: PositionRequest):
     return {"success": True}
 
 
+# ===== 地图系统接口 =====
+
+MAPS_DIR = ROOT_DIR / "config" / "maps"
+TILES_FILE = ROOT_DIR / "config" / "tiles.json"
+
+
+class TransferRequest(BaseModel):
+    target_map: str
+    target_x: int
+    target_y: int
+
+
+class ObjectInteractRequest(BaseModel):
+    map_id: str
+    object_id: str
+    action: str = "interact"
+
+
+@app.get("/api/map/tiles")
+async def get_tiles():
+    """获取瓦片类型定义。"""
+    if not TILES_FILE.exists():
+        raise HTTPException(status_code=404, detail="瓦片配置文件不存在")
+    with open(TILES_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+@app.get("/api/map/{map_id}")
+async def get_map(map_id: str):
+    """获取地图数据。"""
+    map_file = MAPS_DIR / f"{map_id}.json"
+    if not map_file.exists():
+        raise HTTPException(status_code=404, detail=f"地图 '{map_id}' 不存在")
+    with open(map_file, "r", encoding="utf-8") as f:
+        map_data = json.load(f)
+    # 合并存档中的物件状态
+    map_states = player_profile.map_states.get(map_id, {})
+    object_states = map_states.get("objects", {})
+    for obj in map_data.get("objects", []):
+        if obj["id"] in object_states:
+            obj["state"] = object_states[obj["id"]]
+    return map_data
+
+
+@app.post("/api/map/transfer")
+async def transfer_map(req: TransferRequest):
+    """地图切换（传送门）。"""
+    map_file = MAPS_DIR / f"{req.target_map}.json"
+    if not map_file.exists():
+        raise HTTPException(status_code=404, detail=f"目标地图 '{req.target_map}' 不存在")
+    # 保存当前地图状态
+    player_profile.set_position(req.target_x, req.target_y)
+    player_profile.current_map = req.target_map
+    player_profile._save()
+    # 返回目标地图数据
+    with open(map_file, "r", encoding="utf-8") as f:
+        map_data = json.load(f)
+    return {"success": True, "map_data": map_data, "player_info": player_profile.get_info()}
+
+
+@app.post("/api/map/object/interact")
+async def interact_object(req: ObjectInteractRequest):
+    """与地图物件交互。"""
+    map_file = MAPS_DIR / f"{req.map_id}.json"
+    if not map_file.exists():
+        raise HTTPException(status_code=404, detail=f"地图 '{req.map_id}' 不存在")
+    with open(map_file, "r", encoding="utf-8") as f:
+        map_data = json.load(f)
+    # 查找物件
+    target_obj = None
+    for obj in map_data.get("objects", []):
+        if obj["id"] == req.object_id:
+            target_obj = obj
+            break
+    if not target_obj:
+        raise HTTPException(status_code=404, detail=f"物件 '{req.object_id}' 不存在")
+    # 根据物件类型处理
+    obj_type = target_obj.get("type")
+    props = target_obj.get("properties", {})
+    result = {"success": True, "type": obj_type}
+    if obj_type == "chest":
+        if target_obj.get("state", {}).get("opened"):
+            result["message"] = "这个宝箱已经打开了。"
+        else:
+            items = props.get("items", [])
+            for item in items:
+                player_profile.add_item(item["item_id"], item["quantity"])
+            # 更新物件状态
+            if req.map_id not in player_profile.map_states:
+                player_profile.map_states[req.map_id] = {"objects": {}}
+            player_profile.map_states[req.map_id]["objects"][req.object_id] = {"opened": True}
+            player_profile._save()
+            result["message"] = f"获得物品！"
+            result["items"] = items
+    elif obj_type == "gather":
+        item_id = props.get("item_id")
+        if item_id:
+            player_profile.add_item(item_id, 1)
+            if req.map_id not in player_profile.map_states:
+                player_profile.map_states[req.map_id] = {"objects": {}}
+            import time
+            player_profile.map_states[req.map_id]["objects"][req.object_id] = {"last_gathered": int(time.time())}
+            player_profile._save()
+            result["message"] = f"采集了 1 个物品。"
+    elif obj_type == "decoration":
+        result["message"] = props.get("interact_text", "")
+    else:
+        result["message"] = "无法交互。"
+    return result
+
+
 # 挂载静态文件（放在路由之后）
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 

@@ -47,6 +47,8 @@ class PlayerProfile:
         self.inventory = []
         self.player_x = 9  # 默认位置（瓦片坐标）
         self.player_y = 9
+        self.current_map = "village"  # 当前所在地图
+        self.map_states = {}  # 各地图物件状态
 
     def _save(self):
         if self.current_slot is None:
@@ -68,6 +70,8 @@ class PlayerProfile:
             "inventory": self.inventory,
             "player_x": self.player_x,
             "player_y": self.player_y,
+            "current_map": self.current_map,
+            "map_states": self.map_states,
             "save_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
         with open(save_path(self.current_slot), "w", encoding="utf-8") as f:
@@ -96,6 +100,8 @@ class PlayerProfile:
             self.inventory = data.get("inventory", [])
             self.player_x = data.get("player_x", 9)
             self.player_y = data.get("player_y", 9)
+            self.current_map = data.get("current_map", "village")
+            self.map_states = data.get("map_states", {})
             return True
         except (json.JSONDecodeError, KeyError):
             return False
@@ -232,6 +238,8 @@ class PlayerProfile:
             "gold": self.gold,
             "player_x": self.player_x,
             "player_y": self.player_y,
+            "current_map": self.current_map,
+            "map_states": self.map_states,
         }
 
     def set_position(self, x: int, y: int):

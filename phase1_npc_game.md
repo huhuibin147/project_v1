@@ -59,7 +59,7 @@ project_v1/
 
 ```bash
 cd backend
-python main.py
+python3.11 main.py
 ```
 
 程序会提示：
@@ -110,12 +110,14 @@ pip install -r requirements.txt
 ### 3. 启动服务
 
 ```bash
-python main.py
+python3.11 main.py
 ```
 
-首次运行会自动生成 `config.json` 并提示填写，填好后再次执行 `python main.py` 即可启动。
+首次运行会自动生成 `config.json` 并提示填写，填好后再次执行 `python3.11 main.py` 即可启动。
 
 服务启动后访问 `http://localhost:8000`。
+
+按 `Ctrl + C` 停止服务。
 
 ### 4. 游戏操作
 
@@ -452,6 +454,63 @@ NPC 对话接口（支持交易意图自动执行）。
 ```
 
 ### GET /api/npc/config?npc_id=xxx
+
+获取 NPC 配置信息。
+
+### GET /api/map/tiles
+
+获取瓦片类型定义。
+
+**响应**：
+```json
+{"0": {"name": "草地", "color": "#4a8c3f", "walkable": true, "detail": "grass"}, ...}
+```
+
+### GET /api/map/{map_id}
+
+获取地图数据（含物件状态）。
+
+**响应**：
+```json
+{
+  "id": "village",
+  "name": "青石村",
+  "width": 25,
+  "height": 18,
+  "layers": {"ground": [[...], ...]},
+  "objects": [...],
+  "npcs": [...],
+  "player_spawn": {"x": 9, "y": 9}
+}
+```
+
+### POST /api/map/transfer
+
+地图切换（传送门）。
+
+**请求**：
+```json
+{"target_map": "forest", "target_x": 12, "target_y": 1}
+```
+
+**响应**：
+```json
+{"success": true, "map_data": {...}, "player_info": {...}}
+```
+
+### POST /api/map/object/interact
+
+与地图物件交互。
+
+**请求**：
+```json
+{"map_id": "village", "object_id": "chest_01", "action": "interact"}
+```
+
+**响应**：
+```json
+{"success": true, "type": "chest", "message": "获得物品！", "items": [...]}
+```
 
 获取 NPC 配置信息。
 
