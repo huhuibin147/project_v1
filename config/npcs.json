@@ -5,7 +5,6 @@
     "role": "铁匠",
     "location": "青石村铁匠铺",
     "map_id": "village",
-
     "personality": {
       "traits": "豪爽直率，说话带点江湖气",
       "pronoun": "俺",
@@ -13,53 +12,176 @@
       "likes": "冒险者、有胆识的人",
       "dislikes": "偷东西的人、胆小鬼"
     },
-
     "backstory": "在青石村经营铁匠铺已经 20 年，年轻时走南闯北，最后在这落了脚。打铁的手艺在方圆百里是最好的，对此很自豪。最近很担心村外出没的怪物，已经好几个村民受伤了。",
-
     "greeting": "哟！冒险者，来俺这铁匠铺看看？最近俺刚打了一批新货，包你满意！",
-
     "default_mood": "平静",
     "default_affinity": 50,
-
     "personality_params": {
       "friendliness": 0.8,
       "courage": 0.6,
       "greed": 0.3,
       "humor": 0.7
     },
-
     "intents": {
       "chat": "闲聊、打招呼、问NPC个人的事情",
       "quest": "玩家想接任务、问有没有需要帮忙的",
       "trade": "玩家想买卖武器装备",
       "unknown": "无法判断意图"
     },
-
     "shop": {
       "name": "老王铁匠铺",
       "gold": 500,
       "inventory": [
-        {"item_id": "iron_sword", "quantity": 3},
-        {"item_id": "steel_sword", "quantity": 1},
-        {"item_id": "iron_dagger", "quantity": 5},
-        {"item_id": "iron_shield", "quantity": 2},
-        {"item_id": "health_potion", "quantity": 10},
-        {"item_id": "antidote", "quantity": 8},
-        {"item_id": "torch", "quantity": 20},
-        {"item_id": "rope", "quantity": 15}
+        {
+          "item_id": "wood_sword",
+          "quantity": 2
+        },
+        {
+          "item_id": "stone_sword",
+          "quantity": 5
+        },
+        {
+          "item_id": "copper_sword",
+          "quantity": 3
+        },
+        {
+          "item_id": "iron_sword",
+          "quantity": 3
+        },
+        {
+          "item_id": "iron_dagger",
+          "quantity": 3
+        },
+        {
+          "item_id": "hunter_bow",
+          "quantity": 4
+        },
+        {
+          "item_id": "mage_staff",
+          "quantity": 2
+        },
+        {
+          "item_id": "iron_axe",
+          "quantity": 5
+        },
+        {
+          "item_id": "wood_shield",
+          "quantity": 5
+        },
+        {
+          "item_id": "iron_shield",
+          "quantity": 5
+        },
+        {
+          "item_id": "leather_hat",
+          "quantity": 5
+        },
+        {
+          "item_id": "iron_helmet",
+          "quantity": 2
+        },
+        {
+          "item_id": "cloth_robe",
+          "quantity": 5
+        },
+        {
+          "item_id": "leather_armor",
+          "quantity": 5
+        },
+        {
+          "item_id": "iron_armor",
+          "quantity": 3
+        },
+        {
+          "item_id": "steel_sword",
+          "quantity": 2
+        },
+        {
+          "item_id": "silver_dagger",
+          "quantity": 1
+        },
+        {
+          "item_id": "silver_bow",
+          "quantity": 1
+        },
+        {
+          "item_id": "alloy_staff",
+          "quantity": 1
+        },
+        {
+          "item_id": "steel_axe",
+          "quantity": 1
+        },
+        {
+          "item_id": "bronze_hammer",
+          "quantity": 2
+        },
+        {
+          "item_id": "steel_shield",
+          "quantity": 2
+        },
+        {
+          "item_id": "silver_round_shield",
+          "quantity": 2
+        },
+        {
+          "item_id": "hard_leather_hat",
+          "quantity": 2
+        },
+        {
+          "item_id": "silver_helmet",
+          "quantity": 2
+        },
+        {
+          "item_id": "bronze_crown",
+          "quantity": 2
+        },
+        {
+          "item_id": "hard_leather_garb",
+          "quantity": 1
+        },
+        {
+          "item_id": "silver_robe",
+          "quantity": 2
+        },
+        {
+          "item_id": "steel_armor",
+          "quantity": 1
+        },
+        {
+          "item_id": "health_potion",
+          "quantity": 10
+        },
+        {
+          "item_id": "antidote",
+          "quantity": 5
+        },
+        {
+          "item_id": "bandage",
+          "quantity": 15
+        },
+        {
+          "item_id": "torch",
+          "quantity": 11
+        },
+        {
+          "item_id": "rope",
+          "quantity": 18
+        },
+        {
+          "item_id": "iron_ore",
+          "quantity": 5
+        }
       ]
     },
-
     "default_gold": 200
   },
-
   "merchant": {
     "id": "merchant",
     "name": "杂货婆刘婶",
     "role": "日用品商人",
     "location": "青石村杂货铺",
     "map_id": "village",
-
     "personality": {
       "traits": "热情健谈，爱唠叨，精明但不刻薄",
       "pronoun": "我",
@@ -67,54 +189,92 @@
       "likes": "勤快的年轻人、会过日子的人",
       "dislikes": "好吃懒做的人、赊账不还的人"
     },
-
     "backstory": "刘婶在青石村开杂货铺十几年了，卖些日用百货、吃食草药。她消息灵通，村里大大小小的事都知道。丈夫早年进山采药再也没回来，她一个人把铺子撑起来，村里人都敬重她。",
-
     "greeting": "哟，小伙子来啦！看看我这铺子，吃的用的都有，价格公道！",
-
     "default_mood": "热情",
     "default_affinity": 55,
-
     "personality_params": {
       "friendliness": 0.9,
       "courage": 0.4,
       "greed": 0.4,
       "humor": 0.6
     },
-
     "intents": {
       "chat": "闲聊、打听消息、问村里的事",
       "quest": "帮刘婶跑腿、找东西、传话",
       "trade": "买日用品、卖山货草药",
       "unknown": "无法判断意图"
     },
-
     "shop": {
       "name": "刘婶杂货铺",
       "gold": 300,
       "inventory": [
-        {"item_id": "bread", "quantity": 30},
-        {"item_id": "dried_meat", "quantity": 15},
-        {"item_id": "wine", "quantity": 10},
-        {"item_id": "cloth", "quantity": 20},
-        {"item_id": "bandage", "quantity": 25},
-        {"item_id": "health_potion", "quantity": 5},
-        {"item_id": "candle", "quantity": 30},
-        {"item_id": "rope", "quantity": 10},
-        {"item_id": "torch", "quantity": 15}
+        {
+          "item_id": "cloth_robe",
+          "quantity": 3
+        },
+        {
+          "item_id": "leather_armor",
+          "quantity": 3
+        },
+        {
+          "item_id": "iron_armor",
+          "quantity": 1
+        },
+        {
+          "item_id": "health_potion",
+          "quantity": 19
+        },
+        {
+          "item_id": "bandage",
+          "quantity": 23
+        },
+        {
+          "item_id": "candle",
+          "quantity": 14
+        },
+        {
+          "item_id": "rope",
+          "quantity": 23
+        },
+        {
+          "item_id": "torch",
+          "quantity": 22
+        },
+        {
+          "item_id": "cloth",
+          "quantity": 12
+        },
+        {
+          "item_id": "bread",
+          "quantity": 20
+        },
+        {
+          "item_id": "dried_meat",
+          "quantity": 15
+        },
+        {
+          "item_id": "wine",
+          "quantity": 26
+        },
+        {
+          "item_id": "jam",
+          "quantity": 27
+        },
+        {
+          "item_id": "honey",
+          "quantity": 28
+        }
       ]
     },
-
     "default_gold": 200
   },
-
   "herbalist": {
     "id": "herbalist",
     "name": "采药人老林",
     "role": "采药人",
     "location": "幽暗森林",
     "map_id": "forest",
-
     "personality": {
       "traits": "沉默寡言，神秘莫测，对森林了如指掌",
       "pronoun": "我",
@@ -122,41 +282,112 @@
       "likes": "安静的人、尊重自然的人",
       "dislikes": "吵闹的人、破坏森林的人"
     },
-
     "backstory": "老林在幽暗森林深处生活了十几年，据说他曾是京城的名医，因一场变故隐居于此。他熟悉森林中每一种草药，也知晓森林深处的秘密。村民们很少见到他，只有偶尔深入森林的冒险者才有幸遇见。",
-
     "greeting": "……你来了。森林不欢迎喧闹的人，但如果你需要草药，我可以帮忙。",
-
     "default_mood": "平静",
     "default_affinity": 40,
-
     "personality_params": {
       "friendliness": 0.5,
       "courage": 0.8,
       "greed": 0.2,
       "humor": 0.3
     },
-
     "intents": {
       "chat": "闲聊、询问森林的事、打听情报",
       "quest": "委托玩家收集稀有草药、探索森林深处",
       "trade": "买卖草药、药材、特殊材料",
       "unknown": "无法判断意图"
     },
-
     "shop": {
       "name": "老林草药铺",
       "gold": 150,
       "inventory": [
-        {"item_id": "herb", "quantity": 20},
-        {"item_id": "health_potion", "quantity": 8},
-        {"item_id": "antidote", "quantity": 12},
-        {"item_id": "bandage", "quantity": 15},
-        {"item_id": "candle", "quantity": 10},
-        {"item_id": "torch", "quantity": 8}
+        {
+          "item_id": "leather_hat",
+          "quantity": 1
+        },
+        {
+          "item_id": "iron_helmet",
+          "quantity": 1
+        },
+        {
+          "item_id": "cloth_robe",
+          "quantity": 2
+        },
+        {
+          "item_id": "leather_armor",
+          "quantity": 2
+        },
+        {
+          "item_id": "iron_armor",
+          "quantity": 1
+        },
+        {
+          "item_id": "ring_of_power",
+          "quantity": 1
+        },
+        {
+          "item_id": "necklace_of_life",
+          "quantity": 1
+        },
+        {
+          "item_id": "charm_of_wind",
+          "quantity": 2
+        },
+        {
+          "item_id": "health_potion",
+          "quantity": 17
+        },
+        {
+          "item_id": "antidote",
+          "quantity": 19
+        },
+        {
+          "item_id": "bandage",
+          "quantity": 14
+        },
+        {
+          "item_id": "greater_health_potion",
+          "quantity": 17
+        },
+        {
+          "item_id": "purify_potion",
+          "quantity": 15
+        },
+        {
+          "item_id": "mana_potion",
+          "quantity": 14
+        },
+        {
+          "item_id": "candle",
+          "quantity": 6
+        },
+        {
+          "item_id": "torch",
+          "quantity": 15
+        },
+        {
+          "item_id": "herb",
+          "quantity": 17
+        },
+        {
+          "item_id": "mushroom",
+          "quantity": 12
+        },
+        {
+          "item_id": "magic_crystal",
+          "quantity": 22
+        },
+        {
+          "item_id": "mushroom",
+          "quantity": 12
+        },
+        {
+          "item_id": "honey",
+          "quantity": 9
+        }
       ]
     },
-
     "default_gold": 100
   }
 }

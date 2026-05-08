@@ -124,6 +124,7 @@
         <button class="panel-close" onclick="closeInventory()">×</button>
       </div>
       <div id="inventory-items" class="items-grid"></div>
+      <div id="inventory-pagination" class="pagination-bar" style="display:none"></div>
     </div>
 
     <!-- NPC 交互选项面板 -->
@@ -150,6 +151,7 @@
       </div>
       <div id="trade-message" class="trade-message" style="display:none"></div>
       <div id="shop-items" class="items-grid"></div>
+      <div id="shop-pagination" class="pagination-bar" style="display:none"></div>
     </div>
 
     <!-- 玩家信息面板 -->
@@ -166,6 +168,42 @@
             <div class="pi-class" id="pi-class">战士</div>
           </div>
           <div class="pi-level-badge">Lv.<span id="pi-level">1</span></div>
+        </div>
+
+        <div class="pi-section">
+          <div class="pi-section-title">装备</div>
+          <div class="equip-grid" id="equip-grid">
+            <div class="equip-slot" data-slot="weapon">
+              <div class="equip-slot-label">武器</div>
+              <div class="equip-slot-item" id="equip-weapon">-</div>
+              <div class="equip-slot-stats" id="equip-weapon-stats"></div>
+              <button class="btn-unequip" id="btn-unequip-weapon" style="display:none" onclick="doUnequip('weapon')">卸下</button>
+            </div>
+            <div class="equip-slot" data-slot="shield">
+              <div class="equip-slot-label">盾牌</div>
+              <div class="equip-slot-item" id="equip-shield">-</div>
+              <div class="equip-slot-stats" id="equip-shield-stats"></div>
+              <button class="btn-unequip" id="btn-unequip-shield" style="display:none" onclick="doUnequip('shield')">卸下</button>
+            </div>
+            <div class="equip-slot" data-slot="head">
+              <div class="equip-slot-label">头部</div>
+              <div class="equip-slot-item" id="equip-head">-</div>
+              <div class="equip-slot-stats" id="equip-head-stats"></div>
+              <button class="btn-unequip" id="btn-unequip-head" style="display:none" onclick="doUnequip('head')">卸下</button>
+            </div>
+            <div class="equip-slot" data-slot="body">
+              <div class="equip-slot-label">身体</div>
+              <div class="equip-slot-item" id="equip-body">-</div>
+              <div class="equip-slot-stats" id="equip-body-stats"></div>
+              <button class="btn-unequip" id="btn-unequip-body" style="display:none" onclick="doUnequip('body')">卸下</button>
+            </div>
+            <div class="equip-slot" data-slot="accessory">
+              <div class="equip-slot-label">饰品</div>
+              <div class="equip-slot-item" id="equip-accessory">-</div>
+              <div class="equip-slot-stats" id="equip-accessory-stats"></div>
+              <button class="btn-unequip" id="btn-unequip-accessory" style="display:none" onclick="doUnequip('accessory')">卸下</button>
+            </div>
+          </div>
         </div>
 
         <div class="pi-section">
@@ -190,14 +228,17 @@
             <div class="pi-stat">
               <span class="pi-stat-label">攻击</span>
               <span class="pi-stat-value" id="pi-attack">15</span>
+              <span class="pi-stat-bonus" id="pi-attack-bonus"></span>
             </div>
             <div class="pi-stat">
               <span class="pi-stat-label">防御</span>
               <span class="pi-stat-value" id="pi-defense">12</span>
+              <span class="pi-stat-bonus" id="pi-defense-bonus"></span>
             </div>
             <div class="pi-stat">
               <span class="pi-stat-label">速度</span>
               <span class="pi-stat-value" id="pi-speed">8</span>
+              <span class="pi-stat-bonus" id="pi-speed-bonus"></span>
             </div>
           </div>
         </div>

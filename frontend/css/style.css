@@ -332,7 +332,7 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 480px;
-  max-height: 420px;
+  max-height: 80vh;
   background: rgba(20, 20, 40, 0.95);
   border: 2px solid #f0c060;
   border-radius: 6px;
@@ -392,6 +392,44 @@ body {
 
 .items-grid::-webkit-scrollbar {
   width: 6px;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(240, 192, 96, 0.2);
+  background: rgba(240, 192, 96, 0.08);
+  flex-shrink: 0;
+}
+
+.pagination-bar .page-info {
+  color: #aaa;
+  font-size: 12px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.pagination-bar button {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #ddd;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pagination-bar button:hover:not(:disabled) {
+  background: rgba(240, 192, 96, 0.3);
+  color: #f0c060;
+}
+
+.pagination-bar button:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 .items-grid::-webkit-scrollbar-thumb {
@@ -585,7 +623,9 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 340px;
+  width: 380px;
+  max-height: 85vh;
+  overflow-y: auto;
   background: rgba(20, 20, 40, 0.95);
   border: 2px solid #6bafff;
   border-radius: 6px;
@@ -749,6 +789,110 @@ body {
 .no-effects {
   color: #555;
   font-size: 12px;
+}
+
+.equip-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.equip-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(107, 175, 255, 0.15);
+  border-radius: 4px;
+  padding: 6px 10px;
+  min-height: 32px;
+}
+
+.equip-slot:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.equip-slot-label {
+  width: 36px;
+  font-size: 11px;
+  color: #6bafff;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.equip-slot-item {
+  flex: 1;
+  font-size: 13px;
+  color: #888;
+  font-weight: bold;
+}
+
+.equip-slot-item.equipped {
+  color: #f0c060;
+}
+
+.equip-slot-stats {
+  font-size: 11px;
+  color: #66BB6A;
+  flex-shrink: 0;
+}
+
+.equip-slot-stats .stat-neg {
+  color: #EF5350;
+}
+
+.btn-unequip {
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  color: #EF5350;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.btn-unequip:hover {
+  background: rgba(244, 67, 54, 0.3);
+  border-color: #EF5350;
+}
+
+.pi-stat-bonus {
+  font-size: 11px;
+  color: #66BB6A;
+  margin-left: 2px;
+}
+
+.pi-stat-bonus.neg {
+  color: #EF5350;
+}
+
+.btn-equip {
+  background: rgba(107, 175, 255, 0.2);
+  border: 1px solid rgba(107, 175, 255, 0.5);
+  color: #6bafff;
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-equip:hover {
+  background: rgba(107, 175, 255, 0.35);
+  border-color: #6bafff;
+}
+
+.item-stats-line {
+  font-size: 11px;
+  color: #66BB6A;
+  margin-bottom: 4px;
+}
+
+.item-stats-line .stat-neg {
+  color: #EF5350;
 }
 
 /* ===== 开始界面（独立全屏） ===== */
@@ -1135,7 +1279,7 @@ body {
   font-size: 14px;
   font-weight: bold;
   z-index: 200;
-  animation: fadeInOut 2s ease-in-out;
+  animation: fadeInOut 1s ease-in-out;
 }
 
 @keyframes fadeInOut {

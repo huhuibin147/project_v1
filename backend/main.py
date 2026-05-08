@@ -150,6 +150,14 @@ class LoadSaveRequest(BaseModel):
     slot: int
 
 
+class EquipRequest(BaseModel):
+    item_id: str
+
+
+class UnequipRequest(BaseModel):
+    slot: str
+
+
 class PositionRequest(BaseModel):
     x: int
     y: int
@@ -317,9 +325,37 @@ async def update_player(req: PlayerUpdateRequest):
 
 @app.post("/api/player/heal")
 async def heal_player(amount: int = 999):
-    """回复生命值。"""
     player_profile.heal(amount)
     return player_profile.get_info()
+
+
+# ===== 装备系统接口 =====
+
+@app.get("/api/equipment")
+async def get_equipment():
+    return player_profile.get_equipment_info()
+
+
+@app.post("/api/equip")
+async def equip_item(req: EquipRequest):
+    result = player_profile.equip_item(req.item_id)
+    if not result["success"]:
+        return result
+    return {
+        **result,
+        "player_gold": player_profile.gold,
+    }
+
+
+@app.post("/api/unequip")
+async def unequip_slot(req: UnequipRequest):
+    result = player_profile.unequip_slot(req.slot)
+    if not result["success"]:
+        return result
+    return {
+        **result,
+        "player_gold": player_profile.gold,
+    }
 
 
 # ===== 存档管理接口 =====

@@ -1,8 +1,10 @@
-// 物品系统：背包、商店、交易 UI（支持多 NPC）
-
 let inventoryOpen = false;
 let shopOpen = false;
-let shopNpcId = null; // 当前商店所属 NPC
+let shopNpcId = null;
+
+const ITEMS_PER_PAGE = 8;
+const inventoryPage = { current: 1 };
+const shopPage = { current: 1 };
 
 const inventoryState = {
   items: [],
@@ -15,7 +17,24 @@ const shopState = {
   gold: 0,
 };
 
-// ===== 数据获取 =====
+const STAT_LABELS_INV = {
+  attack: "攻",
+  defense: "防",
+  speed: "速",
+  max_hp: "HP",
+};
+
+function formatItemStats(stats) {
+  if (!stats) return "";
+  const parts = [];
+  for (const [key, val] of Object.entries(stats)) {
+    if (val === 0) continue;
+    const label = STAT_LABELS_INV[key] || key;
+    const cls = val < 0 ? "stat-neg" : "";
+    parts.push(`<span class="${cls}">${label}${val > 0 ? "+" : ""}${val}</span>`);
+  }
+  return parts.join(" ");
+}
 
 async function fetchInventory() {
   try {
@@ -41,11 +60,10 @@ async function fetchShop(npcId) {
   }
 }
 
-// ===== 背包面板 =====
-
 function openInventory() {
   if (dialogueOpen || gameMenuOpen) return;
   inventoryOpen = true;
+  inventoryPage.current = 1;
   fetchInventory().then(() => renderInventory());
   document.getElementById("inventory-panel").classList.add("active");
 }
@@ -61,32 +79,80 @@ function renderInventory() {
 
   if (inventoryState.items.length === 0) {
     container.innerHTML = '<div class="empty-hint">背包空空如也...</div>';
+    renderPagination("inventory-pagination", 0, inventoryPage);
     return;
   }
 
-  for (const item of inventoryState.items) {
+  const total = inventoryState.items.length;
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  if (inventoryPage.current > totalPages) inventoryPage.current = totalPages;
+  const start = (inventoryPage.current - 1) * ITEMS_PER_PAGE;
+  const pageItems = inventoryState.items.slice(start, start + ITEMS_PER_PAGE);
+
+  for (const item of pageItems) {
     const div = document.createElement("div");
     div.className = `item-card ${item.type}`;
+
+    const canEquip = item.equip_slot && item.stats;
+    const isEquipped = isItemEquipped(item.item_id);
+
+    let statsHtml = "";
+    if (canEquip && item.stats) {
+      statsHtml = `<div class="item-stats-line">${formatItemStats(item.stats)}</div>`;
+    }
+
+    let equipBtnHtml = "";
+    if (canEquip && !isEquipped) {
+      equipBtnHtml = `<button class="btn-equip" onclick="doEquip('${item.item_id}')">装备</button>`;
+    } else if (isEquipped) {
+      equipBtnHtml = `<span style="color:#6bafff;font-size:11px;font-weight:bold;">已装备</span>`;
+    }
+
     div.innerHTML = `
       <div class="item-header">
         <span class="item-name">${item.name}</span>
         <span class="item-qty">x${item.quantity}</span>
       </div>
-      <div class="item-type">${getTypeLabel(item.type)}</div>
+      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}</div>
+      ${statsHtml}
       <div class="item-desc">${item.description}</div>
-      <div class="item-price">出售价: ${item.sell_price} 金</div>
+      <div class="item-actions">
+        <span class="item-price">出售价: ${item.sell_price} 金</span>
+        ${equipBtnHtml}
+      </div>
     `;
     container.appendChild(div);
   }
 
   document.getElementById("inventory-gold").textContent = inventoryState.gold;
+  renderPagination("inventory-pagination", totalPages, inventoryPage);
 }
 
-// ===== 商店面板 =====
+function isItemEquipped(itemId) {
+  const equipment = playerInfo.equipment || {};
+  for (const slot of ["weapon", "shield", "head", "body", "accessory"]) {
+    if (equipment[slot] && equipment[slot].item_id === itemId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getSlotLabel(slot) {
+  const labels = {
+    weapon: "武器槽",
+    shield: "盾牌槽",
+    head: "头部槽",
+    body: "身体槽",
+    accessory: "饰品槽",
+  };
+  return labels[slot] || slot;
+}
 
 function openShop(npcId) {
   shopOpen = true;
   shopNpcId = npcId || activeNpcId || "blacksmith";
+  shopPage.current = 1;
   fetchShop(shopNpcId).then(() => {
     fetchInventory().then(() => renderShop());
   });
@@ -109,11 +175,25 @@ function renderShop() {
 
   if (shopState.items.length === 0) {
     container.innerHTML = '<div class="empty-hint">商店暂无货物</div>';
+    renderPagination("shop-pagination", 0, shopPage);
     return;
   }
 
-  for (const item of shopState.items) {
+  const total = shopState.items.length;
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  if (shopPage.current > totalPages) shopPage.current = totalPages;
+  const start = (shopPage.current - 1) * ITEMS_PER_PAGE;
+  const pageItems = shopState.items.slice(start, start + ITEMS_PER_PAGE);
+
+  for (const item of pageItems) {
     const playerQty = getPlayerItemQty(item.item_id);
+    const canEquip = item.equip_slot && item.stats;
+
+    let statsHtml = "";
+    if (canEquip && item.stats) {
+      statsHtml = `<div class="item-stats-line">${formatItemStats(item.stats)}</div>`;
+    }
+
     const div = document.createElement("div");
     div.className = `item-card shop-item ${item.type}`;
     div.innerHTML = `
@@ -121,7 +201,8 @@ function renderShop() {
         <span class="item-name">${item.name}</span>
         <span class="item-qty">库存: ${item.quantity}</span>
       </div>
-      <div class="item-type">${getTypeLabel(item.type)}</div>
+      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}</div>
+      ${statsHtml}
       <div class="item-desc">${item.description}</div>
       <div class="item-actions">
         <span class="item-price">售价: ${item.buy_price} 金</span>
@@ -131,14 +212,14 @@ function renderShop() {
     `;
     container.appendChild(div);
   }
+
+  renderPagination("shop-pagination", totalPages, shopPage);
 }
 
 function getPlayerItemQty(itemId) {
   const item = inventoryState.items.find(i => i.item_id === itemId);
   return item ? item.quantity : 0;
 }
-
-// ===== 交易 =====
 
 async function doTrade(action, itemId, quantity = 1) {
   if (!shopNpcId) return;
@@ -174,7 +255,38 @@ function showTradeMessage(msg, success) {
   setTimeout(() => { el.style.display = "none"; }, 2500);
 }
 
-// ===== 工具函数 =====
+function renderPagination(containerId, totalPages, pageState) {
+  const bar = document.getElementById(containerId);
+  if (totalPages <= 1) {
+    bar.style.display = "none";
+    return;
+  }
+  bar.style.display = "flex";
+  bar.innerHTML = "";
+
+  const btnPrev = document.createElement("button");
+  btnPrev.textContent = "◀ 上一页";
+  btnPrev.disabled = pageState.current <= 1;
+  btnPrev.onclick = () => { pageState.current--; rerenderByContainer(containerId); };
+
+  const info = document.createElement("span");
+  info.className = "page-info";
+  info.textContent = `${pageState.current} / ${totalPages}`;
+
+  const btnNext = document.createElement("button");
+  btnNext.textContent = "下一页 ▶";
+  btnNext.disabled = pageState.current >= totalPages;
+  btnNext.onclick = () => { pageState.current++; rerenderByContainer(containerId); };
+
+  bar.appendChild(btnPrev);
+  bar.appendChild(info);
+  bar.appendChild(btnNext);
+}
+
+function rerenderByContainer(containerId) {
+  if (containerId === "inventory-pagination") renderInventory();
+  else if (containerId === "shop-pagination") renderShop();
+}
 
 function getTypeLabel(type) {
   const labels = {
@@ -184,6 +296,7 @@ function getTypeLabel(type) {
     food: "食物",
     tool: "工具",
     material: "材料",
+    accessory: "饰品",
   };
   return labels[type] || type;
 }
@@ -192,8 +305,6 @@ function updateGoldDisplay() {
   const el = document.getElementById("hud-gold");
   if (el) el.textContent = inventoryState.gold;
 }
-
-// ===== 事件绑定 =====
 
 document.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "i" && !dialogueOpen && !gameMenuOpen) {

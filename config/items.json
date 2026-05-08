@@ -6,7 +6,14 @@
     "description": "一把坚固的铁剑，适合初级冒险者。",
     "buy_price": 80,
     "sell_price": 40,
-    "stackable": false
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 8,
+      "defense": 0,
+      "speed": 0,
+      "max_hp": 0
+    }
   },
   "steel_sword": {
     "id": "steel_sword",
@@ -15,7 +22,14 @@
     "description": "用精钢打造的利剑，锋利无比。",
     "buy_price": 200,
     "sell_price": 100,
-    "stackable": false
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 15,
+      "defense": 0,
+      "speed": 0,
+      "max_hp": 0
+    }
   },
   "iron_dagger": {
     "id": "iron_dagger",
@@ -24,7 +38,46 @@
     "description": "轻便的匕首，适合快速攻击。",
     "buy_price": 50,
     "sell_price": 25,
-    "stackable": false
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 5,
+      "defense": 0,
+      "speed": 3,
+      "max_hp": 0
+    }
+  },
+  "mage_staff": {
+    "id": "mage_staff",
+    "name": "法师杖",
+    "type": "weapon",
+    "description": "蕴含魔力的法杖，适合施法者。",
+    "buy_price": 150,
+    "sell_price": 75,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 10,
+      "defense": 0,
+      "speed": 2,
+      "max_hp": 0
+    }
+  },
+  "hunter_bow": {
+    "id": "hunter_bow",
+    "name": "猎人弓",
+    "type": "weapon",
+    "description": "灵活的猎弓，攻速快射程远。",
+    "buy_price": 120,
+    "sell_price": 60,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 7,
+      "defense": 0,
+      "speed": 4,
+      "max_hp": 0
+    }
   },
   "iron_shield": {
     "id": "iron_shield",
@@ -33,7 +86,110 @@
     "description": "厚实的铁盾，能挡住不少伤害。",
     "buy_price": 120,
     "sell_price": 60,
-    "stackable": false
+    "stackable": false,
+    "equip_slot": "shield",
+    "stats": {
+      "attack": 0,
+      "defense": 6,
+      "speed": -2,
+      "max_hp": 0
+    }
+  },
+  "steel_shield": {
+    "id": "steel_shield",
+    "name": "精钢盾",
+    "type": "armor",
+    "description": "精钢锻造的盾牌，防御力极强。",
+    "buy_price": 250,
+    "sell_price": 125,
+    "stackable": false,
+    "equip_slot": "shield",
+    "stats": {
+      "attack": 0,
+      "defense": 10,
+      "speed": -3,
+      "max_hp": 0
+    }
+  },
+  "iron_helmet": {
+    "id": "iron_helmet",
+    "name": "铁盔",
+    "type": "armor",
+    "description": "沉重的铁盔，保护头部安全。",
+    "buy_price": 90,
+    "sell_price": 45,
+    "stackable": false,
+    "equip_slot": "head",
+    "stats": {
+      "attack": 0,
+      "defense": 3,
+      "speed": -1,
+      "max_hp": 5
+    }
+  },
+  "leather_armor": {
+    "id": "leather_armor",
+    "name": "皮甲",
+    "type": "armor",
+    "description": "轻便的皮甲，提供基础防护。",
+    "buy_price": 100,
+    "sell_price": 50,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 4,
+      "speed": 0,
+      "max_hp": 10
+    }
+  },
+  "iron_armor": {
+    "id": "iron_armor",
+    "name": "铁甲",
+    "type": "armor",
+    "description": "沉重的铁甲，防御力极强但影响行动。",
+    "buy_price": 280,
+    "sell_price": 140,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 8,
+      "speed": -3,
+      "max_hp": 20
+    }
+  },
+  "cloth_robe": {
+    "id": "cloth_robe",
+    "name": "布袍",
+    "type": "armor",
+    "description": "轻柔的布袍，适合法师穿着。",
+    "buy_price": 60,
+    "sell_price": 30,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 1,
+      "speed": 1,
+      "max_hp": 5
+    }
+  },
+  "ring_of_power": {
+    "id": "ring_of_power",
+    "name": "力量戒指",
+    "type": "accessory",
+    "description": "蕴含力量的神秘戒指，全面提升能力。",
+    "buy_price": 300,
+    "sell_price": 150,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 3,
+      "defense": 1,
+      "speed": 1,
+      "max_hp": 0
+    }
   },
   "health_potion": {
     "id": "health_potion",
@@ -159,6 +315,799 @@
     "description": "森林里采的蘑菇，味道鲜美。",
     "buy_price": 0,
     "sell_price": 8,
+    "stackable": true
+  },
+  "wood_sword": {
+    "id": "wood_sword",
+    "name": "木剑",
+    "type": "weapon",
+    "description": "用硬木削成的剑，虽然简陋但聊胜于无。",
+    "buy_price": 36,
+    "sell_price": 18,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 3,
+      "defense": 0,
+      "speed": 1,
+      "max_hp": 0
+    }
+  },
+  "stone_sword": {
+    "id": "stone_sword",
+    "name": "石剑",
+    "type": "weapon",
+    "description": "用磨利的石头制成的剑，比木剑锋利。",
+    "buy_price": 30,
+    "sell_price": 15,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 3,
+      "defense": 0,
+      "speed": 0,
+      "max_hp": 0
+    }
+  },
+  "copper_sword": {
+    "id": "copper_sword",
+    "name": "铜剑",
+    "type": "weapon",
+    "description": "铜铸的剑，适合初出茅庐的冒险者。",
+    "buy_price": 40,
+    "sell_price": 20,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 4,
+      "defense": 0,
+      "speed": 0,
+      "max_hp": 0
+    }
+  },
+  "iron_axe": {
+    "id": "iron_axe",
+    "name": "铁斧",
+    "type": "weapon",
+    "description": "沉重的铁斧，攻击力强但影响速度。",
+    "buy_price": 37,
+    "sell_price": 18,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 4,
+      "defense": 0,
+      "speed": -1,
+      "max_hp": 0
+    }
+  },
+  "wood_shield": {
+    "id": "wood_shield",
+    "name": "木盾",
+    "type": "armor",
+    "description": "简陋的木盾，总比没有强。",
+    "buy_price": 23,
+    "sell_price": 11,
+    "stackable": false,
+    "equip_slot": "shield",
+    "stats": {
+      "attack": 0,
+      "defense": 3,
+      "speed": -1,
+      "max_hp": 1
+    }
+  },
+  "leather_hat": {
+    "id": "leather_hat",
+    "name": "皮帽",
+    "type": "armor",
+    "description": "轻便的皮帽，适合游侠和盗贼。",
+    "buy_price": 18,
+    "sell_price": 9,
+    "stackable": false,
+    "equip_slot": "head",
+    "stats": {
+      "attack": 0,
+      "defense": 1,
+      "speed": 1,
+      "max_hp": 2
+    }
+  },
+  "necklace_of_life": {
+    "id": "necklace_of_life",
+    "name": "生命项链",
+    "type": "accessory",
+    "description": "温暖的项链，佩戴后生命力旺盛。",
+    "buy_price": 16,
+    "sell_price": 8,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 0,
+      "defense": 1,
+      "speed": 0,
+      "max_hp": 4
+    }
+  },
+  "charm_of_wind": {
+    "id": "charm_of_wind",
+    "name": "疾风护符",
+    "type": "accessory",
+    "description": "轻灵的护符，佩戴后身轻如燕。",
+    "buy_price": 20,
+    "sell_price": 10,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 1,
+      "defense": 0,
+      "speed": 1,
+      "max_hp": 2
+    }
+  },
+  "silver_dagger": {
+    "id": "silver_dagger",
+    "name": "银匕首",
+    "type": "weapon",
+    "description": "银制的匕首，对暗系生物有额外伤害。",
+    "buy_price": 225,
+    "sell_price": 112,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 6,
+      "defense": 0,
+      "speed": 5,
+      "max_hp": 0
+    }
+  },
+  "silver_bow": {
+    "id": "silver_bow",
+    "name": "银弓",
+    "type": "weapon",
+    "description": "银制的猎弓，精准而有力。",
+    "buy_price": 215,
+    "sell_price": 107,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 5,
+      "defense": 0,
+      "speed": 6,
+      "max_hp": 0
+    }
+  },
+  "alloy_staff": {
+    "id": "alloy_staff",
+    "name": "合金法杖",
+    "type": "weapon",
+    "description": "合金打造的法杖，魔力传导更顺畅。",
+    "buy_price": 220,
+    "sell_price": 110,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 7,
+      "defense": 0,
+      "speed": 3,
+      "max_hp": 0
+    }
+  },
+  "steel_axe": {
+    "id": "steel_axe",
+    "name": "精钢斧",
+    "type": "weapon",
+    "description": "精钢锻造的战斧，劈砍力惊人。",
+    "buy_price": 285,
+    "sell_price": 142,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 12,
+      "defense": 0,
+      "speed": -2,
+      "max_hp": 0
+    }
+  },
+  "bronze_hammer": {
+    "id": "bronze_hammer",
+    "name": "青铜锤",
+    "type": "weapon",
+    "description": "青铜铸成的战锤，攻防兼备。",
+    "buy_price": 242,
+    "sell_price": 121,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 9,
+      "defense": 2,
+      "speed": -3,
+      "max_hp": 0
+    }
+  },
+  "silver_round_shield": {
+    "id": "silver_round_shield",
+    "name": "银圆盾",
+    "type": "armor",
+    "description": "银制的圆盾，轻便而坚固。",
+    "buy_price": 160,
+    "sell_price": 80,
+    "stackable": false,
+    "equip_slot": "shield",
+    "stats": {
+      "attack": 0,
+      "defense": 8,
+      "speed": -2,
+      "max_hp": 3
+    }
+  },
+  "hard_leather_hat": {
+    "id": "hard_leather_hat",
+    "name": "硬皮帽",
+    "type": "armor",
+    "description": "硬化处理的皮帽，防护更佳。",
+    "buy_price": 95,
+    "sell_price": 47,
+    "stackable": false,
+    "equip_slot": "head",
+    "stats": {
+      "attack": 0,
+      "defense": 2,
+      "speed": 2,
+      "max_hp": 5
+    }
+  },
+  "silver_helmet": {
+    "id": "silver_helmet",
+    "name": "银盔",
+    "type": "armor",
+    "description": "银制的头盔，既美观又实用。",
+    "buy_price": 140,
+    "sell_price": 70,
+    "stackable": false,
+    "equip_slot": "head",
+    "stats": {
+      "attack": 0,
+      "defense": 5,
+      "speed": -2,
+      "max_hp": 11
+    }
+  },
+  "bronze_crown": {
+    "id": "bronze_crown",
+    "name": "青铜冠",
+    "type": "armor",
+    "description": "华丽的青铜冠，彰显身份。",
+    "buy_price": 120,
+    "sell_price": 60,
+    "stackable": false,
+    "equip_slot": "head",
+    "stats": {
+      "attack": 2,
+      "defense": 2,
+      "speed": 1,
+      "max_hp": 3
+    }
+  },
+  "hard_leather_garb": {
+    "id": "hard_leather_garb",
+    "name": "硬皮衣",
+    "type": "armor",
+    "description": "硬化处理的皮衣，防护力大增。",
+    "buy_price": 125,
+    "sell_price": 62,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 4,
+      "speed": 0,
+      "max_hp": 9
+    }
+  },
+  "silver_robe": {
+    "id": "silver_robe",
+    "name": "银袍",
+    "type": "armor",
+    "description": "银线织成的法袍，魔力流转其中。",
+    "buy_price": 100,
+    "sell_price": 50,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 2,
+      "speed": 2,
+      "max_hp": 6
+    }
+  },
+  "steel_armor": {
+    "id": "steel_armor",
+    "name": "精钢甲",
+    "type": "armor",
+    "description": "精钢锻造的铠甲，坚如磐石。",
+    "buy_price": 202,
+    "sell_price": 101,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 7,
+      "speed": -3,
+      "max_hp": 17
+    }
+  },
+  "silver_ring": {
+    "id": "silver_ring",
+    "name": "银戒指",
+    "type": "accessory",
+    "description": "银制的戒指，散发着柔和的光芒。",
+    "buy_price": 160,
+    "sell_price": 80,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 3,
+      "defense": 2,
+      "speed": 2,
+      "max_hp": 3
+    }
+  },
+  "necklace_of_guard": {
+    "id": "necklace_of_guard",
+    "name": "守护项链",
+    "type": "accessory",
+    "description": "守护之力的项链，危难时庇护佩戴者。",
+    "buy_price": 165,
+    "sell_price": 82,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 1,
+      "defense": 3,
+      "speed": 1,
+      "max_hp": 13
+    }
+  },
+  "charm_of_swift": {
+    "id": "charm_of_swift",
+    "name": "迅捷护符",
+    "type": "accessory",
+    "description": "迅捷之力的护符，佩戴后行动如风。",
+    "buy_price": 145,
+    "sell_price": 72,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 2,
+      "defense": 1,
+      "speed": 3,
+      "max_hp": 6
+    }
+  },
+  "mithril_sword": {
+    "id": "mithril_sword",
+    "name": "秘银剑",
+    "type": "weapon",
+    "description": "秘银铸造的神剑，锋芒毕露。",
+    "buy_price": 1140,
+    "sell_price": 570,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 19,
+      "defense": 0,
+      "speed": 0,
+      "max_hp": 0
+    }
+  },
+  "dark_gold_dagger": {
+    "id": "dark_gold_dagger",
+    "name": "暗金匕首",
+    "type": "weapon",
+    "description": "暗金打造的匕首，快如闪电。",
+    "buy_price": 984,
+    "sell_price": 492,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 11,
+      "defense": 0,
+      "speed": 9,
+      "max_hp": 0
+    }
+  },
+  "dark_iron_bow": {
+    "id": "dark_iron_bow",
+    "name": "玄铁弓",
+    "type": "weapon",
+    "description": "玄铁制成的强弓，箭无虚发。",
+    "buy_price": 936,
+    "sell_price": 468,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 9,
+      "defense": 0,
+      "speed": 11,
+      "max_hp": 0
+    }
+  },
+  "crystal_staff": {
+    "id": "crystal_staff",
+    "name": "魔晶法杖",
+    "type": "weapon",
+    "description": "镶嵌魔晶的法杖，魔力澎湃。",
+    "buy_price": 996,
+    "sell_price": 498,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 13,
+      "defense": 0,
+      "speed": 6,
+      "max_hp": 0
+    }
+  },
+  "dark_iron_axe": {
+    "id": "dark_iron_axe",
+    "name": "玄铁斧",
+    "type": "weapon",
+    "description": "玄铁锻造的巨斧，一击必杀。",
+    "buy_price": 1188,
+    "sell_price": 594,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 21,
+      "defense": 0,
+      "speed": -4,
+      "max_hp": 0
+    }
+  },
+  "dark_gold_hammer": {
+    "id": "dark_gold_hammer",
+    "name": "暗金锤",
+    "type": "weapon",
+    "description": "暗金铸成的神锤，震天动地。",
+    "buy_price": 1104,
+    "sell_price": 552,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 17,
+      "defense": 4,
+      "speed": -6,
+      "max_hp": 0
+    }
+  },
+  "mithril_shield": {
+    "id": "mithril_shield",
+    "name": "秘银盾",
+    "type": "armor",
+    "description": "秘银铸造的盾牌，坚不可摧。",
+    "buy_price": 804,
+    "sell_price": 402,
+    "stackable": false,
+    "equip_slot": "shield",
+    "stats": {
+      "attack": 0,
+      "defense": 19,
+      "speed": -6,
+      "max_hp": 0
+    }
+  },
+  "dark_gold_round_shield": {
+    "id": "dark_gold_round_shield",
+    "name": "暗金圆盾",
+    "type": "armor",
+    "description": "暗金打造的圆盾，轻巧而强大。",
+    "buy_price": 738,
+    "sell_price": 369,
+    "stackable": false,
+    "equip_slot": "shield",
+    "stats": {
+      "attack": 0,
+      "defense": 15,
+      "speed": -3,
+      "max_hp": 6
+    }
+  },
+  "dragon_hat": {
+    "id": "dragon_hat",
+    "name": "龙皮帽",
+    "type": "armor",
+    "description": "龙皮缝制的帽子，轻如鸿毛坚如磐石。",
+    "buy_price": 396,
+    "sell_price": 198,
+    "stackable": false,
+    "equip_slot": "head",
+    "stats": {
+      "attack": 0,
+      "defense": 4,
+      "speed": 3,
+      "max_hp": 8
+    }
+  },
+  "mithril_helmet": {
+    "id": "mithril_helmet",
+    "name": "秘银盔",
+    "type": "armor",
+    "description": "秘银铸成的头盔，轻便而坚固。",
+    "buy_price": 618,
+    "sell_price": 309,
+    "stackable": false,
+    "equip_slot": "head",
+    "stats": {
+      "attack": 0,
+      "defense": 9,
+      "speed": -3,
+      "max_hp": 20
+    }
+  },
+  "crystal_crown": {
+    "id": "crystal_crown",
+    "name": "魔晶冠",
+    "type": "armor",
+    "description": "镶嵌魔晶的王冠，散发着神秘光芒。",
+    "buy_price": 468,
+    "sell_price": 234,
+    "stackable": false,
+    "equip_slot": "head",
+    "stats": {
+      "attack": 3,
+      "defense": 3,
+      "speed": 2,
+      "max_hp": 6
+    }
+  },
+  "dragon_garb": {
+    "id": "dragon_garb",
+    "name": "龙皮衣",
+    "type": "armor",
+    "description": "龙皮缝制的战衣，轻巧而坚韧。",
+    "buy_price": 588,
+    "sell_price": 294,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 8,
+      "speed": 0,
+      "max_hp": 17
+    }
+  },
+  "crystal_robe": {
+    "id": "crystal_robe",
+    "name": "魔晶袍",
+    "type": "armor",
+    "description": "魔晶织成的法袍，魔力无穷。",
+    "buy_price": 384,
+    "sell_price": 192,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 3,
+      "speed": 3,
+      "max_hp": 11
+    }
+  },
+  "dark_iron_armor": {
+    "id": "dark_iron_armor",
+    "name": "玄铁甲",
+    "type": "armor",
+    "description": "玄铁锻造的铠甲，刀枪不入。",
+    "buy_price": 906,
+    "sell_price": 453,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 13,
+      "speed": -5,
+      "max_hp": 31
+    }
+  },
+  "dark_gold_ring": {
+    "id": "dark_gold_ring",
+    "name": "暗金戒指",
+    "type": "accessory",
+    "description": "暗金打造的戒指，蕴含远古之力。",
+    "buy_price": 768,
+    "sell_price": 384,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 6,
+      "defense": 4,
+      "speed": 4,
+      "max_hp": 6
+    }
+  },
+  "necklace_of_eternity": {
+    "id": "necklace_of_eternity",
+    "name": "永恒项链",
+    "type": "accessory",
+    "description": "永恒之力的项链，据说能延年益寿。",
+    "buy_price": 744,
+    "sell_price": 372,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 2,
+      "defense": 6,
+      "speed": 2,
+      "max_hp": 22
+    }
+  },
+  "charm_of_phantom": {
+    "id": "charm_of_phantom",
+    "name": "幻影护符",
+    "type": "accessory",
+    "description": "幻影之力的护符，佩戴后如鬼魅般飘忽。",
+    "buy_price": 684,
+    "sell_price": 342,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 4,
+      "defense": 2,
+      "speed": 6,
+      "max_hp": 11
+    }
+  },
+  "greater_health_potion": {
+    "id": "greater_health_potion",
+    "name": "强效生命药水",
+    "type": "consumable",
+    "description": "恢复大量生命值。",
+    "buy_price": 80,
+    "sell_price": 40,
+    "stackable": true
+  },
+  "mana_potion": {
+    "id": "mana_potion",
+    "name": "魔力药水",
+    "type": "consumable",
+    "description": "恢复少量魔力。",
+    "buy_price": 35,
+    "sell_price": 17,
+    "stackable": true
+  },
+  "purify_potion": {
+    "id": "purify_potion",
+    "name": "净化药水",
+    "type": "consumable",
+    "description": "解除诅咒状态。",
+    "buy_price": 50,
+    "sell_price": 25,
+    "stackable": true
+  },
+  "strength_elixir": {
+    "id": "strength_elixir",
+    "name": "力量药剂",
+    "type": "consumable",
+    "description": "暂时提升攻击力。",
+    "buy_price": 60,
+    "sell_price": 30,
+    "stackable": true
+  },
+  "speed_elixir": {
+    "id": "speed_elixir",
+    "name": "速度药剂",
+    "type": "consumable",
+    "description": "暂时提升速度。",
+    "buy_price": 60,
+    "sell_price": 30,
+    "stackable": true
+  },
+  "beast_bone": {
+    "id": "beast_bone",
+    "name": "兽骨",
+    "type": "material",
+    "description": "坚硬的兽骨，可以制作武器。",
+    "buy_price": 0,
+    "sell_price": 25,
+    "stackable": true
+  },
+  "magic_crystal": {
+    "id": "magic_crystal",
+    "name": "魔法水晶",
+    "type": "material",
+    "description": "蕴含魔力的水晶碎片。",
+    "buy_price": 0,
+    "sell_price": 40,
+    "stackable": true
+  },
+  "dragon_scale": {
+    "id": "dragon_scale",
+    "name": "龙鳞",
+    "type": "material",
+    "description": "坚硬的龙鳞，极其珍贵。",
+    "buy_price": 0,
+    "sell_price": 80,
+    "stackable": true
+  },
+  "silk": {
+    "id": "silk",
+    "name": "丝绸",
+    "type": "material",
+    "description": "光滑细腻的丝绸，价值不菲。",
+    "buy_price": 25,
+    "sell_price": 12,
+    "stackable": true
+  },
+  "steel_ingot": {
+    "id": "steel_ingot",
+    "name": "精钢锭",
+    "type": "material",
+    "description": "精炼的钢锭，锻造高级装备的原料。",
+    "buy_price": 0,
+    "sell_price": 35,
+    "stackable": true
+  },
+  "grilled_fish": {
+    "id": "grilled_fish",
+    "name": "烤鱼",
+    "type": "food",
+    "description": "香喷喷的烤鱼，回味无穷。",
+    "buy_price": 15,
+    "sell_price": 7,
+    "stackable": true
+  },
+  "jam": {
+    "id": "jam",
+    "name": "果酱",
+    "type": "food",
+    "description": "甜美的果酱，涂面包最好。",
+    "buy_price": 8,
+    "sell_price": 4,
+    "stackable": true
+  },
+  "honey": {
+    "id": "honey",
+    "name": "蜂蜜",
+    "type": "food",
+    "description": "森林里采的蜂蜜，甘甜可口。",
+    "buy_price": 18,
+    "sell_price": 9,
+    "stackable": true
+  },
+  "rations": {
+    "id": "rations",
+    "name": "干粮",
+    "type": "food",
+    "description": "行军干粮，耐储存。",
+    "buy_price": 10,
+    "sell_price": 5,
+    "stackable": true
+  },
+  "stew": {
+    "id": "stew",
+    "name": "炖汤",
+    "type": "food",
+    "description": "热腾腾的炖汤，暖身又暖心。",
+    "buy_price": 22,
+    "sell_price": 11,
+    "stackable": true
+  },
+  "lockpick": {
+    "id": "lockpick",
+    "name": "开锁器",
+    "type": "tool",
+    "description": "精巧的开锁工具。",
+    "buy_price": 25,
+    "sell_price": 12,
+    "stackable": true
+  },
+  "spyglass": {
+    "id": "spyglass",
+    "name": "望远镜",
+    "type": "tool",
+    "description": "可以看清远处的东西。",
+    "buy_price": 40,
+    "sell_price": 20,
     "stackable": true
   }
 }

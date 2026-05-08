@@ -25,11 +25,29 @@ RESPONSE_FORMAT = """
   "trade_action": null 或 {{"action": "buy" 或 "sell", "item_id": "物品ID", "quantity": 数量}}
 }}
 
-trade_action 说明：
-- 当玩家明确要购买某样物品时，填 {{"action": "buy", "item_id": "物品ID", "quantity": 数量}}
-- 当玩家明确要出售某样物品时，填 {{"action": "sell", "item_id": "物品ID", "quantity": 数量}}
-- 如果不是交易意图，填 null
-- item_id 必须是以下物品之一：{item_ids}
+trade_action 详细说明：
+1. 当玩家明确要购买物品时（例如："我要买xxx"、"给我来个xxx"、"买xxx"），填写：
+   {{"action": "buy", "item_id": "物品ID", "quantity": 数量}}
+   
+2. 当玩家明确要出售物品给你时（例如："我要卖xxx"、"这个xxx卖给你"、"卖xxx"），填写：
+   {{"action": "sell", "item_id": "物品ID", "quantity": 数量}}
+   
+3. 如果玩家只是在询问价格、查看商品、或者没有明确买卖意图，填写：null
+
+重要规则：
+- 只有当玩家明确说出"买"或"卖"时才填写trade_action
+- 购买时，item_id 必须是你商店里有的物品：{item_ids}
+- 出售时，item_id 必须是玩家背包里有的物品（见上方玩家背包信息）
+- quantity 默认为1，如果玩家明确说了数量则使用该数量
+- 如果玩家要买你没有的物品，在reply中告诉他你没有，trade_action填null
+- 如果玩家要卖他背包里没有的物品，在reply中告诉他没有这个物品，trade_action填null
+
+示例：
+玩家："我要买一把铁剑" -> trade_action: {{"action": "buy", "item_id": "iron_sword", "quantity": 1}}
+玩家："给我来3个生命药水" -> trade_action: {{"action": "buy", "item_id": "health_potion", "quantity": 3}}
+玩家："我想卖给你一个草药" -> trade_action: {{"action": "sell", "item_id": "herb", "quantity": 1}}
+玩家："你这里有什么？" -> trade_action: null
+玩家："铁剑多少钱？" -> trade_action: null
 """
 
 
@@ -43,7 +61,7 @@ def load_npc_config(npc_id: str) -> dict:
 
 def build_system_prompt(cfg: dict, mood: str, affinity: int,
                         history_text: str, shop_info: str,
-                        shop_item_ids: list[str]) -> str:
+                        shop_item_ids: list[str], player_inventory: list[dict] = None) -> str:
     p = cfg["personality"]
 
     pp = cfg.get("personality_params", {})
@@ -62,6 +80,14 @@ def build_system_prompt(cfg: dict, mood: str, affinity: int,
 
     # 只列出该 NPC 自己卖的物品 ID
     item_ids = ", ".join(shop_item_ids) if shop_item_ids else "（无商品）"
+    
+    # 玩家背包信息
+    player_items_info = ""
+    if player_inventory:
+        player_items = []
+        for item in player_inventory:
+            player_items.append(f"{item['name']}({item['item_id']}): {item['quantity']}个")
+        player_items_info = f"\n玩家背包里的物品：\n{chr(10).join(player_items)}"
 
     prompt = f"""你是{cfg['name']}，身份是{cfg['role']}，位于{cfg['location']}。
 性格：{p['traits']}，喜欢用"{p['pronoun']}"自称。
@@ -78,6 +104,7 @@ def build_system_prompt(cfg: dict, mood: str, affinity: int,
 
 注意：你只卖上面列出的物品。如果玩家要买你没有的东西，请告诉他你这里没有。
 你也可以收购玩家手里的物品，但价格要合理。
+{player_items_info}
 
 玩家和你的对话历史：
 {history_text if history_text else "（第一次对话）"}
@@ -156,10 +183,18 @@ class NPCAgent:
             self.history = data.get("history", [])
             if "shop_inventory" in data:
                 self.shop_inventory = Inventory.from_save(data["shop_inventory"])
+                self._merge_new_shop_items()
             if "acquired_inventory" in data:
                 self.acquired_inventory = Inventory.from_save(data["acquired_inventory"])
         except (json.JSONDecodeError, KeyError):
             pass
+
+    def _merge_new_shop_items(self):
+        saved_ids = {item["item_id"] for item in self.shop_inventory.items}
+        shop_cfg = self.cfg.get("shop", {})
+        for slot in shop_cfg.get("inventory", []):
+            if slot["item_id"] not in saved_ids:
+                self.shop_inventory.add_item(slot["item_id"], slot["quantity"])
 
     def _get_shop_info(self) -> str:
         """生成商店库存描述，注入 LLM 上下文。"""
@@ -180,8 +215,10 @@ class NPCAgent:
         shop_info = self._get_shop_info()
         # 只传入该 NPC 商店实际有的物品 ID
         shop_item_ids = [item["item_id"] for item in self.shop_inventory.items]
+        # 获取玩家背包信息
+        player_inventory = player_profile.get_inventory()
         system = build_system_prompt(self.cfg, self.mood, self.affinity,
-                                     history_text, shop_info, shop_item_ids)
+                                     history_text, shop_info, shop_item_ids, player_inventory)
         return [
             {"role": "system", "content": system},
             {"role": "user", "content": player_input},

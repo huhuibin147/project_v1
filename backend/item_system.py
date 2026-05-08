@@ -45,7 +45,6 @@ class Inventory:
         return False
 
     def to_list(self) -> list[dict]:
-        """返回带物品详情的列表。"""
         result = []
         for item in self.items:
             item_id = item["item_id"]
@@ -58,6 +57,8 @@ class Inventory:
                 "quantity": item["quantity"],
                 "buy_price": info.get("buy_price", 0),
                 "sell_price": info.get("sell_price", 0),
+                "equip_slot": info.get("equip_slot"),
+                "stats": info.get("stats"),
             })
         return result
 
