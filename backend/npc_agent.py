@@ -88,19 +88,39 @@ def build_system_prompt(cfg: dict, mood: str, affinity: int,
 
 
 class NPCAgent:
-    def __init__(self, npc_id: str = "blacksmith"):
+    def __init__(self, npc_id: str = "blacksmith", slot: int = None):
         self.npc_id = npc_id
         self.cfg = load_npc_config(npc_id)
         self.name = self.cfg["name"]
         self.mood = self.cfg.get("default_mood", "平静")
         self.affinity = self.cfg.get("default_affinity", 50)
         self.history: list[dict] = []
-        self._save_file = DATA_DIR / f"{npc_id}_save.json"
+        self.slot = slot
+        self._update_save_file()
 
         # 物品系统：NPC 商店库存和玩家背包
         self.shop_inventory = self._init_shop_inventory()
         self.acquired_inventory = Inventory(gold=0)  # 从玩家处收购的物品，独立存放
 
+        self._load()
+
+    def _update_save_file(self):
+        """根据存档槽更新保存文件路径。"""
+        if self.slot is not None:
+            self._save_file = DATA_DIR / f"save_{self.slot}" / f"{self.npc_id}.json"
+        else:
+            self._save_file = DATA_DIR / f"{self.npc_id}_save.json"
+
+    def set_slot(self, slot: int):
+        """切换存档槽。"""
+        self.slot = slot
+        self._update_save_file()
+        # 重置状态并加载新存档
+        self.mood = self.cfg.get("default_mood", "平静")
+        self.affinity = self.cfg.get("default_affinity", 50)
+        self.history = []
+        self.shop_inventory = self._init_shop_inventory()
+        self.acquired_inventory = Inventory(gold=0)
         self._load()
 
     def _init_shop_inventory(self) -> Inventory:
@@ -112,7 +132,7 @@ class NPCAgent:
         return inv
 
     def _save(self):
-        DATA_DIR.mkdir(exist_ok=True)
+        self._save_file.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "npc_id": self.npc_id,
             "name": self.name,

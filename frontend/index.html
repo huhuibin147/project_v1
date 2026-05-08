@@ -7,7 +7,64 @@
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <div id="game-container">
+  <!-- 开始界面（独立画面） -->
+  <div id="start-screen">
+    <!-- 主菜单 -->
+    <div class="start-content" id="start-menu">
+      <div class="start-title">
+        <div class="title-main">青石村</div>
+        <div class="title-sub">LLM NPC 冒险</div>
+      </div>
+      <div class="start-menu">
+        <button class="start-btn" onclick="showNewGamePanel()">新的冒险</button>
+        <button class="start-btn" id="btn-continue" style="display:none">继续冒险</button>
+        <button class="start-btn" onclick="showLoadPanel()">读取存档</button>
+      </div>
+    </div>
+
+    <!-- 新建游戏面板 -->
+    <div id="new-game-panel" class="save-panel">
+      <div class="panel-header">
+        <span class="panel-title">新的冒险</span>
+        <button class="panel-close" onclick="closeSavePanel()">×</button>
+      </div>
+      <div class="save-panel-body">
+        <div class="form-group">
+          <label class="form-label">冒险者名称</label>
+          <input type="text" id="new-name" class="form-input" placeholder="输入你的名字..." maxlength="10" value="冒险者">
+        </div>
+        <div class="form-group">
+          <label class="form-label">选择职业</label>
+          <div class="class-cards" id="class-cards"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">存档位置</label>
+          <div class="slot-select" id="new-slot-select"></div>
+        </div>
+        <div class="form-actions">
+          <button class="start-btn" onclick="confirmNewGame()">开始冒险</button>
+          <button class="start-btn secondary" onclick="closeSavePanel()">返回</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 读取存档面板 -->
+    <div id="load-panel" class="save-panel">
+      <div class="panel-header">
+        <span class="panel-title">读取存档</span>
+        <button class="panel-close" onclick="closeSavePanel()">×</button>
+      </div>
+      <div class="save-panel-body">
+        <div class="save-slots" id="load-slots"></div>
+        <div class="form-actions">
+          <button class="start-btn secondary" onclick="closeSavePanel()">返回</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏容器（初始隐藏） -->
+  <div id="game-container" style="display:none">
     <canvas id="game-canvas"></canvas>
 
     <!-- HUD 玩家状态条 -->
@@ -16,9 +73,26 @@
         <span id="hud-level">Lv.1</span>
         <span id="hud-hp">120/120</span>
       </div>
-      <div id="hud-gold-bar">
-        <span class="gold-icon">金</span>
-        <span id="hud-gold">0</span>
+      <div id="hud-right">
+        <div id="hud-gold-bar">
+          <span class="gold-icon">金</span>
+          <span id="hud-gold">0</span>
+        </div>
+        <button id="hud-menu-btn" onclick="toggleGameMenu()">菜单</button>
+      </div>
+    </div>
+
+    <!-- 游戏菜单面板 -->
+    <div id="game-menu-panel">
+      <div class="panel-header">
+        <span class="panel-title">菜单</span>
+        <button class="panel-close" onclick="closeGameMenu()">×</button>
+      </div>
+      <div class="game-menu-actions">
+        <button class="btn-interact" onclick="closeGameMenu(); openInventory()">背包 (I)</button>
+        <button class="btn-interact" onclick="closeGameMenu(); openPlayerInfo()">角色信息 (P)</button>
+        <button class="btn-interact" onclick="saveGame()">保存游戏</button>
+        <button class="btn-interact btn-danger" onclick="returnToMainMenu()">返回主菜单</button>
       </div>
     </div>
 
@@ -142,6 +216,7 @@
   <script src="/static/js/dialogue.js"></script>
   <script src="/static/js/inventory.js"></script>
   <script src="/static/js/player_info.js"></script>
+  <script src="/static/js/start_screen.js"></script>
   <script src="/static/js/game.js"></script>
 </body>
 </html>

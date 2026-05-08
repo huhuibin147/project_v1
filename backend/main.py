@@ -43,6 +43,48 @@ from item_system import Inventory, buy_item, sell_item, get_item_info, ITEMS_DB
 app = FastAPI(title="LLM NPC Game")
 
 FRONTEND_DIR = str(ROOT_DIR / "frontend")
+DATA_DIR = ROOT_DIR / "data"
+
+
+def migrate_old_saves():
+    """将旧版平铺存档文件迁移到文件夹结构。"""
+    DATA_DIR.mkdir(exist_ok=True)
+
+    # 获取所有 NPC ID
+    with open(NPC_CONFIG_FILE, "r", encoding="utf-8") as f:
+        npc_ids = list(json.load(f).keys())
+
+    for slot in range(1, 4):
+        folder = DATA_DIR / f"save_{slot}"
+        if folder.exists():
+            continue
+
+        old_player = DATA_DIR / f"save_{slot}.json"
+        if not old_player.exists():
+            continue
+
+        # 有旧的平铺存档，迁移
+        folder.mkdir(parents=True, exist_ok=True)
+        old_player.rename(folder / "player.json")
+
+        # 迁移旧格式 NPC 存档（save_{slot}_{npc_id}.json）
+        for npc_id in npc_ids:
+            old_npc = DATA_DIR / f"save_{slot}_{npc_id}.json"
+            if old_npc.exists():
+                old_npc.rename(folder / f"{npc_id}.json")
+
+    # 迁移无槽位的旧版 NPC 存档（{npc_id}_save.json）到 save_1
+    folder_1 = DATA_DIR / "save_1"
+    for npc_id in npc_ids:
+        legacy_npc = DATA_DIR / f"{npc_id}_save.json"
+        if legacy_npc.exists():
+            target = folder_1 / f"{npc_id}.json"
+            if not target.exists():
+                folder_1.mkdir(parents=True, exist_ok=True)
+                legacy_npc.rename(target)
+
+
+migrate_old_saves()
 
 # 多 NPC 实例管理
 npc_agents: dict[str, NPCAgent] = {}
@@ -51,8 +93,16 @@ npc_agents: dict[str, NPCAgent] = {}
 def get_npc(npc_id: str) -> NPCAgent:
     """获取或创建 NPC Agent 实例。"""
     if npc_id not in npc_agents:
-        npc_agents[npc_id] = NPCAgent(npc_id)
+        slot = player_profile.current_slot
+        npc_agents[npc_id] = NPCAgent(npc_id, slot=slot)
     return npc_agents[npc_id]
+
+
+def sync_npc_slots():
+    """同步所有 NPC 的存档槽到当前玩家存档槽。"""
+    slot = player_profile.current_slot
+    for npc_id, npc in npc_agents.items():
+        npc.set_slot(slot)
 
 
 def get_all_npc_ids() -> list[str]:
@@ -90,6 +140,21 @@ class PlayerUpdateRequest(BaseModel):
     class_id: str = None
 
 
+class NewGameRequest(BaseModel):
+    name: str
+    class_id: str
+    slot: int = 1
+
+
+class LoadSaveRequest(BaseModel):
+    slot: int
+
+
+class PositionRequest(BaseModel):
+    x: int
+    y: int
+
+
 @app.get("/")
 async def index():
     return FileResponse(f"{FRONTEND_DIR}/index.html")
@@ -123,6 +188,13 @@ async def chat(req: ChatRequest):
 async def npc_status(npc_id: str = "blacksmith"):
     npc = get_npc(npc_id)
     return npc.get_status()
+
+
+@app.get("/api/npc/history")
+async def npc_history(npc_id: str = "blacksmith"):
+    """获取 NPC 对话历史。"""
+    npc = get_npc(npc_id)
+    return {"npc_id": npc_id, "history": npc.history}
 
 
 @app.get("/api/npc/config")
@@ -247,6 +319,55 @@ async def heal_player(amount: int = 999):
     """回复生命值。"""
     player_profile.heal(amount)
     return player_profile.get_info()
+
+
+# ===== 存档管理接口 =====
+
+@app.get("/api/saves")
+async def list_saves():
+    """获取所有存档槽信息。"""
+    return player_profile.list_saves()
+
+
+@app.post("/api/saves/new")
+async def new_game(req: NewGameRequest):
+    """新建游戏存档。"""
+    if not req.name.strip():
+        raise HTTPException(status_code=400, detail="名称不能为空")
+    # 清空旧的 NPC 实例，确保加载新存档数据
+    npc_agents.clear()
+    success = player_profile.new_game(req.name.strip(), req.class_id, req.slot)
+    if not success:
+        raise HTTPException(status_code=400, detail="创建失败：无效的职业或存档槽")
+    return {"success": True, "player_info": player_profile.get_info()}
+
+
+@app.post("/api/saves/load")
+async def load_save(req: LoadSaveRequest):
+    """读取存档。"""
+    success = player_profile.load_from_slot(req.slot)
+    if not success:
+        raise HTTPException(status_code=400, detail="存档不存在或已损坏")
+    # 清空旧的 NPC 实例，确保加载新存档数据
+    npc_agents.clear()
+    return {"success": True, "player_info": player_profile.get_info()}
+
+
+@app.delete("/api/saves/{slot}")
+async def delete_save(slot: int):
+    """删除存档。"""
+    npc_agents.clear()
+    success = player_profile.delete_slot(slot)
+    if not success:
+        raise HTTPException(status_code=400, detail="存档不存在")
+    return {"success": True}
+
+
+@app.post("/api/player/position")
+async def save_position(req: PositionRequest):
+    """保存玩家位置。"""
+    player_profile.set_position(req.x, req.y)
+    return {"success": True}
 
 
 # 挂载静态文件（放在路由之后）

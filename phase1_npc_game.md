@@ -23,6 +23,12 @@ project_v1/
 │   ├── npcs.json                  # NPC 定义（属性、性格、商店库存）
 │   ├── items.json                 # 物品定义（名称、类型、价格）
 │   └── player_default.json        # 玩家默认属性和职业配置
+├── data/
+│   ├── save_1/                    # 存档槽 1
+│   │   ├── player.json            #   玩家数据
+│   │   └── {npc_id}.json          #   NPC 数据（对话历史、商店库存等）
+│   ├── save_2/                    # 存档槽 2
+│   └── save_3/                    # 存档槽 3
 ├── backend/
 │   ├── main.py                    # FastAPI 入口
 │   ├── config.py                  # 配置加载模块
@@ -128,7 +134,25 @@ python main.py
 
 ### 启动后你会看到什么
 
-启动服务后浏览器打开 `http://localhost:8000`，你会看到一个像素风的村庄俯视角地图：
+启动服务后浏览器打开 `http://localhost:8000`，首先会看到游戏开始界面：
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│            青石村                   │
+│         LLM NPC 冒险               │
+│                                     │
+│         [新的冒险]                  │
+│         [读取存档]                  │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+- **新的冒险**：创建新角色，输入名称、选择职业（战士/盗贼/法师）、选择存档槽
+- **读取存档**：选择已有的存档继续游戏（最多 3 个存档槽）
+- **继续冒险**：如果有存档，快速加载最近的存档
+
+创建或加载存档后，进入像素风的村庄俯视角地图：
 
 ```
 ┌─────────────────────────────────────┐
@@ -347,7 +371,19 @@ User: 玩家输入
 **等级系统**：
 - 每次升级：HP+10、攻击+3、防御+2、速度+1
 - 升级所需经验递增（exp_to_next × 1.5）
-- 数据持久化到 `data/player_save.json`
+- 数据持久化到 `data/save_{slot}/player.json`（支持 3 个存档槽）
+
+**存档系统**：
+- 游戏启动时显示开始界面，支持新建冒险和读取存档
+- 最多 3 个存档槽，存档满时新建会提示覆盖
+- 存档数据包含：角色属性、背包、金币、玩家位置、存档时间
+- 支持删除存档
+- **数据完全隔离**：每个存档槽的玩家数据和 NPC 数据独立保存在文件夹中
+  - 玩家数据：`data/save_{slot}/player.json`
+  - NPC 数据：`data/save_{slot}/{npc_id}.json`（含对话历史、商店库存、好感度等）
+  - 切换存档时自动清空并重新加载所有数据
+  - 游戏每 5 秒自动保存玩家位置
+  - 加载存档时自动恢复 NPC 对话历史
 
 ### 前端渲染
 
@@ -406,6 +442,15 @@ NPC 对话接口（支持交易意图自动执行）。
 
 获取 NPC 当前状态（含金币信息）。
 
+### GET /api/npc/history?npc_id=xxx
+
+获取 NPC 对话历史。
+
+**响应**：
+```json
+{"npc_id": "blacksmith", "history": [{"role": "player", "content": "..."}, {"role": "npc", "content": "..."}]}
+```
+
 ### GET /api/npc/config?npc_id=xxx
 
 获取 NPC 配置信息。
@@ -434,6 +479,70 @@ NPC 对话接口（支持交易意图自动执行）。
 ### POST /api/player/heal
 
 玩家回复 HP。
+
+### POST /api/player/position
+
+保存玩家位置。
+
+**请求**：
+```json
+{"x": 10, "y": 8}
+```
+
+**响应**：
+```json
+{"success": true}
+```
+
+### GET /api/saves
+
+获取所有存档槽信息。
+
+**响应**：
+```json
+[
+  {"slot": 1, "name": "冒险者", "class_id": "warrior", "level": 5, "save_time": "2026-05-08 12:00:00", "exists": true},
+  {"slot": 2, "exists": false},
+  {"slot": 3, "exists": false}
+]
+```
+
+### POST /api/saves/new
+
+新建游戏存档。
+
+**请求**：
+```json
+{"name": "勇者", "class_id": "warrior", "slot": 1}
+```
+
+**响应**：
+```json
+{"success": true, "player_info": {...}}
+```
+
+### POST /api/saves/load
+
+读取存档。
+
+**请求**：
+```json
+{"slot": 1}
+```
+
+**响应**：
+```json
+{"success": true, "player_info": {...}}
+```
+
+### DELETE /api/saves/{slot}
+
+删除指定存档槽。
+
+**响应**：
+```json
+{"success": true}
+```
 
 ### GET /
 

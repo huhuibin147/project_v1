@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
+from datetime import datetime
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 DATA_DIR = Path(__file__).parent.parent / "data"
 DEFAULT_FILE = CONFIG_DIR / "player_default.json"
-SAVE_FILE = DATA_DIR / "player_save.json"
+SAVE_SLOTS = 3
 
 
 def load_defaults() -> dict:
@@ -12,33 +13,45 @@ def load_defaults() -> dict:
         return json.load(f)
 
 
+def save_dir(slot: int) -> Path:
+    return DATA_DIR / f"save_{slot}"
+
+
+def save_path(slot: int) -> Path:
+    return save_dir(slot) / "player.json"
+
+
 class PlayerProfile:
     def __init__(self):
         defaults = load_defaults()
+        self.classes = defaults["classes"]
+        self.current_slot = None
+        self._reset_to_defaults(defaults)
+
+    def _reset_to_defaults(self, defaults=None):
+        if defaults is None:
+            defaults = load_defaults()
         self.name = defaults["name"]
         self.class_id = defaults["class"]
-        self.classes = defaults["classes"]
         self.level = defaults["level"]
         self.exp = defaults["exp"]
         self.exp_to_next = defaults["exp_to_next"]
         self.status_effects = defaults["status_effects"]
-
-        # 从职业配置计算基础属性
         cls = self.classes[self.class_id]
         self.max_hp = cls["base_hp"]
         self.hp = self.max_hp
         self.attack = cls["base_attack"]
         self.defense = cls["base_defense"]
         self.speed = cls["base_speed"]
-
-        # 统一钱包与背包
-        self.gold = 0
-        self.inventory = []  # [{item_id, quantity}]
-
-        self._load()
+        self.gold = 200
+        self.inventory = []
+        self.player_x = 9  # 默认位置（瓦片坐标）
+        self.player_y = 9
 
     def _save(self):
-        DATA_DIR.mkdir(exist_ok=True)
+        if self.current_slot is None:
+            return
+        save_dir(self.current_slot).mkdir(parents=True, exist_ok=True)
         data = {
             "name": self.name,
             "class_id": self.class_id,
@@ -53,17 +66,21 @@ class PlayerProfile:
             "status_effects": self.status_effects,
             "gold": self.gold,
             "inventory": self.inventory,
+            "player_x": self.player_x,
+            "player_y": self.player_y,
+            "save_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        with open(SAVE_FILE, "w", encoding="utf-8") as f:
+        with open(save_path(self.current_slot), "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
-    def _load(self):
-        if not SAVE_FILE.exists():
-            self._save()
-            return
+    def _load_from_file(self, slot: int):
+        path = save_path(slot)
+        if not path.exists():
+            return False
         try:
-            with open(SAVE_FILE, "r", encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            self.current_slot = slot
             self.name = data.get("name", self.name)
             self.class_id = data.get("class_id", self.class_id)
             self.level = data.get("level", self.level)
@@ -77,8 +94,68 @@ class PlayerProfile:
             self.status_effects = data.get("status_effects", [])
             self.gold = data.get("gold", 0)
             self.inventory = data.get("inventory", [])
+            self.player_x = data.get("player_x", 9)
+            self.player_y = data.get("player_y", 9)
+            return True
         except (json.JSONDecodeError, KeyError):
-            self._save()
+            return False
+
+    # ===== 存档管理 =====
+
+    @staticmethod
+    def list_saves() -> list[dict]:
+        saves = []
+        for slot in range(1, SAVE_SLOTS + 1):
+            path = save_path(slot)
+            if path.exists():
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    saves.append({
+                        "slot": slot,
+                        "name": data.get("name", "未知"),
+                        "class_id": data.get("class_id", "warrior"),
+                        "level": data.get("level", 1),
+                        "save_time": data.get("save_time", ""),
+                        "exists": True,
+                    })
+                except (json.JSONDecodeError, KeyError):
+                    saves.append({"slot": slot, "exists": False})
+            else:
+                saves.append({"slot": slot, "exists": False})
+        return saves
+
+    def new_game(self, name: str, class_id: str, slot: int) -> bool:
+        if class_id not in self.classes:
+            return False
+        if slot < 1 or slot > SAVE_SLOTS:
+            return False
+        self._reset_to_defaults()
+        self.name = name
+        self.class_id = class_id
+        cls = self.classes[class_id]
+        self.max_hp = cls["base_hp"]
+        self.hp = self.max_hp
+        self.attack = cls["base_attack"]
+        self.defense = cls["base_defense"]
+        self.speed = cls["base_speed"]
+        self.current_slot = slot
+        self._save()
+        return True
+
+    def load_from_slot(self, slot: int) -> bool:
+        return self._load_from_file(slot)
+
+    def delete_slot(self, slot: int) -> bool:
+        folder = save_dir(slot)
+        if folder.exists():
+            import shutil
+            shutil.rmtree(folder)
+            if self.current_slot == slot:
+                self.current_slot = None
+                self._reset_to_defaults()
+            return True
+        return False
 
     def get_class_name(self) -> str:
         return self.classes.get(self.class_id, {}).get("name", "未知")
@@ -87,7 +164,6 @@ class PlayerProfile:
         return self.classes.get(self.class_id, {}).get("description", "")
 
     def gain_exp(self, amount: int) -> dict:
-        """获得经验值，返回是否升级。"""
         self.exp += amount
         leveled = False
         while self.exp >= self.exp_to_next:
@@ -104,21 +180,18 @@ class PlayerProfile:
         }
 
     def _level_up(self):
-        """升级时属性增长。"""
         self.max_hp += 10
-        self.hp = self.max_hp  # 升级回满血
+        self.hp = self.max_hp
         self.attack += 3
         self.defense += 2
         self.speed += 1
         self.exp_to_next = int(self.exp_to_next * 1.5)
 
     def heal(self, amount: int):
-        """回复生命值。"""
         self.hp = min(self.max_hp, self.hp + amount)
         self._save()
 
     def take_damage(self, amount: int) -> int:
-        """受到伤害，返回实际伤害值。"""
         actual = max(1, amount - self.defense // 3)
         self.hp = max(0, self.hp - actual)
         self._save()
@@ -157,7 +230,19 @@ class PlayerProfile:
             "speed": self.speed,
             "status_effects": self.status_effects,
             "gold": self.gold,
+            "player_x": self.player_x,
+            "player_y": self.player_y,
         }
+
+    def set_position(self, x: int, y: int):
+        """设置玩家位置（瓦片坐标）。"""
+        self.player_x = x
+        self.player_y = y
+        self._save()
+
+    def get_position(self) -> dict:
+        """获取玩家位置。"""
+        return {"x": self.player_x, "y": self.player_y}
 
     def get_classes(self) -> dict:
         return self.classes
@@ -165,7 +250,6 @@ class PlayerProfile:
     # ===== 统一背包与金币操作 =====
 
     def get_inventory(self) -> list[dict]:
-        """返回带物品详情的背包列表。"""
         from item_system import ITEMS_DB
         result = []
         for item in self.inventory:

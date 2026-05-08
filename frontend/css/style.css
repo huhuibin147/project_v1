@@ -254,6 +254,69 @@ body {
   font-weight: bold;
 }
 
+#hud-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+#hud-menu-btn {
+  background: rgba(0,0,0,0.7);
+  color: #f0c060;
+  border: 1px solid rgba(240, 192, 96, 0.4);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  pointer-events: auto;
+}
+
+#hud-menu-btn:hover {
+  background: rgba(240, 192, 96, 0.2);
+  border-color: #f0c060;
+}
+
+/* 游戏菜单面板 */
+#game-menu-panel {
+  display: none;
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  width: 180px;
+  background: rgba(20, 20, 40, 0.95);
+  border: 2px solid #f0c060;
+  border-radius: 6px;
+  color: #eee;
+  font-size: 13px;
+  z-index: 120;
+  flex-direction: column;
+}
+
+#game-menu-panel.active {
+  display: flex;
+}
+
+.game-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+}
+
+.btn-danger {
+  background: rgba(244, 67, 54, 0.15) !important;
+  border-color: rgba(244, 67, 54, 0.4) !important;
+  color: #EF5350 !important;
+}
+
+.btn-danger:hover {
+  background: rgba(244, 67, 54, 0.3) !important;
+  border-color: #EF5350 !important;
+}
+
 /* 背包和商店共用样式 */
 #inventory-panel, #shop-panel {
   display: none;
@@ -679,4 +742,374 @@ body {
 .no-effects {
   color: #555;
   font-size: 12px;
+}
+
+/* ===== 开始界面（独立全屏） ===== */
+#start-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3e 50%, #0a0a1a 100%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#start-screen.hidden {
+  display: none;
+}
+
+.start-content {
+  text-align: center;
+}
+
+.start-title {
+  margin-bottom: 50px;
+}
+
+.title-main {
+  font-size: 56px;
+  font-weight: bold;
+  color: #f0c060;
+  text-shadow: 0 0 20px rgba(240, 192, 96, 0.5), 0 4px 0 #a07020;
+  letter-spacing: 12px;
+  margin-bottom: 10px;
+}
+
+.title-sub {
+  font-size: 18px;
+  color: #8888aa;
+  letter-spacing: 6px;
+}
+
+.start-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.start-btn {
+  background: rgba(240, 192, 96, 0.15);
+  border: 2px solid rgba(240, 192, 96, 0.5);
+  color: #f0c060;
+  border-radius: 6px;
+  padding: 12px 48px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 220px;
+  transition: all 0.2s;
+}
+
+.start-btn:hover {
+  background: rgba(240, 192, 96, 0.3);
+  border-color: #f0c060;
+  transform: scale(1.03);
+}
+
+.start-btn:active {
+  transform: scale(0.98);
+}
+
+.start-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #aaa;
+  font-size: 15px;
+  padding: 10px 36px;
+}
+
+.start-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ddd;
+}
+
+/* 存档管理面板 */
+.save-panel {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  max-height: 520px;
+  background: rgba(15, 15, 35, 0.98);
+  border: 2px solid #f0c060;
+  border-radius: 8px;
+  color: #eee;
+  font-size: 13px;
+  z-index: 210;
+  flex-direction: column;
+}
+
+.save-panel.active {
+  display: flex;
+}
+
+.save-panel-body {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.save-panel-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.save-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+/* 表单元素 */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 13px;
+  color: #aaa;
+  font-weight: bold;
+}
+
+.form-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #f0c060;
+}
+
+.form-input::placeholder {
+  color: #555;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.form-actions .start-btn {
+  padding: 10px 32px;
+  font-size: 15px;
+  min-width: 140px;
+}
+
+/* 职业选择卡片 */
+.class-cards {
+  display: flex;
+  gap: 10px;
+}
+
+.class-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 12px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.class-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.class-card.selected {
+  border-color: #f0c060;
+  background: rgba(240, 192, 96, 0.12);
+}
+
+.class-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.class-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: #f0c060;
+  margin-bottom: 4px;
+}
+
+.class-desc {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.class-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.class-stat-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.class-stat-val {
+  color: #f0c060;
+  font-weight: bold;
+}
+
+/* 存档槽选择 */
+.slot-select {
+  display: flex;
+  gap: 8px;
+}
+
+.slot-option {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-size: 13px;
+  color: #aaa;
+}
+
+.slot-option:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.slot-option.selected {
+  border-color: #f0c060;
+  background: rgba(240, 192, 96, 0.12);
+  color: #f0c060;
+}
+
+.slot-option.has-save {
+  color: #aaa;
+}
+
+.slot-label {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.slot-info {
+  font-size: 11px;
+  color: #777;
+}
+
+/* 存档槽列表（读档用） */
+.save-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.save-slot-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-slot-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.save-slot-card.empty {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.save-slot-card.empty:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.save-slot-num {
+  width: 36px;
+  height: 36px;
+  background: rgba(240, 192, 96, 0.15);
+  border: 1px solid rgba(240, 192, 96, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #f0c060;
+  flex-shrink: 0;
+}
+
+.save-slot-info {
+  flex: 1;
+}
+
+.save-slot-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.save-slot-detail {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.save-slot-time {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.save-slot-empty {
+  font-size: 14px;
+  color: #555;
+}
+
+.btn-delete-save {
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  color: #EF5350;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.btn-delete-save:hover {
+  background: rgba(244, 67, 54, 0.3);
+  border-color: #EF5350;
 }

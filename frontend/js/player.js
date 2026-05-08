@@ -12,7 +12,36 @@ const player = {
   frame: 0,
   moving: false,
   color: "#4488ff",
+  name: "冒险者",      // 玩家名字
 };
+
+// 设置玩家位置（瓦片坐标）
+function setPlayerPosition(tileX, tileY) {
+  player.x = tileX * TILE_SIZE;
+  player.y = tileY * TILE_SIZE;
+}
+
+// 获取玩家位置（瓦片坐标）
+function getPlayerTilePosition() {
+  return {
+    x: Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE),
+    y: Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE)
+  };
+}
+
+// 保存玩家位置到服务器
+async function savePlayerPosition() {
+  const pos = getPlayerTilePosition();
+  try {
+    await fetch("/api/player/position", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ x: pos.x, y: pos.y }),
+    });
+  } catch (e) {
+    console.error("保存位置失败:", e);
+  }
+}
 
 const keys = {};
 
@@ -32,7 +61,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function updatePlayer() {
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen) return; // 面板打开时不允许移动
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen) return; // 面板打开时不允许移动
 
   let dx = 0, dy = 0;
 
@@ -108,4 +137,13 @@ function drawPlayer(ctx) {
     ctx.fillRect(x + p * 2, y + p * 7 + bounce, p * 2, p * 1);
     ctx.fillRect(x + p * 4, y + p * 7 + bounce, p * 2, p * 1);
   }
+
+  // 名字标签
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.font = "10px monospace";
+  const nameWidth = ctx.measureText(player.name).width + 10;
+  ctx.fillRect(x + s / 2 - nameWidth / 2, y - 14, nameWidth, 14);
+  ctx.fillStyle = "#6bafff";
+  ctx.textAlign = "center";
+  ctx.fillText(player.name, x + s / 2, y - 4);
 }

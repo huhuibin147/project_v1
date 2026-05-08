@@ -44,7 +44,7 @@ async function fetchShop(npcId) {
 // ===== 背包面板 =====
 
 function openInventory() {
-  if (dialogueOpen) return;
+  if (dialogueOpen || gameMenuOpen) return;
   inventoryOpen = true;
   fetchInventory().then(() => renderInventory());
   document.getElementById("inventory-panel").classList.add("active");
@@ -196,7 +196,7 @@ function updateGoldDisplay() {
 // ===== 事件绑定 =====
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "i" && !dialogueOpen) {
+  if (e.key.toLowerCase() === "i" && !dialogueOpen && !gameMenuOpen) {
     if (inventoryOpen) {
       closeInventory();
     } else {
@@ -205,7 +205,8 @@ document.addEventListener("keydown", (e) => {
     }
   }
   if (e.key === "Escape") {
-    if (npcInteractOpen) closeNpcInteract();
+    if (gameMenuOpen) closeGameMenu();
+    else if (npcInteractOpen) closeNpcInteract();
     else if (shopOpen) closeShop();
     else if (inventoryOpen) closeInventory();
   }

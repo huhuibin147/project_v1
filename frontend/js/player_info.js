@@ -29,6 +29,14 @@ async function fetchPlayerInfo() {
     const resp = await fetch("/api/player");
     const data = await resp.json();
     Object.assign(playerInfo, data);
+    // 同步名字到 player 对象用于地图显示
+    if (data.name) {
+      player.name = data.name;
+    }
+    // 恢复玩家位置
+    if (data.player_x !== undefined && data.player_y !== undefined) {
+      setPlayerPosition(data.player_x, data.player_y);
+    }
     updatePlayerHUD();
     // 同步金币到背包显示
     if (data.gold !== undefined) {
@@ -41,7 +49,7 @@ async function fetchPlayerInfo() {
 }
 
 function openPlayerInfo() {
-  if (dialogueOpen || shopOpen) return;
+  if (dialogueOpen || shopOpen || gameMenuOpen) return;
   playerInfoOpen = true;
   fetchPlayerInfo().then(() => renderPlayerInfo());
   document.getElementById("player-info-panel").classList.add("active");
@@ -102,7 +110,7 @@ function updatePlayerHUD() {
 
 // 事件绑定
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "p" && !dialogueOpen) {
+  if (e.key.toLowerCase() === "p" && !dialogueOpen && !gameMenuOpen) {
     if (playerInfoOpen) {
       closePlayerInfo();
     } else {

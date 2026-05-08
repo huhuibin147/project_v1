@@ -12,7 +12,7 @@ function getDialogueState(npcId) {
   return dialogueHistory[npcId];
 }
 
-function openDialogue(npc) {
+async function openDialogue(npc) {
   dialogueOpen = true;
   activeNpcId = npc.npc_id;
   const state = getDialogueState(npc.npc_id);
@@ -21,9 +21,41 @@ function openDialogue(npc) {
   document.getElementById("dialogue-title").textContent = npc.name;
   document.getElementById("dialogue-input").focus();
 
-  // 第一次打开，显示开场白
-  if (state.messages.length === 0 && npc.greeting) {
-    state.messages.push({ role: "npc", text: npc.greeting });
+  // 如果前端没有对话记录，从后端加载
+  if (state.messages.length === 0) {
+    try {
+      const resp = await fetch(`/api/npc/history?npc_id=${npc.npc_id}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.history && data.history.length > 0) {
+          for (const h of data.history) {
+            state.messages.push({
+              role: h.role === "player" ? "player" : "npc",
+              text: h.content,
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error("加载对话历史失败:", e);
+    }
+
+    // 如果仍然没有记录，显示开场白
+    if (state.messages.length === 0 && npc.greeting) {
+      state.messages.push({ role: "npc", text: npc.greeting });
+    }
+  }
+
+  // 同步 NPC 状态
+  try {
+    const statusResp = await fetch(`/api/npc/status?npc_id=${npc.npc_id}`);
+    if (statusResp.ok) {
+      const statusData = await statusResp.json();
+      npc.mood = statusData.mood;
+      npc.affinity = statusData.affinity;
+    }
+  } catch (e) {
+    console.error("获取NPC状态失败:", e);
   }
 
   renderDialogue(npc.npc_id);

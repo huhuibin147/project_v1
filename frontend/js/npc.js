@@ -114,7 +114,7 @@ function drawNPC(ctx, npc) {
   ctx.fillText(npc.name, x + s / 2, y - 4);
 
   // 交互提示
-  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen) {
+  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen) {
     npc.showPrompt = true;
     const prompt = "按 E 交互";
     const pw = ctx.measureText(prompt).width + 10;
@@ -136,7 +136,7 @@ function drawAllNpcs(ctx) {
 
 // E 键交互：找最近的 NPC，弹出选项面板
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen) {
+  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen) {
     const nearest = getNearestNpc();
     if (nearest) {
       openNpcInteract(nearest);
