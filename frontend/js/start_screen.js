@@ -63,6 +63,12 @@ function hideStartScreen() {
   for (const key in dialogueHistory) {
     delete dialogueHistory[key];
   }
+  // 确保游戏容器显示后再初始化 Canvas 尺寸
+  requestAnimationFrame(() => {
+    if (typeof resizeCanvas === 'function') {
+      resizeCanvas();
+    }
+  });
 }
 
 function closeSavePanel() {

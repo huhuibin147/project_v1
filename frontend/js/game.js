@@ -10,20 +10,19 @@ let helpVisible = false; // 帮助提示显示状态
 function initCanvas() {
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
-  // 画布大小填充整个窗口
+  resizeCanvas();
+  ctx.imageSmoothingEnabled = false;
+  
+  // 窗口大小改变时更新画布
+  window.addEventListener('resize', resizeCanvas);
+}
+
+function resizeCanvas() {
+  if (!canvas) return;
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   camera.viewportWidth = canvas.width;
   camera.viewportHeight = canvas.height;
-  ctx.imageSmoothingEnabled = false;
-  
-  // 窗口大小改变时更新画布
-  window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    camera.viewportWidth = canvas.width;
-    camera.viewportHeight = canvas.height;
-  });
 }
 
 function gameLoop(timestamp) {
@@ -108,14 +107,14 @@ function drawHUD(ctx) {
     ctx.fillText(helpText2, canvas.width / 2, boxY + 45);
   }
 
-  // 绘制地图名称
+  // 绘制地图名称（显示在最顶部）
   if (currentMap) {
     ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(8, 8, ctx.measureText(currentMap.name).width + 16, 20);
+    ctx.fillRect(8, 8, ctx.measureText(currentMap.name).width + 16, 22);
     ctx.fillStyle = "#f0c060";
-    ctx.font = "bold 12px monospace";
+    ctx.font = "bold 13px monospace";
     ctx.textAlign = "left";
-    ctx.fillText(currentMap.name, 16, 22);
+    ctx.fillText(currentMap.name, 16, 24);
   }
 }
 

@@ -172,6 +172,7 @@ async def list_npcs():
             "name": cfg["name"],
             "role": cfg["role"],
             "location": cfg["location"],
+            "map_id": cfg.get("map_id", ""),
             "greeting": cfg["greeting"],
         })
     return result

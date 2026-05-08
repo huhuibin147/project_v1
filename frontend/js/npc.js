@@ -8,27 +8,31 @@ let npcInteractOpen = false;
 
 function initNpcs(npcList) {
   // 从当前地图配置获取 NPC 位置
+  const currentMapId = currentMap?.id || "";
   const mapNpcs = currentMap?.npcs || [];
   const npcPositionMap = {};
   for (const mn of mapNpcs) {
     npcPositionMap[mn.npc_id] = { x: mn.x, y: mn.y };
   }
 
-  npcs = npcList.map(cfg => {
-    const pos = npcPositionMap[cfg.npc_id] || { x: 4, y: 5 };
-    return {
-      npc_id: cfg.npc_id,
-      name: cfg.name,
-      role: cfg.role,
-      greeting: cfg.greeting,
-      x: pos.x * TILE_SIZE,
-      y: pos.y * TILE_SIZE,
-      mood: "平静",
-      affinity: 50,
-      interactRange: 2,
-      showPrompt: false,
-    };
-  });
+  // 只渲染属于当前地图的 NPC
+  npcs = npcList
+    .filter(cfg => cfg.map_id === currentMapId)
+    .map(cfg => {
+      const pos = npcPositionMap[cfg.npc_id] || { x: 4, y: 5 };
+      return {
+        npc_id: cfg.npc_id,
+        name: cfg.name,
+        role: cfg.role,
+        greeting: cfg.greeting,
+        x: pos.x * TILE_SIZE,
+        y: pos.y * TILE_SIZE,
+        mood: "平静",
+        affinity: 50,
+        interactRange: 2,
+        showPrompt: false,
+      };
+    });
 }
 
 function isPlayerNearNpc(npc) {

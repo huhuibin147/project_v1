@@ -35,15 +35,20 @@ body {
 #dialogue-panel {
   display: none;
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 220px;
-  background: rgba(0, 0, 0, 0.88);
-  border-top: 2px solid #f0c060;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  max-width: 650px;
+  min-width: 400px;
+  height: 280px;
+  background: rgba(0, 0, 0, 0.92);
+  border: 2px solid #f0c060;
+  border-radius: 8px;
   flex-direction: column;
   color: #eee;
   font-size: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 #dialogue-panel.active {
@@ -200,7 +205,7 @@ body {
 /* HUD 顶部状态条 */
 #hud-bar {
   position: absolute;
-  top: 0;
+  top: 40px;
   left: 0;
   right: 0;
   display: flex;

@@ -4,6 +4,7 @@
     "name": "铁匠老王",
     "role": "铁匠",
     "location": "青石村铁匠铺",
+    "map_id": "village",
 
     "personality": {
       "traits": "豪爽直率，说话带点江湖气",
@@ -57,6 +58,7 @@
     "name": "杂货婆刘婶",
     "role": "日用品商人",
     "location": "青石村杂货铺",
+    "map_id": "village",
 
     "personality": {
       "traits": "热情健谈，爱唠叨，精明但不刻薄",
@@ -104,5 +106,57 @@
     },
 
     "default_gold": 200
+  },
+
+  "herbalist": {
+    "id": "herbalist",
+    "name": "采药人老林",
+    "role": "采药人",
+    "location": "幽暗森林",
+    "map_id": "forest",
+
+    "personality": {
+      "traits": "沉默寡言，神秘莫测，对森林了如指掌",
+      "pronoun": "我",
+      "style": "简短含蓄，偶尔说些意味深长的话",
+      "likes": "安静的人、尊重自然的人",
+      "dislikes": "吵闹的人、破坏森林的人"
+    },
+
+    "backstory": "老林在幽暗森林深处生活了十几年，据说他曾是京城的名医，因一场变故隐居于此。他熟悉森林中每一种草药，也知晓森林深处的秘密。村民们很少见到他，只有偶尔深入森林的冒险者才有幸遇见。",
+
+    "greeting": "……你来了。森林不欢迎喧闹的人，但如果你需要草药，我可以帮忙。",
+
+    "default_mood": "平静",
+    "default_affinity": 40,
+
+    "personality_params": {
+      "friendliness": 0.5,
+      "courage": 0.8,
+      "greed": 0.2,
+      "humor": 0.3
+    },
+
+    "intents": {
+      "chat": "闲聊、询问森林的事、打听情报",
+      "quest": "委托玩家收集稀有草药、探索森林深处",
+      "trade": "买卖草药、药材、特殊材料",
+      "unknown": "无法判断意图"
+    },
+
+    "shop": {
+      "name": "老林草药铺",
+      "gold": 150,
+      "inventory": [
+        {"item_id": "herb", "quantity": 20},
+        {"item_id": "health_potion", "quantity": 8},
+        {"item_id": "antidote", "quantity": 12},
+        {"item_id": "bandage", "quantity": 15},
+        {"item_id": "candle", "quantity": 10},
+        {"item_id": "torch", "quantity": 8}
+      ]
+    },
+
+    "default_gold": 100
   }
 }
