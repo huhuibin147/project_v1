@@ -63,15 +63,19 @@ function updateCamera() {
 
   // 边界钳制
   if (mapPixelWidth > camera.viewportWidth) {
+    // 地图比视口宽，限制在地图范围内
     targetX = Math.max(0, Math.min(targetX, mapPixelWidth - camera.viewportWidth));
   } else {
-    targetX = -(camera.viewportWidth - mapPixelWidth) / 2;
+    // 地图比视口窄，居中显示
+    targetX = (mapPixelWidth - camera.viewportWidth) / 2;
   }
 
   if (mapPixelHeight > camera.viewportHeight) {
+    // 地图比视口高，限制在地图范围内
     targetY = Math.max(0, Math.min(targetY, mapPixelHeight - camera.viewportHeight));
   } else {
-    targetY = -(camera.viewportHeight - mapPixelHeight) / 2;
+    // 地图比视口矮，居中显示
+    targetY = (mapPixelHeight - camera.viewportHeight) / 2;
   }
 
   camera.x = targetX;
@@ -85,6 +89,7 @@ function drawMap(ctx) {
   const ground = currentMap.layers?.ground;
   if (!ground) return;
 
+  // 计算可见区域的瓦片范围（考虑摄像机偏移）
   const startCol = Math.max(0, Math.floor(camera.x / TILE_SIZE));
   const endCol = Math.min(currentMap.width, Math.ceil((camera.x + camera.viewportWidth) / TILE_SIZE) + 1);
   const startRow = Math.max(0, Math.floor(camera.y / TILE_SIZE));
@@ -98,6 +103,7 @@ function drawMap(ctx) {
       const tileInfo = tileConfig[String(tileId)];
       if (!tileInfo) continue;
 
+      // 使用世界坐标（translate会处理偏移）
       const x = col * TILE_SIZE;
       const y = row * TILE_SIZE;
 

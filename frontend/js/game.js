@@ -10,12 +10,20 @@ let helpVisible = false; // 帮助提示显示状态
 function initCanvas() {
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
-  // 画布大小固定为 800x576（25x18 瓦片）
-  canvas.width = 800;
-  canvas.height = 576;
+  // 画布大小填充整个窗口
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   camera.viewportWidth = canvas.width;
   camera.viewportHeight = canvas.height;
   ctx.imageSmoothingEnabled = false;
+  
+  // 窗口大小改变时更新画布
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    camera.viewportWidth = canvas.width;
+    camera.viewportHeight = canvas.height;
+  });
 }
 
 function gameLoop(timestamp) {
@@ -153,6 +161,8 @@ async function transferToMap(targetMap, targetX, targetY) {
       // 同步玩家信息
       Object.assign(playerInfo, data.player_info);
       updatePlayerHUD();
+      // 更新摄像机
+      updateCamera();
     }
   } catch (e) {
     console.error("地图切换失败:", e);
@@ -174,6 +184,9 @@ async function startGame() {
 
   await fetchAllNpcs();
   fetchInventory();
+
+  // 立即更新一次摄像机，确保初始位置正确
+  updateCamera();
 
   // 启动定期保存位置的定时器（每5秒）
   if (positionSaveTimer) clearInterval(positionSaveTimer);

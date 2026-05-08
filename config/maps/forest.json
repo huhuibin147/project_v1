@@ -43,11 +43,11 @@
       "id": "portal_to_village",
       "type": "portal",
       "x": 12,
-      "y": 0,
+      "y": 2,
       "properties": {
         "target_map": "village",
-        "target_x": 18,
-        "target_y": 16
+        "target_x": 19,
+        "target_y": 22
       }
     },
     {
