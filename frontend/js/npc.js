@@ -142,6 +142,15 @@ document.addEventListener("keydown", (e) => {
       openNpcInteract(nearest);
     }
   }
+  
+  // NPC交互选项快捷键：1-对话，2-商店
+  if (npcInteractOpen) {
+    if (e.key === "1") {
+      interactTalk();
+    } else if (e.key === "2") {
+      interactShop();
+    }
+  }
 });
 
 function openNpcInteract(npc) {

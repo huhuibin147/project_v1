@@ -17,16 +17,35 @@ async function initStartScreen() {
   try {
     const res = await fetch("/api/saves");
     if (!res.ok) throw new Error("获取存档失败");
-    const saves = await res.json();
+    const data = await res.json();
+    const saves = data.saves;
+    const lastSlot = data.last_slot;
     saveSlotData = saves;
 
-    // 找到最后一个存档，显示"继续冒险"按钮
-    const existingSaves = saves.filter((s) => s.exists);
+    // 显示"继续冒险"按钮
     const btn = document.getElementById("btn-continue");
-    if (existingSaves.length > 0) {
-      const lastSave = existingSaves[existingSaves.length - 1];
+    
+    // 优先使用最后加载的存档槽，如果没有则使用最后一个存在的存档
+    let continueSlot = null;
+    if (lastSlot) {
+      // 检查最后加载的存档是否存在
+      const lastSave = saves.find(s => s.slot === lastSlot && s.exists);
+      if (lastSave) {
+        continueSlot = lastSave;
+      }
+    }
+    
+    // 如果最后加载的存档不存在，使用最后一个存在的存档
+    if (!continueSlot) {
+      const existingSaves = saves.filter(s => s.exists);
+      if (existingSaves.length > 0) {
+        continueSlot = existingSaves[existingSaves.length - 1];
+      }
+    }
+    
+    if (continueSlot) {
       btn.style.display = "block";
-      btn.onclick = () => loadGame(lastSave.slot);
+      btn.onclick = () => loadGame(continueSlot.slot);
     } else {
       btn.style.display = "none";
     }
@@ -77,7 +96,8 @@ async function showNewGamePanel() {
   try {
     const res = await fetch("/api/saves");
     if (!res.ok) throw new Error("获取存档失败");
-    saveSlotData = await res.json();
+    const data = await res.json();
+    saveSlotData = data.saves;
   } catch (e) {
     console.error("加载存档信息失败:", e);
     alert("加载存档信息失败，请重试");
@@ -199,7 +219,8 @@ async function showLoadPanel() {
   try {
     const res = await fetch("/api/saves");
     if (!res.ok) throw new Error("获取存档失败");
-    saveSlotData = await res.json();
+    const data = await res.json();
+    saveSlotData = data.saves;
   } catch (e) {
     console.error("加载存档信息失败:", e);
     alert("加载存档信息失败，请重试");
@@ -278,7 +299,8 @@ async function deleteSave(slot) {
     if (res.ok && data.success) {
       // 刷新存档列表
       const savesRes = await fetch("/api/saves");
-      saveSlotData = await savesRes.json();
+      const savesData = await savesRes.json();
+      saveSlotData = savesData.saves;
       renderLoadSlots();
     } else {
       alert("删除失败：" + (data.detail || "未知错误"));

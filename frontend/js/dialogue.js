@@ -19,6 +19,9 @@ async function openDialogue(npc) {
 
   document.getElementById("dialogue-panel").classList.add("active");
   document.getElementById("dialogue-title").textContent = npc.name;
+  
+  // 先清空输入框
+  document.getElementById("dialogue-input").value = "";
   document.getElementById("dialogue-input").focus();
 
   // 如果前端没有对话记录，从后端加载
@@ -59,6 +62,12 @@ async function openDialogue(npc) {
   }
 
   renderDialogue(npc.npc_id);
+  
+  // 使用 setTimeout 确保在当前事件循环完成后清空输入框
+  // 这样可以清除掉按键快捷键带来的字符残留
+  setTimeout(() => {
+    document.getElementById("dialogue-input").value = "";
+  }, 0);
 }
 
 function closeDialogue() {

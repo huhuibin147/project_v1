@@ -326,7 +326,18 @@ async def heal_player(amount: int = 999):
 @app.get("/api/saves")
 async def list_saves():
     """获取所有存档槽信息。"""
-    return player_profile.list_saves()
+    saves = player_profile.list_saves()
+    # 添加最后加载的存档槽信息
+    last_slot_file = DATA_DIR / "last_slot.json"
+    last_slot = None
+    if last_slot_file.exists():
+        try:
+            with open(last_slot_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                last_slot = data.get("last_slot")
+        except:
+            pass
+    return {"saves": saves, "last_slot": last_slot}
 
 
 @app.post("/api/saves/new")
@@ -339,6 +350,10 @@ async def new_game(req: NewGameRequest):
     success = player_profile.new_game(req.name.strip(), req.class_id, req.slot)
     if not success:
         raise HTTPException(status_code=400, detail="创建失败：无效的职业或存档槽")
+    # 记录最后加载的存档槽
+    last_slot_file = DATA_DIR / "last_slot.json"
+    with open(last_slot_file, "w", encoding="utf-8") as f:
+        json.dump({"last_slot": req.slot}, f)
     return {"success": True, "player_info": player_profile.get_info()}
 
 
@@ -350,6 +365,10 @@ async def load_save(req: LoadSaveRequest):
         raise HTTPException(status_code=400, detail="存档不存在或已损坏")
     # 清空旧的 NPC 实例，确保加载新存档数据
     npc_agents.clear()
+    # 记录最后加载的存档槽
+    last_slot_file = DATA_DIR / "last_slot.json"
+    with open(last_slot_file, "w", encoding="utf-8") as f:
+        json.dump({"last_slot": req.slot}, f)
     return {"success": True, "player_info": player_profile.get_info()}
 
 

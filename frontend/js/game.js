@@ -5,6 +5,7 @@ let lastTime = 0;
 let gameStarted = false;
 let gameMenuOpen = false;
 let positionSaveTimer = null;
+let helpVisible = false; // 帮助提示显示状态
 
 function initCanvas() {
   canvas = document.getElementById("game-canvas");
@@ -57,17 +58,37 @@ function render() {
 }
 
 function drawHUD(ctx) {
-  const hudBarEl = document.getElementById("hud-bar");
-  const hudBottom = hudBarEl ? hudBarEl.getBoundingClientRect().bottom - canvas.getBoundingClientRect().top : 0;
-  const startY = Math.max(hudBottom + 6, 40);
-
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(8, startY, 220, 38);
-  ctx.fillStyle = "#fff";
-  ctx.font = "11px monospace";
-  ctx.textAlign = "left";
-  ctx.fillText("WASD/方向键 移动  E 对话", 16, startY + 14);
-  ctx.fillText("靠近NPC按E开始冒险吧", 16, startY + 28);
+  // 绘制帮助提示（居中显示）
+  if (helpVisible) {
+    const helpText1 = "WASD/方向键 移动  |  E 与NPC交互  |  I 背包  |  P 角色信息  |  O 菜单";
+    const helpText2 = "靠近NPC按E开始冒险吧";
+    
+    ctx.font = "bold 13px monospace";
+    const width1 = ctx.measureText(helpText1).width;
+    const width2 = ctx.measureText(helpText2).width;
+    const maxWidth = Math.max(width1, width2) + 40;
+    const boxHeight = 60;
+    
+    // 居中位置
+    const boxX = (canvas.width - maxWidth) / 2;
+    const boxY = (canvas.height - boxHeight) / 2;
+    
+    // 背景
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.strokeStyle = "#f0c060";
+    ctx.lineWidth = 2;
+    ctx.fillRect(boxX, boxY, maxWidth, boxHeight);
+    ctx.strokeRect(boxX, boxY, maxWidth, boxHeight);
+    
+    // 文字
+    ctx.fillStyle = "#f0c060";
+    ctx.textAlign = "center";
+    ctx.fillText(helpText1, canvas.width / 2, boxY + 25);
+    
+    ctx.fillStyle = "#fff";
+    ctx.font = "12px monospace";
+    ctx.fillText(helpText2, canvas.width / 2, boxY + 45);
+  }
 }
 
 // 开始游戏（由开始界面调用）
@@ -146,9 +167,16 @@ function returnToMainMenu() {
   });
 }
 
-// ESC 键切换游戏菜单
+// O 键切换游戏菜单
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && gameStarted) {
+  if ((e.key === "o" || e.key === "O") && gameStarted) {
     toggleGameMenu();
+  }
+});
+
+// H 键切换帮助提示显示/隐藏
+document.addEventListener("keydown", (e) => {
+  if ((e.key === "h" || e.key === "H") && gameStarted) {
+    helpVisible = !helpVisible;
   }
 });
