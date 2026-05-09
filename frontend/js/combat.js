@@ -347,7 +347,19 @@ async function initiateCombat(monsterInstanceId) {
     }
 
     combatSessionId = data.session_id;
-    combatState = data;
+    // 将嵌套结构扁平化，与 action 响应保持一致
+    combatState = {
+      ...data,
+      monster_name: data.monster?.name || "",
+      monster_hp: data.monster?.hp || 0,
+      monster_max_hp: data.monster?.max_hp || 0,
+      player_hp: data.player?.hp || 0,
+      player_max_hp: data.player?.max_hp || 0,
+      player_mp: data.player?.mp || 0,
+      player_max_mp: data.player?.max_mp || 0,
+      skills: data.player?.skills || [],
+      turn_count: 1,
+    };
     combatOpen = true;
     combatMonsterInstanceId = monsterInstanceId;
 
@@ -380,6 +392,10 @@ function renderCombat() {
   document.getElementById("combat-player-hp-bar").style.width = playerHpPct + "%";
   document.getElementById("combat-player-hp-text").textContent = `${combatState.player_hp}/${combatState.player_max_hp}`;
 
+  const playerMpPct = ((combatState.player_mp || 0) / (combatState.player_max_mp || 1)) * 100;
+  document.getElementById("combat-player-mp-bar").style.width = playerMpPct + "%";
+  document.getElementById("combat-player-mp-text").textContent = `${combatState.player_mp || 0}/${combatState.player_max_mp || 0}`;
+
   // 状态效果
   renderEffects("combat-player-effects", combatState.player_effects || []);
   renderEffects("combat-monster-effects", combatState.monster_effects || []);
@@ -388,6 +404,7 @@ function renderCombat() {
   const isPlayerTurn = combatState.phase === "player_turn";
   document.getElementById("btn-combat-attack").disabled = !isPlayerTurn;
   document.getElementById("btn-combat-defend").disabled = !isPlayerTurn;
+  document.getElementById("btn-combat-skill").disabled = !isPlayerTurn;
   document.getElementById("btn-combat-item").disabled = !isPlayerTurn;
   document.getElementById("btn-combat-flee").disabled = !isPlayerTurn;
 }
@@ -431,6 +448,8 @@ function appendCombatLog(logEntries) {
       div.className += entry.fled ? " log-victory" : " log-monster";
     } else if (entry.type === "use_item") {
       div.className += entry.success ? " log-item" : " log-monster";
+    } else if (entry.type === "skill") {
+      div.className += entry.success ? " log-skill" : " log-monster";
     } else if (entry.type === "effect") {
       div.className += " log-effect";
     } else if (entry.type === "monster_special") {
@@ -460,6 +479,9 @@ async function combatAction(action, itemId) {
     const body = { session_id: combatSessionId, action: action };
     if (action === "use_item" && itemId) {
       body.item_id = itemId;
+    }
+    if (action === "skill" && itemId) {
+      body.skill_id = itemId;
     }
 
     const resp = await fetch("/api/combat/action", {
@@ -562,7 +584,7 @@ async function showCombatResult(data, isVictory) {
         html += `<div class="result-drop">- ${name} x${drop.quantity}</div>`;
       }
     }
-    if (data.level_up) {
+    if (data.level_up && (data.level_up.leveled === true || data.level_up === true)) {
       html += `<div class="result-levelup">等级提升！</div>`;
     }
     if (data.fled) {
@@ -632,6 +654,42 @@ async function endCombat() {
 }
 
 // 物品选择
+let combatSkillSelectOpen = false;
+
+function openCombatSkillSelect() {
+  if (!combatOpen || combatState.phase !== "player_turn") return;
+
+  combatSkillSelectOpen = true;
+  const container = document.getElementById("combat-skills");
+  container.innerHTML = "";
+
+  const skills = combatState.skills || [];
+
+  if (skills.length === 0) {
+    container.innerHTML = '<div class="empty-hint">没有可用的技能</div>';
+  } else {
+    for (const skill of skills) {
+      const div = document.createElement("div");
+      const disabled = (skill.cooldown_remaining || 0) > 0 || (combatState.player_mp || 0) < (skill.mp_cost || 0);
+      const cdText = (skill.cooldown_remaining || 0) > 0 ? ` [CD:${skill.cooldown_remaining}]` : "";
+      div.className = "combat-skill-row";
+      div.innerHTML = `
+        <span class="combat-skill-name">${skill.name}${cdText}</span>
+        <span class="combat-skill-cost">${skill.mp_cost}MP</span>
+        <button class="btn-combat-use" ${disabled ? "disabled" : ""} onclick="combatAction('skill', '${skill.skill_id}')">使用</button>
+      `;
+      container.appendChild(div);
+    }
+  }
+
+  document.getElementById("combat-skill-panel").classList.add("active");
+}
+
+function closeCombatSkillSelect() {
+  combatSkillSelectOpen = false;
+  document.getElementById("combat-skill-panel").classList.remove("active");
+}
+
 function openCombatItemSelect() {
   if (!combatOpen || combatState.phase !== "player_turn") return;
 
@@ -639,7 +697,7 @@ function openCombatItemSelect() {
   const container = document.getElementById("combat-items");
   container.innerHTML = "";
 
-  const consumables = (inventoryState.items || []).filter(i => i.type === "consumable");
+  const consumables = (inventoryState.items || []).filter(i => i.type === "consumable" || i.type === "food");
 
   if (consumables.length === 0) {
     container.innerHTML = '<div class="empty-hint">没有可用的物品</div>';
@@ -668,6 +726,7 @@ function closeCombatItemSelect() {
 function disableCombatButtons() {
   document.getElementById("btn-combat-attack").disabled = true;
   document.getElementById("btn-combat-defend").disabled = true;
+  document.getElementById("btn-combat-skill").disabled = true;
   document.getElementById("btn-combat-item").disabled = true;
   document.getElementById("btn-combat-flee").disabled = true;
 }
@@ -675,6 +734,7 @@ function disableCombatButtons() {
 function enableCombatButtons() {
   document.getElementById("btn-combat-attack").disabled = false;
   document.getElementById("btn-combat-defend").disabled = false;
+  document.getElementById("btn-combat-skill").disabled = false;
   document.getElementById("btn-combat-item").disabled = false;
   document.getElementById("btn-combat-flee").disabled = false;
 }
@@ -690,10 +750,18 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 
+  if (combatSkillSelectOpen) {
+    if (e.key === "Escape") {
+      closeCombatSkillSelect();
+    }
+    return;
+  }
+
   if (combatState && combatState.phase === "player_turn") {
     if (e.key === "1") combatAction("attack");
     else if (e.key === "2") combatAction("defend");
-    else if (e.key === "3") openCombatItemSelect();
-    else if (e.key === "4") combatAction("flee");
+    else if (e.key === "3") openCombatSkillSelect();
+    else if (e.key === "4") openCombatItemSelect();
+    else if (e.key === "5") combatAction("flee");
   }
 });

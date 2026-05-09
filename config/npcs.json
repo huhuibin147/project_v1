@@ -153,6 +153,10 @@
           "quantity": 12
         },
         {
+          "item_id": "mana_potion",
+          "quantity": 8
+        },
+        {
           "item_id": "antidote",
           "quantity": 7
         },
@@ -171,6 +175,18 @@
         {
           "item_id": "iron_ore",
           "quantity": 8
+        },
+        {
+          "item_id": "scroll_heavy_strike",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_shield_wall",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_berserk",
+          "quantity": 2
         }
       ]
     },
@@ -226,6 +242,10 @@
           "quantity": 21
         },
         {
+          "item_id": "small_mana_potion",
+          "quantity": 15
+        },
+        {
           "item_id": "bandage",
           "quantity": 20
         },
@@ -264,6 +284,22 @@
         {
           "item_id": "honey",
           "quantity": 11
+        },
+        {
+          "item_id": "scroll_fireball",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_heal",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_frost_bolt",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_magic_shield",
+          "quantity": 2
         }
       ]
     },
@@ -385,9 +421,195 @@
         {
           "item_id": "honey",
           "quantity": 13
+        },
+        {
+          "item_id": "scroll_backstab",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_poison_blade",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_evasion",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_heal",
+          "quantity": 2
         }
       ]
     },
     "default_gold": 100
+  },
+  "priest": {
+    "id": "priest",
+    "name": "祭司阿雅",
+    "role": "治疗师",
+    "location": "青石村神殿",
+    "map_id": "village",
+    "personality": {
+      "traits": "温柔善良，虔诚慈悲，说话轻声细语",
+      "pronoun": "我",
+      "style": "温和有礼，带有祈祷和祝福的口吻",
+      "likes": "虔诚的信徒、需要帮助的人",
+      "dislikes": "邪恶之物、亵渎神殿的人"
+    },
+    "backstory": "阿雅是青石村神殿的祭司，自幼便展现出治疗天赋。她能用神圣之力治愈伤痛，也能解除各种诅咒和毒素。村民们都很尊敬她，经常来神殿祈祷。",
+    "greeting": "愿光明庇佑你，冒险者。看你风尘仆仆，是否需要治疗？",
+    "default_mood": "平静",
+    "default_affinity": 60,
+    "personality_params": {
+      "friendliness": 0.9,
+      "courage": 0.6,
+      "greed": 0.1,
+      "humor": 0.4
+    },
+    "intents": {
+      "chat": "闲聊、询问神殿的事、打听村里的传闻",
+      "quest": "委托玩家寻找神圣遗物、净化被污染的区域",
+      "trade": "购买治疗用品、出售草药",
+      "unknown": "无法判断意图"
+    },
+    "shop": {
+      "name": "神殿祭品",
+      "gold": 200,
+      "inventory": [
+        {
+          "item_id": "health_potion",
+          "quantity": 15
+        },
+        {
+          "item_id": "greater_health_potion",
+          "quantity": 8
+        },
+        {
+          "item_id": "small_mana_potion",
+          "quantity": 10
+        },
+        {
+          "item_id": "mana_potion",
+          "quantity": 8
+        },
+        {
+          "item_id": "antidote",
+          "quantity": 12
+        },
+        {
+          "item_id": "purify_potion",
+          "quantity": 10
+        },
+        {
+          "item_id": "bandage",
+          "quantity": 20
+        }
+      ]
+    },
+    "default_gold": 150,
+    "services": {
+      "heal": {
+        "name": "恢复生命",
+        "description": "恢复全部生命值",
+        "cost": 20
+      },
+      "restore_mp": {
+        "name": "恢复魔法",
+        "description": "恢复全部魔法值",
+        "cost": 15
+      },
+      "cure": {
+        "name": "解除异常",
+        "description": "解除所有负面状态效果",
+        "cost": 30
+      }
+    }
+  },
+  "skill_master": {
+    "id": "skill_master",
+    "name": "导师艾尔文",
+    "role": "技能导师",
+    "location": "青石村训练场",
+    "map_id": "village",
+    "personality": {
+      "traits": "严谨认真，博学多才，对学徒要求严格",
+      "pronoun": "老夫",
+      "style": "正式庄重，偶尔引用古语和典故",
+      "likes": "勤奋好学的学生、有天赋的年轻人",
+      "dislikes": "懒惰懈怠、半途而废的人"
+    },
+    "backstory": "艾尔文曾是王都魔法学院的首席导师，退休后隐居在青石村。他精通各职业的战斗技巧，愿意教导有潜力的冒险者。但他只收真正用心学习的学生。",
+    "greeting": "年轻人，想学点什么？老夫这里可以传授各职业的战斗技艺，不过要收取一些学费。",
+    "default_mood": "严肃",
+    "default_affinity": 45,
+    "personality_params": {
+      "friendliness": 0.6,
+      "courage": 0.7,
+      "greed": 0.3,
+      "humor": 0.2
+    },
+    "intents": {
+      "chat": "闲聊、询问战斗技巧、打听学院往事",
+      "quest": "委托玩家收集稀有材料、测试新招式",
+      "trade": "购买技能书、学习技能",
+      "unknown": "无法判断意图"
+    },
+    "shop": {
+      "name": "艾尔文书斋",
+      "gold": 500,
+      "inventory": [
+        {
+          "item_id": "scroll_heavy_strike",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_shield_wall",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_berserk",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_backstab",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_poison_blade",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_evasion",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_fireball",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_heal",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_frost_bolt",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_magic_shield",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_thunder_strike",
+          "quantity": 1
+        }
+      ]
+    },
+    "default_gold": 300,
+    "services": {
+      "learn_skill": {
+        "name": "直接传授",
+        "description": "无需技能书，直接学习职业技能（等级要求不变）",
+        "cost_multiplier": 1.5
+      }
+    }
   }
 }

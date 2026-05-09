@@ -297,12 +297,35 @@ FOOD_FLAVORS = [
 CONSUMABLE_TEMPLATES = [
     {"name": "生命药水", "id": "health_potion", "desc": "恢复少量生命值。", "buy": 30, "sell": 15},
     {"name": "强效生命药水", "id": "greater_health_potion", "desc": "恢复大量生命值。", "buy": 80, "sell": 40},
+    {"name": "超级生命药水", "id": "super_health_potion", "desc": "恢复巨量的生命值。", "buy": 150, "sell": 75},
     {"name": "解毒药", "id": "antidote", "desc": "解除中毒状态。", "buy": 25, "sell": 12},
     {"name": "绷带", "id": "bandage", "desc": "简易的止血绷带。", "buy": 8, "sell": 4},
     {"name": "魔力药水", "id": "mana_potion", "desc": "恢复少量魔力。", "buy": 35, "sell": 17},
+    {"name": "强效魔力药水", "id": "greater_mana_potion", "desc": "恢复大量魔力。", "buy": 80, "sell": 40},
     {"name": "净化药水", "id": "purify_potion", "desc": "解除诅咒状态。", "buy": 50, "sell": 25},
     {"name": "力量药剂", "id": "strength_elixir", "desc": "暂时提升攻击力。", "buy": 60, "sell": 30},
     {"name": "速度药剂", "id": "speed_elixir", "desc": "暂时提升速度。", "buy": 60, "sell": 30},
+    {"name": "防御药剂", "id": "defense_elixir", "desc": "暂时提升防御力。", "buy": 60, "sell": 30},
+    {"name": "复活卷轴", "id": "scroll_of_resurrection", "desc": "死亡时自动复活并恢复一半生命值。", "buy": 200, "sell": 100},
+    {"name": "传送卷轴", "id": "scroll_of_teleport", "desc": "瞬间传送回村庄。", "buy": 50, "sell": 25},
+    {"name": "鉴定卷轴", "id": "scroll_of_identify", "desc": "鉴定未知物品。", "buy": 30, "sell": 15},
+    {"name": "火焰卷轴", "id": "scroll_of_fire", "desc": "释放火焰攻击所有敌人。", "buy": 80, "sell": 40},
+    {"name": "冰霜卷轴", "id": "scroll_of_ice", "desc": "释放冰霜冻结敌人。", "buy": 80, "sell": 40},
+]
+
+# ===== 技能书模板 =====
+SKILL_BOOK_TEMPLATES = [
+    {"name": "技能书：重击", "id": "skill_book_slash", "desc": "战士技能书，学习重击。", "buy": 200, "sell": 100, "skill_id": "slash", "required_class": "warrior", "required_level": 1},
+    {"name": "技能书：盾墙", "id": "skill_book_shield_wall", "desc": "战士技能书，学习盾墙。", "buy": 250, "sell": 125, "skill_id": "shield_wall", "required_class": "warrior", "required_level": 3},
+    {"name": "技能书：狂暴", "id": "skill_book_berserk", "desc": "战士技能书，学习狂暴。", "buy": 300, "sell": 150, "skill_id": "berserk", "required_class": "warrior", "required_level": 5},
+    {"name": "技能书：背刺", "id": "skill_book_backstab", "desc": "盗贼技能书，学习背刺。", "buy": 200, "sell": 100, "skill_id": "backstab", "required_class": "rogue", "required_level": 1},
+    {"name": "技能书：毒刃", "id": "skill_book_poison_blade", "desc": "盗贼技能书，学习毒刃。", "buy": 250, "sell": 125, "skill_id": "poison_blade", "required_class": "rogue", "required_level": 3},
+    {"name": "技能书：闪避", "id": "skill_book_dodge", "desc": "盗贼技能书，学习闪避。", "buy": 300, "sell": 150, "skill_id": "dodge", "required_class": "rogue", "required_level": 5},
+    {"name": "技能书：火球术", "id": "skill_book_fireball", "desc": "法师技能书，学习火球术。", "buy": 200, "sell": 100, "skill_id": "fireball", "required_class": "mage", "required_level": 1},
+    {"name": "技能书：治愈术", "id": "skill_book_heal", "desc": "法师技能书，学习治愈术。", "buy": 200, "sell": 100, "skill_id": "heal", "required_class": "mage", "required_level": 1},
+    {"name": "技能书：冰冻术", "id": "skill_book_ice", "desc": "法师技能书，学习冰冻术。", "buy": 250, "sell": 125, "skill_id": "ice", "required_class": "mage", "required_level": 3},
+    {"name": "技能书：魔力护盾", "id": "skill_book_magic_shield", "desc": "法师技能书，学习魔力护盾。", "buy": 300, "sell": 150, "skill_id": "magic_shield", "required_class": "mage", "required_level": 5},
+    {"name": "技能书：雷霆一击", "id": "skill_book_thunder", "desc": "通用技能书，学习雷霆一击。", "buy": 300, "sell": 150, "skill_id": "thunder", "required_class": "any", "required_level": 8},
 ]
 
 MATERIAL_TEMPLATES = [
@@ -316,6 +339,14 @@ MATERIAL_TEMPLATES = [
     {"name": "龙鳞", "id": "dragon_scale", "desc": "坚硬的龙鳞，极其珍贵。", "buy": 0, "sell": 80},
     {"name": "丝绸", "id": "silk", "desc": "光滑细腻的丝绸，价值不菲。", "buy": 25, "sell": 12},
     {"name": "精钢锭", "id": "steel_ingot", "desc": "精炼的钢锭，锻造高级装备的原料。", "buy": 0, "sell": 35},
+    {"name": "秘银矿石", "id": "mithril_ore", "desc": "稀有的秘银矿石，散发着微光。", "buy": 0, "sell": 60},
+    {"name": "玄铁矿石", "id": "dark_iron_ore", "desc": "沉重的玄铁矿石，蕴含黑暗之力。", "buy": 0, "sell": 70},
+    {"name": "魔晶碎片", "id": "crystal_shard", "desc": "魔晶的碎片，魔力充沛。", "buy": 0, "sell": 50},
+    {"name": "毒液囊", "id": "venom_sac", "desc": "从毒蛛身上取得的毒液囊。", "buy": 0, "sell": 30},
+    {"name": "哥布林耳朵", "id": "goblin_ear", "desc": "哥布林的耳朵，某些商人会收购。", "buy": 0, "sell": 15},
+    {"name": "暗熊爪", "id": "dark_bear_claw", "desc": "暗熊的锋利爪子，制作武器的好材料。", "buy": 0, "sell": 45},
+    {"name": "史莱姆凝胶", "id": "slime_gel", "desc": "史莱姆的凝胶，可以用来制作药水。", "buy": 0, "sell": 5},
+    {"name": "古木", "id": "ancient_wood", "desc": "年代久远的古木，质地坚硬。", "buy": 0, "sell": 25},
 ]
 
 FOOD_TEMPLATES = [
@@ -327,6 +358,11 @@ FOOD_TEMPLATES = [
     {"name": "蜂蜜", "id": "honey", "desc": "森林里采的蜂蜜，甘甜可口。", "buy": 18, "sell": 9},
     {"name": "干粮", "id": "rations", "desc": "行军干粮，耐储存。", "buy": 10, "sell": 5},
     {"name": "炖汤", "id": "stew", "desc": "热腾腾的炖汤，暖身又暖心。", "buy": 22, "sell": 11},
+    {"name": "苹果", "id": "apple", "desc": "新鲜的苹果，清脆可口。", "buy": 3, "sell": 1},
+    {"name": "烤肉", "id": "roasted_meat", "desc": "香喷喷的烤肉，恢复体力。", "buy": 18, "sell": 9},
+    {"name": "奶酪", "id": "cheese", "desc": "浓郁的奶酪，营养丰富。", "buy": 15, "sell": 7},
+    {"name": "水果拼盘", "id": "fruit_platter", "desc": "各种水果的拼盘，补充维生素。", "buy": 25, "sell": 12},
+    {"name": "野味汤", "id": "game_soup", "desc": "用野味熬制的浓汤，滋补身体。", "buy": 30, "sell": 15},
 ]
 
 TOOL_TEMPLATES = [
@@ -335,6 +371,11 @@ TOOL_TEMPLATES = [
     {"name": "蜡烛", "id": "candle", "desc": "照明用的蜡烛。", "buy": 5, "sell": 2},
     {"name": "开锁器", "id": "lockpick", "desc": "精巧的开锁工具。", "buy": 25, "sell": 12},
     {"name": "望远镜", "id": "spyglass", "desc": "可以看清远处的东西。", "buy": 40, "sell": 20},
+    {"name": "铲子", "id": "shovel", "desc": "用来挖掘或战斗。", "buy": 20, "sell": 10},
+    {"name": "钓鱼竿", "id": "fishing_rod", "desc": "钓鱼用的工具。", "buy": 30, "sell": 15},
+    {"name": "捕兽夹", "id": "trap", "desc": "用来捕捉野兽。", "buy": 35, "sell": 17},
+    {"name": "磨刀石", "id": "whetstone", "desc": "用来打磨武器，保持锋利。", "buy": 15, "sell": 7},
+    {"name": "急救包", "id": "first_aid_kit", "desc": "包含各种急救用品。", "buy": 50, "sell": 25},
 ]
 
 
@@ -580,6 +621,25 @@ class ItemGenerator:
         print(f"生成工具：{len(generated)} 件")
         return generated
 
+    def generate_skill_books(self):
+        generated = {}
+        for t in SKILL_BOOK_TEMPLATES:
+            if t["id"] not in self.items and t["id"] not in generated:
+                generated[t["id"]] = {
+                    "id": t["id"],
+                    "name": t["name"],
+                    "type": "skill_book",
+                    "description": t["desc"],
+                    "buy_price": t["buy"],
+                    "sell_price": t["sell"],
+                    "stackable": True,
+                    "skill_id": t["skill_id"],
+                    "required_class": t["required_class"],
+                    "required_level": t["required_level"],
+                }
+        print(f"生成技能书：{len(generated)} 件")
+        return generated
+
     def generate_all(self):
         generated = {}
         for tk in TIERS:
@@ -588,6 +648,7 @@ class ItemGenerator:
         generated.update(self.generate_materials())
         generated.update(self.generate_foods())
         generated.update(self.generate_tools())
+        generated.update(self.generate_skill_books())
         return generated
 
     def apply(self, generated):
@@ -713,7 +774,7 @@ class ItemGenerator:
                 by_type[t] = []
             by_type[t].append(item)
 
-        type_order = ["weapon", "armor", "accessory", "consumable", "food", "tool", "material"]
+        type_order = ["weapon", "armor", "accessory", "consumable", "food", "tool", "material", "skill_book"]
         for t in type_order:
             if t in by_type:
                 items = by_type[t]
@@ -771,7 +832,7 @@ def main():
 
     if cmd == "generate":
         if len(sys.argv) < 3:
-            print("用法：python item_generator.py generate <equip|consumable|material|food|tool|all> [tier1|tier2|tier3|all]")
+            print("用法：python item_generator.py generate <equip|consumable|material|food|tool|skill_book|all> [tier1|tier2|tier3|all]")
             return
 
         sub = sys.argv[2]
@@ -786,6 +847,8 @@ def main():
             generated = gen.generate_foods()
         elif sub == "tool":
             generated = gen.generate_tools()
+        elif sub == "skill_book":
+            generated = gen.generate_skill_books()
         elif sub == "all":
             generated = gen.generate_all()
         else:

@@ -74,6 +74,7 @@
       <div id="hud-player">
         <span id="hud-level">Lv.1</span>
         <span id="hud-hp">120/120</span>
+        <span id="hud-mp">30/30</span>
       </div>
       <div id="hud-right">
         <div id="hud-gold-bar">
@@ -126,6 +127,19 @@
         <span class="panel-gold">金币: <span id="inventory-gold">0</span></span>
         <button class="panel-close" onclick="closeInventory()">×</button>
       </div>
+      <div class="inventory-toolbar">
+        <div class="view-toggle">
+          <button class="view-btn active" id="view-list" onclick="switchInventoryView('list')" title="列表">☰</button>
+          <button class="view-btn" id="view-grid" onclick="switchInventoryView('grid')" title="格子">⊞</button>
+        </div>
+        <div class="filter-tabs">
+          <button class="filter-btn active" data-filter="all" onclick="filterInventory('all')">全部</button>
+          <button class="filter-btn" data-filter="weapon" onclick="filterInventory('weapon')">武器</button>
+          <button class="filter-btn" data-filter="armor" onclick="filterInventory('armor')">防具</button>
+          <button class="filter-btn" data-filter="consumable" onclick="filterInventory('consumable')">消耗</button>
+          <button class="filter-btn" data-filter="material" onclick="filterInventory('material')">材料</button>
+        </div>
+      </div>
       <div id="inventory-items" class="items-grid"></div>
       <div id="inventory-pagination" class="pagination-bar" style="display:none"></div>
     </div>
@@ -136,10 +150,32 @@
         <span class="panel-title" id="npc-interact-title">NPC</span>
         <button class="panel-close" onclick="closeNpcInteract()">×</button>
       </div>
-      <div class="npc-interact-actions">
+      <div class="npc-interact-actions" id="npc-interact-actions">
         <button class="btn-interact" onclick="interactTalk()">对话 (1)</button>
         <button class="btn-interact" onclick="interactShop()">商店 (2)</button>
       </div>
+    </div>
+
+    <!-- 治疗服务面板 -->
+    <div id="heal-panel">
+      <div class="panel-header">
+        <span class="panel-title" id="heal-title">治疗服务</span>
+        <span class="panel-info">你的金币: <span id="player-gold-heal">0</span></span>
+        <button class="panel-close" onclick="closeHealPanel()">×</button>
+      </div>
+      <div id="heal-message" class="trade-message" style="display:none"></div>
+      <div class="heal-services" id="heal-services"></div>
+    </div>
+
+    <!-- 技能学习面板 -->
+    <div id="skill-learn-panel">
+      <div class="panel-header">
+        <span class="panel-title" id="skill-learn-title">技能学习</span>
+        <span class="panel-info">你的金币: <span id="player-gold-skill">0</span></span>
+        <button class="panel-close" onclick="closeSkillLearnPanel()">×</button>
+      </div>
+      <div id="skill-learn-message" class="trade-message" style="display:none"></div>
+      <div class="skill-learn-list" id="skill-learn-list"></div>
     </div>
 
     <!-- 商店面板 -->
@@ -223,6 +259,13 @@
             <span class="pi-bar-text" id="pi-hp-text">120 / 120</span>
           </div>
           <div class="pi-bar-row">
+            <span class="pi-bar-label">MP</span>
+            <div class="pi-bar">
+              <div class="pi-bar-fill mp" id="pi-mp-bar" style="width:100%"></div>
+            </div>
+            <span class="pi-bar-text" id="pi-mp-text">30 / 30</span>
+          </div>
+          <div class="pi-bar-row">
             <span class="pi-bar-label">EXP</span>
             <div class="pi-bar">
               <div class="pi-bar-fill exp" id="pi-exp-bar" style="width:0%"></div>
@@ -249,6 +292,11 @@
               <span class="pi-stat-bonus" id="pi-speed-bonus"></span>
             </div>
           </div>
+        </div>
+
+        <div class="pi-section">
+          <div class="pi-section-title">技能</div>
+          <div id="pi-skills"><span class="no-effects">无</span></div>
         </div>
 
         <div class="pi-section">
@@ -370,6 +418,13 @@
             </div>
             <span class="combat-hp-text" id="combat-player-hp-text">120/120</span>
           </div>
+          <div class="combat-hp-bar-row">
+            <span class="combat-hp-label">MP</span>
+            <div class="combat-hp-bar">
+              <div class="combat-hp-fill player-mp" id="combat-player-mp-bar"></div>
+            </div>
+            <span class="combat-hp-text" id="combat-player-mp-text">30/30</span>
+          </div>
           <div id="combat-player-effects"></div>
         </div>
       </div>
@@ -381,12 +436,23 @@
         <button class="btn-combat" id="btn-combat-defend" onclick="combatAction('defend')">
           防御 (2)
         </button>
+        <button class="btn-combat" id="btn-combat-skill" onclick="openCombatSkillSelect()">
+          技能 (3)
+        </button>
         <button class="btn-combat" id="btn-combat-item" onclick="openCombatItemSelect()">
-          物品 (3)
+          物品 (4)
         </button>
         <button class="btn-combat btn-flee" id="btn-combat-flee" onclick="combatAction('flee')">
-          逃跑 (4)
+          逃跑 (5)
         </button>
+      </div>
+
+      <div id="combat-skill-panel">
+        <div class="panel-header">
+          <span class="panel-title">选择技能</span>
+          <button class="panel-close" onclick="closeCombatSkillSelect()">×</button>
+        </div>
+        <div id="combat-skills"></div>
       </div>
 
       <div id="combat-item-panel">

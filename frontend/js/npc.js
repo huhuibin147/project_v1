@@ -5,6 +5,8 @@ let npcs = [];
 let activeNpcId = null; // 当前正在对话的 NPC
 let interactNpcId = null; // 当前交互选项对应的 NPC
 let npcInteractOpen = false;
+let healPanelOpen = false;
+let skillLearnPanelOpen = false;
 
 function initNpcs(npcList) {
   // 从当前地图配置获取 NPC 位置
@@ -67,10 +69,18 @@ function drawNPC(ctx, npc) {
 
   // 根据 NPC 类型选择颜色
   const isBlacksmith = npc.npc_id === "blacksmith";
-  const bodyColor = isBlacksmith ? "#8b4513" : "#6a4a8a";   // 铁匠棕色/商人紫色
-  const bodyLight = isBlacksmith ? "#a0522d" : "#8a6aaa";
-  const hairColor = isBlacksmith ? "#4a3728" : "#3a2a2a";
-  const skinColor = "#d4a574";
+  const isPriest = npc.npc_id === "priest";
+  const isSkillMaster = npc.npc_id === "skill_master";
+  let bodyColor, bodyLight, hairColor, skinColor;
+  if (isBlacksmith) {
+    bodyColor = "#8b4513"; bodyLight = "#a0522d"; hairColor = "#4a3728"; skinColor = "#d4a574";
+  } else if (isPriest) {
+    bodyColor = "#f0e6d2"; bodyLight = "#fff8ee"; hairColor = "#e8c880"; skinColor = "#f5d5b8";
+  } else if (isSkillMaster) {
+    bodyColor = "#2e4053"; bodyLight = "#3d5a80"; hairColor = "#c0c0c0"; skinColor = "#e0c8a8";
+  } else {
+    bodyColor = "#6a4a8a"; bodyLight = "#8a6aaa"; hairColor = "#3a2a2a"; skinColor = "#d4a574";
+  }
 
   // 阴影
   ctx.fillStyle = "rgba(0,0,0,0.2)";
@@ -98,6 +108,34 @@ function drawNPC(ctx, npc) {
     ctx.fillRect(x + p * 6, y + p * 3 + breathe, p, p * 3);
     ctx.fillStyle = "#8b6b4a";
     ctx.fillRect(x + p * 6, y + p * 2 + breathe, p * 2, p * 2);
+  } else if (isPriest) {
+    // 祭司：白色头巾/兜帽
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(x + p * 1, y + p * 0 + breathe, p * 6, p * 2);
+    // 金色十字架装饰
+    ctx.fillStyle = "#ffd700";
+    ctx.fillRect(x + p * 3, y + p * 4 + breathe, p * 2, p * 1);
+    ctx.fillRect(x + p * 3, y + p * 5 + breathe, p * 2, p * 1);
+    // 法杖
+    ctx.fillStyle = "#8b7355";
+    ctx.fillRect(x + p * 7, y + p * 2 + breathe, p, p * 5);
+    ctx.fillStyle = "#ffd700";
+    ctx.fillRect(x + p * 6, y + p * 1 + breathe, p * 3, p);
+  } else if (isSkillMaster) {
+    // 导师：眼镜
+    ctx.fillStyle = "#333";
+    ctx.fillRect(x + p * 2, y + p * 2 + breathe, p * 2, p);
+    ctx.fillRect(x + p * 5, y + p * 2 + breathe, p * 2, p);
+    ctx.fillStyle = "#aaa";
+    ctx.fillRect(x + p * 4, y + p * 2 + breathe, p, p);
+    // 长袍
+    ctx.fillStyle = "#1a2a3a";
+    ctx.fillRect(x + p * 1, y + p * 5 + breathe, p * 6, p * 3);
+    // 书本
+    ctx.fillStyle = "#8b4513";
+    ctx.fillRect(x + p * 7, y + p * 3 + breathe, p * 2, p * 3);
+    ctx.fillStyle = "#f5f5dc";
+    ctx.fillRect(x + p * 7, y + p * 4 + breathe, p * 2, p);
   } else {
     // 商人：围裙
     ctx.fillStyle = "#e8d8b0";
@@ -179,6 +217,19 @@ function openNpcInteract(npc) {
   activeNpcId = npc.npc_id;
   npcInteractOpen = true;
   document.getElementById("npc-interact-title").textContent = npc.name;
+  // 根据NPC类型显示不同的交互按钮
+  const actionsDiv = document.getElementById("npc-interact-actions");
+  let html = '<button class="btn-interact" onclick="interactTalk()">对话 (1)</button>';
+  if (npc.npc_id === "priest") {
+    html += '<button class="btn-interact" onclick="interactHeal()">治疗服务 (2)</button>';
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
+  } else if (npc.npc_id === "skill_master") {
+    html += '<button class="btn-interact" onclick="interactLearnSkill()">学习技能 (2)</button>';
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
+  } else {
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (2)</button>';
+  }
+  actionsDiv.innerHTML = html;
   document.getElementById("npc-interact-panel").classList.add("active");
 }
 
@@ -202,6 +253,178 @@ function interactShop() {
   if (!interactNpcId) return;
   closeNpcInteract();
   openShop(interactNpcId);
+}
+
+// ===== 治疗服务 =====
+
+function interactHeal() {
+  if (!interactNpcId) return;
+  closeNpcInteract();
+  openHealPanel(interactNpcId);
+}
+
+function openHealPanel(npcId) {
+  healPanelOpen = true;
+  document.getElementById("heal-panel").classList.add("active");
+  document.getElementById("heal-title").textContent = "治疗服务";
+  document.getElementById("player-gold-heal").textContent = inventoryState.gold || 0;
+  renderHealServices(npcId);
+}
+
+function closeHealPanel() {
+  healPanelOpen = false;
+  document.getElementById("heal-panel").classList.remove("active");
+  document.getElementById("heal-message").style.display = "none";
+}
+
+function renderHealServices(npcId) {
+  const servicesDiv = document.getElementById("heal-services");
+  // 服务配置（与后端保持一致）
+  const services = [
+    { id: "heal", name: "恢复生命", desc: "恢复全部生命值", cost: 20 },
+    { id: "restore_mp", name: "恢复魔法", desc: "恢复全部魔法值", cost: 15 },
+    { id: "cure", name: "解除异常", desc: "解除所有负面状态效果", cost: 30 },
+  ];
+  let html = "";
+  for (const svc of services) {
+    html += `<div class="heal-service-item">
+      <div class="heal-service-info">
+        <div class="heal-service-name">${svc.name}</div>
+        <div class="heal-service-desc">${svc.desc}</div>
+        <div class="heal-service-cost">${svc.cost} 金币</div>
+      </div>
+      <button class="btn-buy" onclick="requestHealService('${npcId}', '${svc.id}')">使用</button>
+    </div>`;
+  }
+  servicesDiv.innerHTML = html;
+}
+
+async function requestHealService(npcId, serviceType) {
+  try {
+    const resp = await fetch("/api/npc/service/heal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ npc_id: npcId, service_type: serviceType }),
+    });
+    const data = await resp.json();
+    const msgEl = document.getElementById("heal-message");
+    msgEl.textContent = data.message;
+    msgEl.style.display = "block";
+    msgEl.className = data.success ? "trade-message success" : "trade-message error";
+    if (data.success) {
+      // 更新玩家信息
+      if (data.player_info) {
+        updatePlayerInfo(data.player_info);
+        if (data.player_info.gold !== undefined) {
+          inventoryState.gold = data.player_info.gold;
+          if (typeof updateGoldDisplay === "function") updateGoldDisplay();
+        }
+      }
+      document.getElementById("player-gold-heal").textContent = inventoryState.gold || 0;
+    }
+  } catch (e) {
+    console.error("治疗服务请求失败:", e);
+  }
+}
+
+// ===== 技能学习 =====
+
+function interactLearnSkill() {
+  if (!interactNpcId) return;
+  closeNpcInteract();
+  openSkillLearnPanel(interactNpcId);
+}
+
+function openSkillLearnPanel(npcId) {
+  skillLearnPanelOpen = true;
+  document.getElementById("skill-learn-panel").classList.add("active");
+  document.getElementById("skill-learn-title").textContent = "技能学习";
+  document.getElementById("player-gold-skill").textContent = inventoryState.gold || 0;
+  fetchAvailableSkills(npcId);
+}
+
+function closeSkillLearnPanel() {
+  skillLearnPanelOpen = false;
+  document.getElementById("skill-learn-panel").classList.remove("active");
+  document.getElementById("skill-learn-message").style.display = "none";
+}
+
+async function fetchAvailableSkills(npcId) {
+  try {
+    const resp = await fetch(`/api/npc/service/skills?npc_id=${npcId}`);
+    const data = await resp.json();
+    if (data.success) {
+      renderSkillList(data.skills);
+    } else {
+      document.getElementById("skill-learn-list").innerHTML = `<div class="skill-learn-empty">${data.message}</div>`;
+    }
+  } catch (e) {
+    console.error("获取技能列表失败:", e);
+  }
+}
+
+function renderSkillList(skills) {
+  const listDiv = document.getElementById("skill-learn-list");
+  if (!skills || skills.length === 0) {
+    listDiv.innerHTML = '<div class="skill-learn-empty">暂无可学习的技能</div>';
+    return;
+  }
+  let html = "";
+  for (const skill of skills) {
+    const canLearn = skill.can_learn;
+    const disabled = canLearn ? "" : "disabled";
+    const btnText = canLearn ? "学习" : skill.reason;
+    const classReq = skill.class_requirement?.length > 0
+      ? `职业: ${skill.class_requirement.join(", ")}`
+      : "全职业可用";
+    html += `<div class="skill-learn-item ${canLearn ? "" : "disabled"}">
+      <div class="skill-learn-info">
+        <div class="skill-learn-name">${skill.name}</div>
+        <div class="skill-learn-desc">${skill.description}</div>
+        <div class="skill-learn-meta">
+          <span>MP: ${skill.mp_cost}</span>
+          <span>冷却: ${skill.cooldown}回合</span>
+          <span>等级要求: Lv.${skill.level_requirement}</span>
+          <span>${classReq}</span>
+        </div>
+        <div class="skill-learn-cost">学费: ${skill.cost} 金币</div>
+      </div>
+      <button class="btn-buy" ${disabled} onclick="requestLearnSkill('${skill.skill_id}', ${skill.cost})">${btnText}</button>
+    </div>`;
+  }
+  listDiv.innerHTML = html;
+}
+
+async function requestLearnSkill(skillId, cost) {
+  try {
+    const resp = await fetch("/api/npc/service/learn_skill", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ npc_id: "skill_master", skill_id: skillId }),
+    });
+    const data = await resp.json();
+    const msgEl = document.getElementById("skill-learn-message");
+    msgEl.textContent = data.message;
+    msgEl.style.display = "block";
+    msgEl.className = data.success ? "trade-message success" : "trade-message error";
+    if (data.success) {
+      if (data.player_info) {
+        updatePlayerInfo(data.player_info);
+        if (data.player_info.gold !== undefined) {
+          inventoryState.gold = data.player_info.gold;
+          if (typeof updateGoldDisplay === "function") updateGoldDisplay();
+        }
+      }
+      if (data.skills) {
+        player.skills = data.skills;
+      }
+      document.getElementById("player-gold-skill").textContent = inventoryState.gold || 0;
+      // 刷新技能列表
+      fetchAvailableSkills("skill_master");
+    }
+  } catch (e) {
+    console.error("学习技能请求失败:", e);
+  }
 }
 
 // 启动时获取 NPC 列表

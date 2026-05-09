@@ -75,7 +75,8 @@
       "attack": 10,
       "defense": 0,
       "speed": 2,
-      "max_hp": 0
+      "max_hp": 0,
+      "max_mp": 10
     },
     "rarity": "uncommon",
     "tier": "tier1",
@@ -222,7 +223,8 @@
       "attack": 0,
       "defense": 1,
       "speed": 1,
-      "max_hp": 5
+      "max_hp": 5,
+      "max_mp": 5
     },
     "rarity": "common",
     "tier": "tier1",
@@ -600,7 +602,8 @@
       "attack": 7,
       "defense": 0,
       "speed": 3,
-      "max_hp": 0
+      "max_hp": 0,
+      "max_mp": 20
     },
     "rarity": "rare",
     "tier": "tier2",
@@ -768,7 +771,8 @@
       "attack": 0,
       "defense": 2,
       "speed": 2,
-      "max_hp": 6
+      "max_hp": 6,
+      "max_mp": 12
     },
     "rarity": "rare",
     "tier": "tier2",
@@ -936,7 +940,8 @@
       "attack": 13,
       "defense": 0,
       "speed": 6,
-      "max_hp": 0
+      "max_hp": 0,
+      "max_mp": 35
     },
     "rarity": "epic",
     "tier": "tier3",
@@ -1125,7 +1130,8 @@
       "attack": 0,
       "defense": 3,
       "speed": 3,
-      "max_hp": 11
+      "max_hp": 11,
+      "max_mp": 20
     },
     "rarity": "epic",
     "tier": "tier3",
@@ -1368,6 +1374,132 @@
     "description": "可以看清远处的东西。",
     "buy_price": 40,
     "sell_price": 20,
+    "stackable": true
+  },
+  "small_mana_potion": {
+    "id": "small_mana_potion",
+    "name": "小型魔力药水",
+    "type": "consumable",
+    "description": "恢复少量魔法值。",
+    "buy_price": 30,
+    "sell_price": 15,
+    "stackable": true
+  },
+  "mana_potion": {
+    "id": "mana_potion",
+    "name": "魔力药水",
+    "type": "consumable",
+    "description": "恢复中等魔法值。",
+    "buy_price": 60,
+    "sell_price": 30,
+    "stackable": true
+  },
+  "greater_mana_potion": {
+    "id": "greater_mana_potion",
+    "name": "大型魔力药水",
+    "type": "consumable",
+    "description": "恢复大量魔法值。",
+    "buy_price": 120,
+    "sell_price": 60,
+    "stackable": true
+  },
+  "scroll_heavy_strike": {
+    "id": "scroll_heavy_strike",
+    "name": "技能书：重击",
+    "type": "consumable",
+    "description": "学习战士技能「重击」。仅限战士使用。",
+    "buy_price": 200,
+    "sell_price": 50,
+    "stackable": true
+  },
+  "scroll_fireball": {
+    "id": "scroll_fireball",
+    "name": "技能书：火球术",
+    "type": "consumable",
+    "description": "学习法师技能「火球术」。仅限法师使用。",
+    "buy_price": 200,
+    "sell_price": 50,
+    "stackable": true
+  },
+  "scroll_heal": {
+    "id": "scroll_heal",
+    "name": "技能书：治愈术",
+    "type": "consumable",
+    "description": "学习法师技能「治愈术」。仅限法师使用。",
+    "buy_price": 200,
+    "sell_price": 50,
+    "stackable": true
+  },
+  "scroll_shield_wall": {
+    "id": "scroll_shield_wall",
+    "name": "技能书：盾墙",
+    "type": "consumable",
+    "description": "学习战士技能「盾墙」。仅限战士使用。",
+    "buy_price": 250,
+    "sell_price": 60,
+    "stackable": true
+  },
+  "scroll_backstab": {
+    "id": "scroll_backstab",
+    "name": "技能书：背刺",
+    "type": "consumable",
+    "description": "学习盗贼技能「背刺」。仅限盗贼使用。",
+    "buy_price": 200,
+    "sell_price": 50,
+    "stackable": true
+  },
+  "scroll_frost_bolt": {
+    "id": "scroll_frost_bolt",
+    "name": "技能书：冰冻术",
+    "type": "consumable",
+    "description": "学习法师技能「冰冻术」。仅限法师使用。",
+    "buy_price": 250,
+    "sell_price": 60,
+    "stackable": true
+  },
+  "scroll_poison_blade": {
+    "id": "scroll_poison_blade",
+    "name": "技能书：毒刃",
+    "type": "consumable",
+    "description": "学习盗贼技能「毒刃」。仅限盗贼使用。",
+    "buy_price": 250,
+    "sell_price": 60,
+    "stackable": true
+  },
+  "scroll_evasion": {
+    "id": "scroll_evasion",
+    "name": "技能书：闪避",
+    "type": "consumable",
+    "description": "学习盗贼技能「闪避」。仅限盗贼使用。",
+    "buy_price": 300,
+    "sell_price": 75,
+    "stackable": true
+  },
+  "scroll_magic_shield": {
+    "id": "scroll_magic_shield",
+    "name": "技能书：魔力护盾",
+    "type": "consumable",
+    "description": "学习法师技能「魔力护盾」。仅限法师使用。",
+    "buy_price": 300,
+    "sell_price": 75,
+    "stackable": true
+  },
+  "scroll_berserk": {
+    "id": "scroll_berserk",
+    "name": "技能书：狂暴",
+    "type": "consumable",
+    "description": "学习战士技能「狂暴」。仅限战士使用。",
+    "buy_price": 300,
+    "sell_price": 75,
+    "stackable": true
+  },
+  "scroll_thunder_strike": {
+    "id": "scroll_thunder_strike",
+    "name": "技能书：雷霆一击",
+    "type": "consumable",
+    "description": "学习通用技能「雷霆一击」。仅限战士或法师使用，需要等级8。",
+    "buy_price": 500,
+    "sell_price": 125,
     "stackable": true
   }
 }

@@ -10,6 +10,8 @@ const playerInfo = {
   exp_to_next: 100,
   hp: 120,
   max_hp: 120,
+  mp: 50,
+  max_mp: 50,
   attack: 15,
   defense: 12,
   speed: 8,
@@ -22,6 +24,7 @@ const equipBonus = {
   defense: 0,
   speed: 0,
   max_hp: 0,
+  max_mp: 0,
 };
 
 const classNames = {
@@ -43,6 +46,7 @@ const STAT_LABELS = {
   defense: "防",
   speed: "速",
   max_hp: "HP",
+  max_mp: "MP",
 };
 
 const RARITY_DEF_PI = {
@@ -125,6 +129,8 @@ function renderPlayerInfo() {
     ? Math.floor(playerInfo.exp / playerInfo.exp_to_next * 100) : 0;
   const hpPercent = playerInfo.max_hp > 0
     ? Math.floor(playerInfo.hp / playerInfo.max_hp * 100) : 0;
+  const mpPercent = (playerInfo.max_mp || 1) > 0
+    ? Math.floor((playerInfo.mp || 0) / (playerInfo.max_mp || 1) * 100) : 0;
 
   const hpBarColor = hpPercent > 50 ? "#4CAF50" : hpPercent > 20 ? "#FF9800" : "#f44336";
 
@@ -137,6 +143,9 @@ function renderPlayerInfo() {
   document.getElementById("pi-hp-bar").style.backgroundColor = hpBarColor;
   document.getElementById("pi-hp-text").textContent = `${playerInfo.hp} / ${playerInfo.max_hp}`;
 
+  document.getElementById("pi-mp-bar").style.width = `${mpPercent}%`;
+  document.getElementById("pi-mp-text").textContent = `${playerInfo.mp || 0} / ${playerInfo.max_mp || 0}`;
+
   document.getElementById("pi-exp-bar").style.width = `${expPercent}%`;
   document.getElementById("pi-exp-text").textContent = `${playerInfo.exp} / ${playerInfo.exp_to_next}`;
 
@@ -147,8 +156,19 @@ function renderPlayerInfo() {
   renderStatBonus("pi-attack-bonus", equipBonus.attack);
   renderStatBonus("pi-defense-bonus", equipBonus.defense);
   renderStatBonus("pi-speed-bonus", equipBonus.speed);
+  renderStatBonus("pi-max-hp-bonus", equipBonus.max_hp);
+  renderStatBonus("pi-max-mp-bonus", equipBonus.max_mp);
 
   renderEquipment();
+
+  const skillsEl = document.getElementById("pi-skills");
+  if (playerInfo.skills && playerInfo.skills.length > 0) {
+    skillsEl.innerHTML = playerInfo.skills
+      .map(s => `<div class="skill-tag" title="${s.description || ''}\n消耗: ${s.mp_cost || 0} MP"><b>${s.name}</b> <span class="skill-mp">${s.mp_cost}MP</span></div>`)
+      .join("");
+  } else {
+    skillsEl.innerHTML = '<span class="no-effects">无</span>';
+  }
 
   const effectsEl = document.getElementById("pi-effects");
   if (playerInfo.status_effects.length === 0) {
@@ -309,8 +329,10 @@ function showEquipMessage(msg, success) {
 
 function updatePlayerHUD() {
   const hpEl = document.getElementById("hud-hp");
+  const mpEl = document.getElementById("hud-mp");
   const lvlEl = document.getElementById("hud-level");
   if (hpEl) hpEl.textContent = `${playerInfo.hp}/${playerInfo.max_hp}`;
+  if (mpEl) mpEl.textContent = `${playerInfo.mp || 0}/${playerInfo.max_mp || 0}`;
   if (lvlEl) lvlEl.textContent = `Lv.${playerInfo.level}`;
 }
 

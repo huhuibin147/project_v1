@@ -43,16 +43,20 @@ class PlayerProfile:
         cls = self.classes[self.class_id]
         self.max_hp = cls["base_hp"]
         self.hp = self.max_hp
+        self.max_mp = cls.get("base_mp", 30)
+        self.mp = self.max_mp
         self.attack = cls["base_attack"]
         self.defense = cls["base_defense"]
         self.speed = cls["base_speed"]
         self.gold = 200
         self.inventory = []
         self.equipment = dict(DEFAULT_EQUIPMENT)
-        self.player_x = 9
-        self.player_y = 9
+        self.player_x = 25
+        self.player_y = 20
         self.current_map = "village"
         self.map_states = {}
+        self.skills = list(defaults.get("skills", {}).get(self.class_id, []))
+        self.learned_skills = []  # 通过技能书学习的技能
 
     def _save(self):
         if self.current_slot is None:
@@ -66,6 +70,8 @@ class PlayerProfile:
             "exp_to_next": self.exp_to_next,
             "hp": self.hp,
             "max_hp": self.max_hp,
+            "mp": self.mp,
+            "max_mp": self.max_mp,
             "attack": self.attack,
             "defense": self.defense,
             "speed": self.speed,
@@ -73,6 +79,8 @@ class PlayerProfile:
             "gold": self.gold,
             "inventory": self.inventory,
             "equipment": self.equipment,
+            "skills": self.skills,
+            "learned_skills": self.learned_skills,
             "player_x": self.player_x,
             "player_y": self.player_y,
             "current_map": self.current_map,
@@ -97,6 +105,8 @@ class PlayerProfile:
             self.exp_to_next = data.get("exp_to_next", self.exp_to_next)
             self.hp = data.get("hp", self.hp)
             self.max_hp = data.get("max_hp", self.max_hp)
+            self.mp = data.get("mp", getattr(self, "mp", self.max_mp))
+            self.max_mp = data.get("max_mp", getattr(self, "max_mp", 30))
             self.attack = data.get("attack", self.attack)
             self.defense = data.get("defense", self.defense)
             self.speed = data.get("speed", self.speed)
@@ -104,11 +114,13 @@ class PlayerProfile:
             self.gold = data.get("gold", 0)
             self.inventory = data.get("inventory", [])
             self.equipment = data.get("equipment", dict(DEFAULT_EQUIPMENT))
+            self.skills = data.get("skills", [])
+            self.learned_skills = data.get("learned_skills", [])
             for s in EQUIP_SLOTS:
                 if s not in self.equipment:
                     self.equipment[s] = None
-            self.player_x = data.get("player_x", 9)
-            self.player_y = data.get("player_y", 9)
+            self.player_x = data.get("player_x", 25)
+            self.player_y = data.get("player_y", 20)
             self.current_map = data.get("current_map", "village")
             self.map_states = data.get("map_states", {})
             self._recalc_stats()
@@ -120,7 +132,7 @@ class PlayerProfile:
 
     def _calc_equip_bonus(self) -> dict:
         from item_system import ITEMS_DB
-        bonus = {"attack": 0, "defense": 0, "speed": 0, "max_hp": 0}
+        bonus = {"attack": 0, "defense": 0, "speed": 0, "max_hp": 0, "max_mp": 0}
         for slot_name, item_id in self.equipment.items():
             if item_id:
                 info = ITEMS_DB.get(item_id, {})
@@ -136,6 +148,7 @@ class PlayerProfile:
         base_defense = cls["base_defense"] + level_bonus * 2
         base_speed = cls["base_speed"] + level_bonus * 1
         base_max_hp = cls["base_hp"] + level_bonus * 10
+        base_max_mp = cls.get("base_mp", 30) + level_bonus * 3
 
         bonus = self._calc_equip_bonus()
         self.attack = base_attack + bonus["attack"]
@@ -147,6 +160,12 @@ class PlayerProfile:
             self.max_hp = new_max_hp
             if self.max_hp < old_max:
                 self.hp = min(self.hp, self.max_hp)
+        new_max_mp = base_max_mp + bonus["max_mp"]
+        if new_max_mp != getattr(self, "max_mp", 30):
+            old_max_mp = getattr(self, "max_mp", 30)
+            self.max_mp = new_max_mp
+            if self.max_mp < old_max_mp:
+                self.mp = min(getattr(self, "mp", self.max_mp), self.max_mp)
         self._save()
 
     def equip_item(self, item_id: str) -> dict:
@@ -247,6 +266,7 @@ class PlayerProfile:
             "defense": cls["base_defense"] + level_bonus * 2,
             "speed": cls["base_speed"] + level_bonus * 1,
             "max_hp": cls["base_hp"] + level_bonus * 10,
+            "max_mp": cls.get("base_mp", 30) + level_bonus * 3,
         }
         return {
             "equipment": self._get_equipment_detail(),
@@ -257,6 +277,7 @@ class PlayerProfile:
                 "defense": self.defense,
                 "speed": self.speed,
                 "max_hp": self.max_hp,
+                "max_mp": getattr(self, "max_mp", 30),
             },
         }
 
@@ -296,6 +317,8 @@ class PlayerProfile:
         cls = self.classes[class_id]
         self.max_hp = cls["base_hp"]
         self.hp = self.max_hp
+        self.max_mp = cls.get("base_mp", 30)
+        self.mp = self.max_mp
         self.attack = cls["base_attack"]
         self.defense = cls["base_defense"]
         self.speed = cls["base_speed"]
@@ -326,9 +349,11 @@ class PlayerProfile:
     def gain_exp(self, amount: int) -> dict:
         self.exp += amount
         leveled = False
+        level_ups = 0
         while self.exp >= self.exp_to_next:
             self.exp -= self.exp_to_next
             self.level += 1
+            level_ups += 1
             self._level_up()
             leveled = True
         self._save()
@@ -337,14 +362,59 @@ class PlayerProfile:
             "level": self.level,
             "exp": self.exp,
             "exp_to_next": self.exp_to_next,
+            "level_ups": level_ups,
         }
 
     def _level_up(self):
         self._recalc_stats()
+        self.hp = self.max_hp
+        self.mp = self.max_mp
+        # 升级后经验值需求增加
+        self.exp_to_next = int(self.exp_to_next * 1.5)
 
     def heal(self, amount: int):
         self.hp = min(self.max_hp, self.hp + amount)
         self._save()
+
+    def use_item(self, item_id: str, effect: dict) -> dict:
+        """使用消耗品/食物，返回结果。"""
+        if not self.remove_item(item_id, 1):
+            return {"success": False, "message": "物品不足"}
+        msg = ""
+        result = {"success": True, "message": msg, "hp": self.hp, "max_hp": self.max_hp}
+        if effect["type"] == "heal":
+            before = self.hp
+            self.heal(effect["value"])
+            restored = self.hp - before
+            msg = f"恢复了 {restored} 点生命值"
+        elif effect["type"] == "restore_mp":
+            before = self.mp
+            self.mp = min(self.max_mp, self.mp + effect["value"])
+            restored = self.mp - before
+            msg = f"恢复了 {restored} 点魔法值"
+            result["mp"] = self.mp
+            result["max_mp"] = self.max_mp
+        elif effect["type"] == "cure":
+            msg = "解除了状态异常"
+        elif effect["type"] == "buff":
+            msg = "获得了临时增益效果"
+        elif effect["type"] == "learn_skill":
+            from skill_system import can_learn_skill
+            skill_id = effect["skill_id"]
+            all_known = self.skills + self.learned_skills
+            can_learn, reason = can_learn_skill(skill_id, self.class_id, self.level, all_known)
+            if can_learn:
+                if skill_id not in self.skills:
+                    self.skills.append(skill_id)
+                if skill_id not in self.learned_skills:
+                    self.learned_skills.append(skill_id)
+                self._save()
+                msg = f"学会了新技能！"
+            else:
+                self.add_item(item_id, 1)
+                return {"success": False, "message": f"无法学习：{reason}"}
+        result["message"] = msg
+        return result
 
     def take_damage(self, amount: int) -> int:
         actual = max(1, amount - self.defense // 3)
@@ -364,6 +434,7 @@ class PlayerProfile:
         return True
 
     def get_info(self) -> dict:
+        from skill_system import format_skill_for_frontend
         return {
             "name": self.name,
             "class_id": self.class_id,
@@ -374,12 +445,15 @@ class PlayerProfile:
             "exp_to_next": self.exp_to_next,
             "hp": self.hp,
             "max_hp": self.max_hp,
+            "mp": getattr(self, "mp", 0),
+            "max_mp": getattr(self, "max_mp", 0),
             "attack": self.attack,
             "defense": self.defense,
             "speed": self.speed,
             "status_effects": self.status_effects,
             "gold": self.gold,
             "equipment": self._get_equipment_detail(),
+            "skills": [format_skill_for_frontend(s) for s in self.skills],
             "player_x": self.player_x,
             "player_y": self.player_y,
             "current_map": self.current_map,
@@ -400,11 +474,13 @@ class PlayerProfile:
     # ===== 统一背包与金币操作 =====
 
     def get_inventory(self) -> list[dict]:
-        from item_system import ITEMS_DB
+        from item_system import ITEMS_DB, ITEM_EFFECTS
         result = []
         for item in self.inventory:
             item_id = item["item_id"]
             info = ITEMS_DB.get(item_id, {})
+            effect = ITEM_EFFECTS.get(item_id, {})
+            heal_value = effect.get("value") if effect.get("type") == "heal" else None
             result.append({
                 "item_id": item_id,
                 "name": info.get("name", item_id),
@@ -415,6 +491,7 @@ class PlayerProfile:
                 "sell_price": info.get("sell_price", 0),
                 "equip_slot": info.get("equip_slot"),
                 "stats": info.get("stats"),
+                "heal_value": heal_value,
             })
         return result
 

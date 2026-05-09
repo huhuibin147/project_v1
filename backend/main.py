@@ -38,7 +38,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from npc_agent import NPCAgent, NPC_CONFIG_FILE
 from player_profile import player as player_profile
-from item_system import Inventory, buy_item, sell_item, get_item_info, ITEMS_DB
+from item_system import Inventory, buy_item, sell_item, get_item_info, ITEMS_DB, ITEM_EFFECTS
+from skill_system import format_skill_for_frontend
 
 app = FastAPI(title="LLM NPC Game")
 
@@ -156,6 +157,20 @@ class EquipRequest(BaseModel):
 
 class UnequipRequest(BaseModel):
     slot: str
+
+
+class UseItemRequest(BaseModel):
+    item_id: str
+
+
+class HealServiceRequest(BaseModel):
+    npc_id: str
+    service_type: str  # "heal", "restore_mp", "cure"
+
+
+class LearnSkillRequest(BaseModel):
+    npc_id: str
+    skill_id: str
 
 
 class PositionRequest(BaseModel):
@@ -358,6 +373,23 @@ async def unequip_slot(req: UnequipRequest):
     }
 
 
+@app.post("/api/use_item")
+async def use_item(req: UseItemRequest):
+    """使用消耗品、食物或技能书。"""
+    item = ITEMS_DB.get(req.item_id)
+    if not item:
+        return {"success": False, "message": "物品不存在"}
+    if item["type"] not in ("consumable", "food"):
+        return {"success": False, "message": "该物品无法使用"}
+    effect = ITEM_EFFECTS.get(req.item_id)
+    if not effect:
+        return {"success": False, "message": "该物品没有效果"}
+    result = player_profile.use_item(req.item_id, effect)
+    if result["success"] and effect.get("type") == "learn_skill":
+        result["skills"] = [format_skill_for_frontend(s) for s in player_profile.skills]
+    return result
+
+
 # ===== 存档管理接口 =====
 
 @app.get("/api/saves")
@@ -543,6 +575,157 @@ async def interact_object(req: ObjectInteractRequest):
     return result
 
 
+# ===== NPC 服务接口 =====
+
+@app.post("/api/npc/service/heal")
+async def npc_heal_service(req: HealServiceRequest):
+    """祭司/治疗师的服务：恢复生命、恢复魔法、解除异常。"""
+    npc = get_npc(req.npc_id)
+    cfg = npc.cfg
+    services = cfg.get("services", {})
+
+    if req.service_type not in services:
+        return {"success": False, "message": "该NPC不提供此服务"}
+
+    service = services[req.service_type]
+    cost = service.get("cost", 0)
+
+    if player_profile.gold < cost:
+        return {"success": False, "message": f"金币不足，需要 {cost} 金币"}
+
+    msg = ""
+    if req.service_type == "heal":
+        before = player_profile.hp
+        player_profile.hp = player_profile.max_hp
+        healed = player_profile.hp - before
+        msg = f"恢复了 {healed} 点生命值，感觉焕然一新！"
+    elif req.service_type == "restore_mp":
+        before = player_profile.mp
+        player_profile.mp = player_profile.max_mp
+        restored = player_profile.mp - before
+        msg = f"恢复了 {restored} 点魔法值，精神饱满！"
+    elif req.service_type == "cure":
+        player_profile.status_effects = []
+        msg = "解除了所有负面状态效果，身体轻松了许多。"
+
+    player_profile.spend_gold(cost)
+    return {
+        "success": True,
+        "message": msg,
+        "cost": cost,
+        "player_info": player_profile.get_info(),
+    }
+
+
+@app.get("/api/npc/service/skills")
+async def npc_available_skills(npc_id: str = "skill_master"):
+    """获取导师可教授的技能列表。"""
+    from skill_system import get_skill, can_learn_skill
+    npc = get_npc(npc_id)
+    cfg = npc.cfg
+    services = cfg.get("services", {})
+
+    if "learn_skill" not in services:
+        return {"success": False, "message": "该NPC不提供技能教学服务"}
+
+    # 获取所有技能书对应的技能
+    shop_items = cfg.get("shop", {}).get("inventory", [])
+    skill_ids = []
+    for item in shop_items:
+        item_id = item["item_id"]
+        if item_id.startswith("scroll_"):
+            effect = ITEM_EFFECTS.get(item_id)
+            if effect and effect.get("type") == "learn_skill":
+                skill_ids.append(effect["skill_id"])
+
+    # 检查每个技能的学习条件
+    available = []
+    all_known = player_profile.skills + player_profile.learned_skills
+    for sid in skill_ids:
+        skill = get_skill(sid)
+        if not skill:
+            continue
+        can_learn, reason = can_learn_skill(sid, player_profile.class_id, player_profile.level, all_known)
+        # 计算学费（技能书价格 × 倍率）
+        scroll_id = None
+        for item in shop_items:
+            eff = ITEM_EFFECTS.get(item["item_id"])
+            if eff and eff.get("skill_id") == sid:
+                scroll_id = item["item_id"]
+                break
+        base_price = ITEMS_DB.get(scroll_id, {}).get("buy_price", 0) if scroll_id else 0
+        cost_multiplier = services["learn_skill"].get("cost_multiplier", 1.5)
+        learn_cost = int(base_price * cost_multiplier)
+
+        available.append({
+            "skill_id": sid,
+            "name": skill["name"],
+            "description": skill["description"],
+            "mp_cost": skill["mp_cost"],
+            "cooldown": skill["cooldown"],
+            "type": skill["type"],
+            "class_requirement": skill.get("class_requirement", []),
+            "level_requirement": skill.get("level_requirement", 1),
+            "can_learn": can_learn,
+            "reason": reason,
+            "cost": learn_cost,
+        })
+
+    return {"success": True, "skills": available}
+
+
+@app.post("/api/npc/service/learn_skill")
+async def npc_learn_skill(req: LearnSkillRequest):
+    """向导师学习技能（无需技能书）。"""
+    from skill_system import can_learn_skill, get_skill
+    npc = get_npc(req.npc_id)
+    cfg = npc.cfg
+    services = cfg.get("services", {})
+
+    if "learn_skill" not in services:
+        return {"success": False, "message": "该NPC不提供技能教学服务"}
+
+    skill = get_skill(req.skill_id)
+    if not skill:
+        return {"success": False, "message": "技能不存在"}
+
+    # 计算学费
+    shop_items = cfg.get("shop", {}).get("inventory", [])
+    scroll_id = None
+    for item in shop_items:
+        eff = ITEM_EFFECTS.get(item["item_id"])
+        if eff and eff.get("skill_id") == req.skill_id:
+            scroll_id = item["item_id"]
+            break
+    base_price = ITEMS_DB.get(scroll_id, {}).get("buy_price", 0) if scroll_id else 0
+    cost_multiplier = services["learn_skill"].get("cost_multiplier", 1.5)
+    learn_cost = int(base_price * cost_multiplier)
+
+    if player_profile.gold < learn_cost:
+        return {"success": False, "message": f"金币不足，需要 {learn_cost} 金币"}
+
+    all_known = player_profile.skills + player_profile.learned_skills
+    can_learn, reason = can_learn_skill(req.skill_id, player_profile.class_id, player_profile.level, all_known)
+    if not can_learn:
+        return {"success": False, "message": f"无法学习：{reason}"}
+
+    # 扣除金币并学习技能
+    player_profile.spend_gold(learn_cost)
+    if req.skill_id not in player_profile.skills:
+        player_profile.skills.append(req.skill_id)
+    if req.skill_id not in player_profile.learned_skills:
+        player_profile.learned_skills.append(req.skill_id)
+    player_profile._save()
+
+    return {
+        "success": True,
+        "message": f"成功学会了「{skill['name']}」！",
+        "cost": learn_cost,
+        "skills": [format_skill_for_frontend(s) for s in player_profile.skills],
+        "player_info": player_profile.get_info(),
+    }
+
+
 # ===== 锻造系统预留接口 =====
 
 class ForgeRequest(BaseModel):
@@ -598,6 +781,7 @@ class CombatActionRequest(BaseModel):
     session_id: str
     action: str
     item_id: str = None
+    skill_id: str = None
 
 
 class CombatEndRequest(BaseModel):
@@ -634,9 +818,12 @@ async def combat_start(req: CombatStartRequest):
     player_snapshot = {
         "hp": player_profile.hp,
         "max_hp": player_profile.max_hp,
+        "mp": getattr(player_profile, "mp", 0),
+        "max_mp": getattr(player_profile, "max_mp", 0),
         "attack": player_profile.attack,
         "defense": player_profile.defense,
         "speed": player_profile.speed,
+        "skills": getattr(player_profile, "skills", []),
     }
 
     session = create_combat_session(monster_id, monster_config, player_snapshot)
@@ -654,9 +841,12 @@ async def combat_start(req: CombatStartRequest):
         "player": {
             "hp": session.player_hp,
             "max_hp": session.player_max_hp,
+            "mp": session.player_mp,
+            "max_mp": session.player_max_mp,
             "attack": session.player_attack,
             "defense": session.player_defense,
             "speed": session.player_speed,
+            "skills": session.player_skills,
         },
         "phase": session.phase.value,
         "log": session.log,
@@ -680,7 +870,10 @@ async def combat_action(req: CombatActionRequest):
             raise HTTPException(400, "你没有这个物品")
         player_profile.remove_item(req.item_id, 1)
 
-    state = resolve_turn(session, req.action, {"item_id": req.item_id})
+    action_data = {"item_id": req.item_id}
+    if req.action == "skill" and req.skill_id:
+        action_data["skill_id"] = req.skill_id
+    state = resolve_turn(session, req.action, action_data)
 
     if session.phase == CombatPhase.VICTORY and not state.get("fled"):
         exp_leveled = player_profile.gain_exp(session.exp_reward)
@@ -710,11 +903,14 @@ async def combat_action(req: CombatActionRequest):
 
     if session.phase == CombatPhase.PLAYER_TURN:
         player_profile.hp = session.player_hp
+        player_profile.mp = session.player_mp
         player_profile._save()
 
     state["phase"] = session.phase.value
     state["player_hp"] = session.player_hp
     state["player_max_hp"] = session.player_max_hp
+    state["player_mp"] = session.player_mp
+    state["player_max_mp"] = session.player_max_mp
     state["monster_hp"] = session.monster_hp
     state["monster_max_hp"] = session.monster_max_hp
 

@@ -72,6 +72,16 @@
       "npc_id": "merchant",
       "x": 36,
       "y": 7
+    },
+    {
+      "npc_id": "priest",
+      "x": 10,
+      "y": 32
+    },
+    {
+      "npc_id": "skill_master",
+      "x": 40,
+      "y": 32
     }
   ],
   "player_spawn": {"x": 25, "y": 20}

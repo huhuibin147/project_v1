@@ -11,6 +11,11 @@ const inventoryState = {
   gold: 0,
 };
 
+const inventoryDisplay = {
+  view: "list",
+  filter: "all",
+};
+
 const shopState = {
   name: "",
   items: [],
@@ -22,6 +27,7 @@ const STAT_LABELS_INV = {
   defense: "防",
   speed: "速",
   max_hp: "HP",
+  max_mp: "MP",
 };
 
 const RARITY_DEF = {
@@ -74,7 +80,7 @@ function buildCompareHtml(item) {
   if (!current || !current.stats) return "";
 
   const diff = {};
-  for (const key of ["attack", "defense", "speed", "max_hp"]) {
+  for (const key of ["attack", "defense", "speed", "max_hp", "max_mp"]) {
     const newVal = (item.stats && item.stats[key]) || 0;
     const oldVal = (current.stats && current.stats[key]) || 0;
     const d = newVal - oldVal;
@@ -129,22 +135,70 @@ function closeInventory() {
   document.getElementById("inventory-panel").classList.remove("active");
 }
 
+function getFilteredItems() {
+  let items = inventoryState.items;
+  const filter = inventoryDisplay.filter;
+  if (filter !== "all") {
+    if (filter === "armor") {
+      items = items.filter(it => it.type === "armor" || (it.equip_slot && it.equip_slot !== "weapon" && it.equip_slot !== "accessory"));
+    } else if (filter === "weapon") {
+      items = items.filter(it => it.type === "weapon" || it.equip_slot === "weapon");
+    } else {
+      items = items.filter(it => it.type === filter);
+    }
+  }
+  return items;
+}
+
+function switchInventoryView(view) {
+  inventoryDisplay.view = view;
+  document.getElementById("view-list").classList.toggle("active", view === "list");
+  document.getElementById("view-grid").classList.toggle("active", view === "grid");
+  const container = document.getElementById("inventory-items");
+  container.classList.toggle("grid-view", view === "grid");
+  inventoryPage.current = 1;
+  renderInventory();
+}
+
+function filterInventory(filter) {
+  inventoryDisplay.filter = filter;
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === filter);
+  });
+  inventoryPage.current = 1;
+  renderInventory();
+}
+
 function renderInventory() {
   const container = document.getElementById("inventory-items");
   container.innerHTML = "";
+  container.classList.toggle("grid-view", inventoryDisplay.view === "grid");
 
-  if (inventoryState.items.length === 0) {
+  const filteredItems = getFilteredItems();
+
+  if (filteredItems.length === 0) {
     container.innerHTML = '<div class="empty-hint">背包空空如也...</div>';
     renderPagination("inventory-pagination", 0, inventoryPage);
     return;
   }
 
-  const total = inventoryState.items.length;
+  const total = filteredItems.length;
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
   if (inventoryPage.current > totalPages) inventoryPage.current = totalPages;
   const start = (inventoryPage.current - 1) * ITEMS_PER_PAGE;
-  const pageItems = inventoryState.items.slice(start, start + ITEMS_PER_PAGE);
+  const pageItems = filteredItems.slice(start, start + ITEMS_PER_PAGE);
 
+  if (inventoryDisplay.view === "grid") {
+    renderInventoryGrid(container, pageItems);
+  } else {
+    renderInventoryList(container, pageItems);
+  }
+
+  document.getElementById("inventory-gold").textContent = inventoryState.gold;
+  renderPagination("inventory-pagination", totalPages, inventoryPage);
+}
+
+function renderInventoryList(container, pageItems) {
   for (const item of pageItems) {
     const div = document.createElement("div");
     const rarityCls = item.rarity || "common";
@@ -158,11 +212,25 @@ function renderInventory() {
       statsHtml = `<div class="item-stats-line">${formatItemStats(item.stats)}</div>`;
     }
 
+    let healHtml = "";
+    if (item.heal_value && item.heal_value > 0) {
+      healHtml = `<div class="item-heal-value">回复 <span class="heal-num">${item.heal_value}</span> HP</div>`;
+    }
+    let mpHtml = "";
+    if (item.mp_value && item.mp_value > 0) {
+      mpHtml = `<div class="item-heal-value">回复 <span class="heal-num">${item.mp_value}</span> MP</div>`;
+    }
+
     let equipBtnHtml = "";
     if (canEquip && !isEquipped) {
       equipBtnHtml = `<button class="btn-equip" onclick="doEquip('${item.item_id}')">装备</button>`;
     } else if (isEquipped) {
       equipBtnHtml = `<span style="color:#6bafff;font-size:11px;font-weight:bold;">已装备</span>`;
+    }
+
+    let useBtnHtml = "";
+    if ((item.type === "consumable" || item.type === "food") && !isEquipped) {
+      useBtnHtml = `<button class="btn-use" onclick="doUseItem('${item.item_id}')">使用</button>`;
     }
 
     const rarityColor = getRarityColor(rarityCls);
@@ -183,19 +251,152 @@ function renderInventory() {
       </div>
       <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span></div>
       ${statsHtml}
+      ${healHtml}
+      ${mpHtml}
       ${affixesHtml}
       ${compareHtml}
       <div class="item-desc">${item.description}</div>
       <div class="item-actions">
         <span class="item-price">出售价: ${item.sell_price} 金</span>
+        ${useBtnHtml}
         ${equipBtnHtml}
       </div>
     `;
     container.appendChild(div);
   }
+}
 
-  document.getElementById("inventory-gold").textContent = inventoryState.gold;
-  renderPagination("inventory-pagination", totalPages, inventoryPage);
+function renderInventoryGrid(container, pageItems) {
+  for (const item of pageItems) {
+    const div = document.createElement("div");
+    const rarityCls = item.rarity || "common";
+    div.className = `item-grid-cell ${item.type} rarity-${rarityCls}`;
+
+    const canEquip = item.equip_slot && item.stats;
+    const isEquipped = isItemEquipped(item.item_id);
+    const rarityColor = getRarityColor(rarityCls);
+
+    let equipMark = "";
+    if (isEquipped) {
+      equipMark = `<div class="grid-equipped">✓</div>`;
+    }
+
+    let qtyBadge = "";
+    if (item.quantity > 1) {
+      qtyBadge = `<div class="grid-qty">${item.quantity}</div>`;
+    }
+
+    let actionBtn = "";
+    if (canEquip && !isEquipped) {
+      actionBtn = `<button class="grid-action" onclick="doEquip('${item.item_id}')">装备</button>`;
+    } else if (isEquipped) {
+      actionBtn = `<span class="grid-action text">已装备</span>`;
+    } else if (item.type === "consumable" || item.type === "food") {
+      actionBtn = `<button class="grid-action" onclick="doUseItem('${item.item_id}')">使用</button>`;
+    }
+
+    div.innerHTML = `
+      ${equipMark}
+      ${qtyBadge}
+      <div class="grid-icon">${getTypeIcon(item.type)}</div>
+      <div class="grid-name" style="color:${rarityColor}">${item.name}</div>
+      <div class="grid-type">${getTypeLabel(item.type)}</div>
+      ${actionBtn}
+    `;
+
+    div.addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON") return;
+      showItemTooltip(item, div);
+    });
+
+    container.appendChild(div);
+  }
+}
+
+function getTypeIcon(type) {
+  const icons = {
+    weapon: "⚔️",
+    armor: "🛡️",
+    consumable: "🧪",
+    food: "🍞",
+    tool: "🔧",
+    material: "💎",
+    accessory: "💍",
+  };
+  return icons[type] || "📦";
+}
+
+let tooltipEl = null;
+
+function showItemTooltip(item, anchorEl) {
+  if (tooltipEl) {
+    tooltipEl.remove();
+    tooltipEl = null;
+  }
+
+  const canEquip = item.equip_slot && item.stats;
+  const isEquipped = isItemEquipped(item.item_id);
+  const rarityColor = getRarityColor(item.rarity || "common");
+  const rarityName = getRarityName(item.rarity || "common");
+  const tierName = item.tier ? getTierName(item.tier) : "";
+  const levelText = getLevelRangeText(item);
+
+  let statsHtml = "";
+  if (canEquip && item.stats) {
+    statsHtml = `<div class="tt-stats">${formatItemStats(item.stats)}</div>`;
+  }
+
+  let healHtml = "";
+  if (item.heal_value && item.heal_value > 0) {
+    healHtml = `<div class="tt-heal">回复 <span class="heal-num">${item.heal_value}</span> HP</div>`;
+  }
+  let mpHtml = "";
+  if (item.mp_value && item.mp_value > 0) {
+    mpHtml = `<div class="tt-heal">回复 <span class="heal-num">${item.mp_value}</span> MP</div>`;
+  }
+
+  let compareHtml = canEquip && !isEquipped ? buildCompareHtml(item) : "";
+
+  const tt = document.createElement("div");
+  tt.className = "item-tooltip";
+  tt.innerHTML = `
+    <div class="tt-header">
+      <span class="tt-name" style="color:${rarityColor}">${item.name}</span>
+      <span class="tt-qty">x${item.quantity}</span>
+    </div>
+    <div class="tt-meta">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span></div>
+    ${statsHtml}
+    ${healHtml}
+    ${mpHtml}
+    ${compareHtml}
+    <div class="tt-desc">${item.description}</div>
+    <div class="tt-price">出售价: ${item.sell_price} 金</div>
+  `;
+
+  document.body.appendChild(tt);
+  tooltipEl = tt;
+
+  const rect = anchorEl.getBoundingClientRect();
+  const panelRect = document.getElementById("inventory-panel").getBoundingClientRect();
+  let left = rect.right + 8;
+  let top = rect.top;
+  if (left + 220 > window.innerWidth) {
+    left = rect.left - 228;
+  }
+  if (top + 200 > window.innerHeight) {
+    top = window.innerHeight - 200;
+  }
+  tt.style.left = left + "px";
+  tt.style.top = top + "px";
+
+  const closeTooltip = (e) => {
+    if (!tt.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) {
+      tt.remove();
+      tooltipEl = null;
+      document.removeEventListener("click", closeTooltip);
+    }
+  };
+  setTimeout(() => document.addEventListener("click", closeTooltip), 10);
 }
 
 function isItemEquipped(itemId) {
@@ -270,6 +471,15 @@ function renderShop() {
       statsHtml = `<div class="item-stats-line">${formatItemStats(item.stats)}</div>`;
     }
 
+    let healHtml = "";
+    if (item.heal_value && item.heal_value > 0) {
+      healHtml = `<div class="item-heal-value">回复 <span class="heal-num">${item.heal_value}</span> HP</div>`;
+    }
+    let mpHtml = "";
+    if (item.mp_value && item.mp_value > 0) {
+      mpHtml = `<div class="item-heal-value">回复 <span class="heal-num">${item.mp_value}</span> MP</div>`;
+    }
+
     const compareHtml = canEquip ? buildCompareHtml(item) : "";
 
     let affixesHtml = "";
@@ -286,6 +496,8 @@ function renderShop() {
       </div>
       <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span></div>
       ${statsHtml}
+      ${healHtml}
+      ${mpHtml}
       ${affixesHtml}
       ${compareHtml}
       <div class="item-desc">${item.description}</div>
@@ -389,6 +601,33 @@ function getTypeLabel(type) {
 function updateGoldDisplay() {
   const el = document.getElementById("hud-gold");
   if (el) el.textContent = inventoryState.gold;
+}
+
+async function doUseItem(itemId) {
+  try {
+    const resp = await fetch("/api/use_item", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ item_id: itemId }),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      if (data.hp !== undefined) playerInfo.hp = data.hp;
+      if (data.max_hp !== undefined) playerInfo.max_hp = data.max_hp;
+      if (data.mp !== undefined) playerInfo.mp = data.mp;
+      if (data.max_mp !== undefined) playerInfo.max_mp = data.max_mp;
+      if (data.skills !== undefined) playerInfo.skills = data.skills;
+      updatePlayerHUD();
+      await fetchInventory();
+      renderInventory();
+      showEquipMessage(data.message, true);
+    } else {
+      showEquipMessage(data.message, false);
+    }
+  } catch (e) {
+    showEquipMessage("使用失败", false);
+    console.error("使用物品失败:", e);
+  }
 }
 
 document.addEventListener("keydown", (e) => {

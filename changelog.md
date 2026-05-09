@@ -1,5 +1,124 @@
 # 更新日志
 
+## 2026-05-09 — 战斗系统修复 + 技能系统完善 + 金币统一
+
+- **修复**：战斗系统进入时 HP/MP/技能显示 undefined
+  - 根因：`/api/combat/start` 返回嵌套结构（`monster.hp`），前端 `renderCombat()` 期望扁平结构（`monster_hp`）
+  - 修复：在 `startCombat()` 中将嵌套数据扁平化后再存入 `combatState`
+  - 修复：技能面板首次打开为空（`combatState.skills` 未从 `player.skills` 提取）
+  - 修复：回合数初始显示修复
+- **修复**：NPC 治疗/技能学习面板金币显示为 0
+  - 根因：`npc.js` 引用 `player.gold`（始终为 undefined），应使用 `inventoryState.gold`
+  - 修复：统一使用 `inventoryState.gold` 作为前端金币数据源
+  - 修复：NPC 服务消费后同步更新 `inventoryState.gold` 和全局金币显示
+- **修复**：战斗胜利等级提升判断健壮性
+  - `level_up` 字段为 dict 时正确检查 `.leveled` 属性
+- **完善**：技能系统 - 补全所有技能卷轴效果
+  - 新增 8 个缺失的 `ITEM_EFFECTS`：`scroll_shield_wall`、`scroll_berserk`、`scroll_backstab`、`scroll_poison_blade`、`scroll_evasion`、`scroll_frost_bolt`、`scroll_magic_shield`、`scroll_thunder_strike`
+  - 新增 `scroll_thunder_strike` 物品定义到 `items.json`
+  - 现在所有 11 个技能均可通过 NPC 导师或技能书学习
+- **修复**：`playerInfo` 默认值缺少 `mp`/`max_mp` 字段，导致 HUD 初始显示 0/0
+
+## 2026-05-09 — 物品生成器补充 + 怪物生成器
+
+- **新增**：`tools/monster_generator.py` 怪物生成脚本
+  - 5 种怪物模板：普通、精英、BOSS、谨慎型、防御型
+  - 8 种预设怪物：骷髅兵、僵尸、幽灵、巨型蜘蛛、兽人、黑暗骑士、吸血鬼、远古巨龙
+  - 快捷创建命令：`create-normal`、`create-elite`、`create-boss`
+  - 掉落自动分配：按怪物种族（undead/beast/humanoid/dragon）自动分配材料/消耗品/装备
+  - 批量生成：`batch` 命令可一次性生成多个同等级范围的怪物
+  - 数据验证：检查必填字段、stats 正值、AI 配置、掉落概率范围
+  - 属性预览：按类型/等级分类统计、属性平均值、奖励平均值
+- **新增**：`docs/monster_generator.md` 怪物生成器文档
+  - 完整的使用方法说明和示例
+  - 模板和预设的详细参数表
+  - 怪物数据结构说明
+  - 掉落物品规则表
+  - 扩展模板的方法说明
+- **物品生成器补充**：
+  - 新增消耗品：超级生命药水、强效魔力药水、防御药剂、复活卷轴、传送卷轴、鉴定卷轴、火焰卷轴、冰霜卷轴（+8 种）
+  - 新增技能书模板：11 种职业技能书（战士/盗贼/法师/通用），含 skill_id、required_class、required_level
+  - 新增材料：秘银矿石、玄铁矿石、魔晶碎片、毒液囊、哥布林耳朵、暗熊爪、史莱姆凝胶、古木（+8 种）
+  - 新增食物：苹果、烤肉、奶酪、水果拼盘、野味汤（+5 种）
+  - 新增工具：铲子、钓鱼竿、捕兽夹、磨刀石、急救包（+5 种）
+  - 新增 `generate_skill_books()` 方法，支持 `python item_generator.py generate skill_book`
+  - 更新 `list` 命令分类显示 skill_book 类型
+- **更新**：`readme.md` 文档索引新增怪物生成器链接
+- **更新**：`docs/game_design.md` 项目结构新增 monster_generator.py 说明
+
+## 2026-05-09 — NPC 生成器
+
+- **新增**：`tools/npc_generator.py` NPC 生成脚本
+  - 7 种 NPC 模板：商人、铁匠、治疗师、技能导师、任务发布者、旅店老板、守卫
+  - 4 种预设 NPC：面包师、酒馆老板、守卫、旅行商人
+  - 快捷创建命令：`create-merchant`、`create-healer`、`create-master`、`create-quest`
+  - 商店库存自动分配：按物品类型（weapon/armor/consumable/food 等）筛选并随机分配数量
+  - 批量生成：`batch` 命令可一次性生成多个同类型 NPC
+  - 数据验证：检查必填字段、personality_params 范围、商店/服务格式
+  - 属性预览：按角色/地图分类统计、性格参数平均值、商店/服务覆盖率
+- **新增**：`docs/npc_generator.md` NPC 生成器文档
+  - 完整的使用方法说明和示例
+  - 模板和预设的详细参数表
+  - NPC 数据结构说明
+  - 商店库存分配规则表
+  - 扩展模板的方法说明
+- **更新**：`readme.md` 文档索引新增 NPC 生成器链接
+- **更新**：`docs/game_design.md` 项目结构新增 `tools/` 目录说明
+
+## 2026-05-09 — 新增 NPC：治疗师与技能导师
+
+- **新增**：祭司阿雅（治疗师 NPC）
+  - 位置：青石村神殿 (10, 32)
+  - 提供三种治疗服务：恢复生命（20金币）、恢复魔法（15金币）、解除异常（30金币）
+  - 商店出售：生命药水、魔力药水、解毒药、净化药水、绷带等治疗用品
+  - 白色祭司袍像素外观，手持金色法杖
+  - 交互选项：1-对话，2-治疗服务，3-商店
+- **新增**：导师艾尔文（技能导师 NPC）
+  - 位置：青石村训练场 (40, 32)
+  - 直接教授职业技能，无需技能书，学费为技能书原价的 1.5 倍
+  - 商店出售：全职业技能书（战士/盗贼/法师/通用）
+  - 深蓝长袍像素外观，手持书本，戴眼镜
+  - 交互选项：1-对话，2-学习技能，3-商店
+- **新增**：治疗服务面板 UI
+  - 绿色边框面板，显示三种服务及其费用
+  - 点击使用按钮调用 `/api/npc/service/heal`
+  - 治疗后实时更新玩家 HP/MP/金币
+- **新增**：技能学习面板 UI
+  - 蓝色边框面板，显示所有可学技能列表
+  - 显示技能名称、描述、MP消耗、冷却、等级要求、职业限制、学费
+  - 已满足条件的技能可点击学习，不满足的显示原因并禁用按钮
+  - 调用 `/api/npc/service/skills` 获取列表，`/api/npc/service/learn_skill` 学习技能
+- **新增**：后端 API
+  - `POST /api/npc/service/heal` — 治疗服务（恢复HP/MP/解除异常）
+  - `GET /api/npc/service/skills` — 获取导师可教授的技能列表（含学习条件检查）
+  - `POST /api/npc/service/learn_skill` — 向导师学习技能（扣除金币，无需技能书）
+- **更新**：NPC 渲染系统
+  - 新增祭司和导师的像素外观绘制逻辑
+  - 祭司：白色兜帽、金色十字架、法杖
+  - 导师：眼镜、深蓝长袍、书本
+- **更新**：交互选项面板动态化
+  - 根据 NPC 类型显示不同的交互按钮
+  - 铁匠/商人/采药人：对话、商店
+  - 祭司：对话、治疗服务、商店
+  - 导师：对话、学习技能、商店
+- **更新**：文档
+  - readme.md：NPC 表格新增祭司和导师，新增治疗服务和技能学习说明
+  - docs/game_design.md：NPC 表格更新，新增治疗服务和技能学习章节
+  - 操作指南更新：NPC 交互快捷键说明按 NPC 类型区分
+
+## 2026-05-09 — 物品使用功能
+
+- **新增**：背包中可直接使用消耗品和食物
+  - 消耗品/食物物品卡片显示「使用」按钮
+  - 点击使用后恢复生命值，物品数量减少
+  - 恢复量不超过最大生命值
+  - 使用结果通过消息提示反馈
+  - HUD 生命值实时更新
+- **新增**：`POST /api/use_item` 接口
+- **重构**：物品效果定义 `ITEM_EFFECTS` 移至 `item_system.py`，战斗和非战斗共用
+- **新增**：食物类物品效果定义（面包、肉干、烤鱼、炖汤等 9 种食物的恢复量）
+- **更新**：文档补充物品使用说明
+
 ## 2026-05-09 (v3) — Phase 2 战斗系统
 
 - **新增**：回合制战斗系统

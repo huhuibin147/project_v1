@@ -6,6 +6,7 @@
       "name": "战士",
       "description": "近战为主，血厚防高",
       "base_hp": 120,
+      "base_mp": 30,
       "base_attack": 15,
       "base_defense": 12,
       "base_speed": 8
@@ -14,6 +15,7 @@
       "name": "盗贼",
       "description": "敏捷灵活，攻击高速度快",
       "base_hp": 80,
+      "base_mp": 50,
       "base_attack": 18,
       "base_defense": 6,
       "base_speed": 15
@@ -22,6 +24,7 @@
       "name": "法师",
       "description": "远程法术，攻高血薄",
       "base_hp": 70,
+      "base_mp": 100,
       "base_attack": 22,
       "base_defense": 5,
       "base_speed": 10
@@ -30,5 +33,10 @@
   "level": 1,
   "exp": 0,
   "exp_to_next": 100,
-  "status_effects": []
+  "status_effects": [],
+  "skills": {
+    "warrior": ["heavy_strike", "shield_wall"],
+    "rogue": ["backstab", "poison_blade"],
+    "mage": ["fireball", "heal", "frost_bolt"]
+  }
 }

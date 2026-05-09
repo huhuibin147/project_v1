@@ -4,8 +4,8 @@ const PLAYER_SPEED = 3;
 const PLAYER_SIZE = TILE_SIZE;
 
 const player = {
-  x: 9 * TILE_SIZE,   // 初始位置（路上）
-  y: 9 * TILE_SIZE,
+  x: 25 * TILE_SIZE,   // 初始位置（路上）
+  y: 20 * TILE_SIZE,
   width: PLAYER_SIZE,
   height: PLAYER_SIZE,
   direction: "down",   // up/down/left/right
