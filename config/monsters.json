@@ -1,0 +1,159 @@
+{
+  "slime": {
+    "id": "slime",
+    "name": "史莱姆",
+    "description": "森林中最常见的低级怪物，身体软弹弹的",
+    "type": "normal",
+    "sprite_color": "#44cc44",
+    "sprite_accent": "#228822",
+    "stats": {
+      "hp": 30,
+      "attack": 8,
+      "defense": 3,
+      "speed": 5
+    },
+    "exp_reward": 15,
+    "gold_reward": [5, 15],
+    "drops": [
+      {"item_id": "herb", "chance": 0.3},
+      {"item_id": "mushroom", "chance": 0.2}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 80,
+      "defend_weight": 15,
+      "special_weight": 5,
+      "special": null
+    },
+    "level": 1,
+    "tags": ["slime", "forest", "common"]
+  },
+  "wild_wolf": {
+    "id": "wild_wolf",
+    "name": "野狼",
+    "description": "凶猛的野狼，速度很快",
+    "type": "normal",
+    "sprite_color": "#888888",
+    "sprite_accent": "#555555",
+    "stats": {
+      "hp": 45,
+      "attack": 12,
+      "defense": 4,
+      "speed": 12
+    },
+    "exp_reward": 25,
+    "gold_reward": [8, 20],
+    "drops": [
+      {"item_id": "wolf_pelt", "chance": 0.5},
+      {"item_id": "beast_bone", "chance": 0.2},
+      {"item_id": "dried_meat", "chance": 0.15}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 85,
+      "defend_weight": 10,
+      "special_weight": 5,
+      "special": null
+    },
+    "level": 2,
+    "tags": ["beast", "forest", "common"]
+  },
+  "forest_spider": {
+    "id": "forest_spider",
+    "name": "毒蛛",
+    "description": "带有剧毒的蜘蛛，被咬到会中毒",
+    "type": "normal",
+    "sprite_color": "#663399",
+    "sprite_accent": "#331166",
+    "stats": {
+      "hp": 35,
+      "attack": 10,
+      "defense": 2,
+      "speed": 14
+    },
+    "exp_reward": 30,
+    "gold_reward": [10, 25],
+    "drops": [
+      {"item_id": "antidote", "chance": 0.25},
+      {"item_id": "cloth", "chance": 0.3},
+      {"item_id": "herb", "chance": 0.2}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 70,
+      "defend_weight": 10,
+      "special_weight": 20,
+      "special": {
+        "type": "apply_effect",
+        "effect": "poison",
+        "chance": 0.3,
+        "duration": 3,
+        "value": 0,
+        "message": "毒蛛喷出毒液！"
+      }
+    },
+    "level": 3,
+    "tags": ["beast", "forest", "poison"]
+  },
+  "goblin": {
+    "id": "goblin",
+    "name": "哥布林",
+    "description": "狡猾的小型人形怪物，受伤时会更加谨慎",
+    "type": "normal",
+    "sprite_color": "#88aa33",
+    "sprite_accent": "#557722",
+    "stats": {
+      "hp": 50,
+      "attack": 14,
+      "defense": 6,
+      "speed": 10
+    },
+    "exp_reward": 35,
+    "gold_reward": [15, 35],
+    "drops": [
+      {"item_id": "health_potion", "chance": 0.2},
+      {"item_id": "bandage", "chance": 0.3},
+      {"item_id": "iron_ore", "chance": 0.1}
+    ],
+    "ai": {
+      "behavior": "cautious",
+      "attack_weight": 65,
+      "defend_weight": 25,
+      "special_weight": 10,
+      "special": null
+    },
+    "level": 3,
+    "tags": ["humanoid", "forest", "common"]
+  },
+  "dark_bear": {
+    "id": "dark_bear",
+    "name": "暗熊",
+    "description": "森林深处的凶暴巨熊，极其危险",
+    "type": "elite",
+    "sprite_color": "#443322",
+    "sprite_accent": "#221100",
+    "stats": {
+      "hp": 100,
+      "attack": 20,
+      "defense": 12,
+      "speed": 6
+    },
+    "exp_reward": 80,
+    "gold_reward": [30, 60],
+    "drops": [
+      {"item_id": "beast_bone", "chance": 0.6},
+      {"item_id": "wolf_pelt", "chance": 0.4},
+      {"item_id": "strength_elixir", "chance": 0.15},
+      {"item_id": "leather_armor", "chance": 0.05}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 75,
+      "defend_weight": 20,
+      "special_weight": 5,
+      "special": null
+    },
+    "level": 5,
+    "tags": ["beast", "forest", "elite"]
+  }
+}

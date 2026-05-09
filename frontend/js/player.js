@@ -61,7 +61,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function updatePlayer() {
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen) return; // 面板打开时不允许移动
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || combatOpen) return; // 面板打开时不允许移动
 
   let dx = 0, dy = 0;
 
@@ -88,6 +88,14 @@ function updatePlayer() {
   const newRow2 = Math.floor((player.y + dy + PLAYER_SIZE / 2) / TILE_SIZE);
   if (isWalkable(newCol2, newRow2)) {
     player.y += dy;
+  }
+
+  // 碰撞检测：碰到怪物触发战斗
+  if (typeof checkMonsterCollision === "function") {
+    const hitMonster = checkMonsterCollision();
+    if (hitMonster) {
+      initiateCombat(hitMonster.instance_id);
+    }
   }
 }
 

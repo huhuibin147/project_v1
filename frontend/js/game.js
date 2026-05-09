@@ -5,7 +5,7 @@ let lastTime = 0;
 let gameStarted = false;
 let gameMenuOpen = false;
 let positionSaveTimer = null;
-let helpVisible = false; // 帮助提示显示状态
+// let helpVisible = false; // 帮助提示显示状态
 
 function initCanvas() {
   canvas = document.getElementById("game-canvas");
@@ -41,6 +41,7 @@ function update(dt) {
   updatePlayer();
   updateCamera();
   checkPortalAutoTransfer();
+  updateMonsters(dt);
 }
 
 function render() {
@@ -52,11 +53,16 @@ function render() {
   drawMap(ctx);
   drawObjects(ctx);
 
-  // 收集所有可绘制对象（NPC + 玩家），按 Y 坐标排序实现遮挡
+  // 收集所有可绘制对象（NPC + 怪物 + 玩家），按 Y 坐标排序实现遮挡
   const drawables = [];
 
   for (const npc of npcs) {
     drawables.push({ type: "npc", y: npc.y, data: npc });
+  }
+  for (const m of mapMonsters) {
+    if (m.alive) {
+      drawables.push({ type: "monster", y: m.y, data: m });
+    }
   }
   drawables.push({ type: "player", y: player.y, data: player });
 
@@ -65,13 +71,24 @@ function render() {
   for (const obj of drawables) {
     if (obj.type === "npc") {
       drawNPC(ctx, obj.data);
+    } else if (obj.type === "monster") {
+      drawMapMonster(ctx, obj.data);
     } else {
       drawPlayer(ctx);
     }
   }
 
   ctx.restore();
-  drawHUD(ctx);
+
+  if (currentMap) {
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(8, 8, ctx.measureText(currentMap.name).width + 16, 22);
+    ctx.fillStyle = "#f0c060";
+    ctx.font = "bold 13px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(currentMap.name, 16, 24);
+  }
+  // drawHUD(ctx); // 帮助提示已迁移到独立的帮助面板
 }
 
 function drawHUD(ctx) {
@@ -105,16 +122,6 @@ function drawHUD(ctx) {
     ctx.fillStyle = "#fff";
     ctx.font = "12px monospace";
     ctx.fillText(helpText2, canvas.width / 2, boxY + 45);
-  }
-
-  // 绘制地图名称（显示在最顶部）
-  if (currentMap) {
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(8, 8, ctx.measureText(currentMap.name).width + 16, 22);
-    ctx.fillStyle = "#f0c060";
-    ctx.font = "bold 13px monospace";
-    ctx.textAlign = "left";
-    ctx.fillText(currentMap.name, 16, 24);
   }
 }
 
@@ -157,6 +164,8 @@ async function transferToMap(targetMap, targetX, targetY) {
       setPlayerPosition(targetX, targetY);
       // 重新加载 NPC
       await fetchAllNpcs();
+      // 重新加载怪物
+      loadMapMonsters();
       // 同步玩家信息
       Object.assign(playerInfo, data.player_info);
       updatePlayerHUD();
@@ -177,11 +186,15 @@ async function startGame() {
   // 先加载玩家信息（含位置），再加载地图和 NPC
   await fetchPlayerInfo();
 
+  // 加载怪物配置
+  await loadMonstersConfig();
+
   // 加载当前地图
   const mapId = playerInfo.current_map || "village";
   await loadMap(mapId);
 
   await fetchAllNpcs();
+  loadMapMonsters();
   fetchInventory();
 
   // 立即更新一次摄像机，确保初始位置正确
@@ -245,6 +258,7 @@ function returnToMainMenu() {
     if (shopOpen) closeShop();
     if (playerInfoOpen) closePlayerInfo();
     if (npcInteractOpen) closeNpcInteract();
+    if (combatOpen) endCombat();
 
     document.getElementById("game-container").style.display = "none";
     document.getElementById("start-screen").classList.remove("hidden");
@@ -255,14 +269,14 @@ function returnToMainMenu() {
 
 // O 键切换游戏菜单
 document.addEventListener("keydown", (e) => {
-  if ((e.key === "o" || e.key === "O") && gameStarted) {
+  if ((e.key === "o" || e.key === "O") && gameStarted && !combatOpen) {
     toggleGameMenu();
   }
 });
 
 // H 键切换帮助提示显示/隐藏
-document.addEventListener("keydown", (e) => {
-  if ((e.key === "h" || e.key === "H") && gameStarted) {
-    helpVisible = !helpVisible;
-  }
-});
+// document.addEventListener("keydown", (e) => {
+//   if ((e.key === "h" || e.key === "H") && gameStarted) {
+//     helpVisible = !helpVisible;
+//   }
+// });

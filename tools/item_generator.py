@@ -46,19 +46,29 @@ NPCS_FILE = CONFIG_DIR / "npcs.json"
 TIERS = {
     "tier1": {
         "name": "初级",
-        "level_range": (1, 4),
+        "level_max": 4,
         "price_multiplier": 1.0,
     },
     "tier2": {
         "name": "中级",
-        "level_range": (5, 9),
+        "level_max": 9,
         "price_multiplier": 2.5,
     },
     "tier3": {
         "name": "高级",
-        "level_range": (10, 15),
+        "level_max": 15,
         "price_multiplier": 6.0,
     },
+}
+
+RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"]
+
+RARITY_DEF = {
+    "common":    {"name": "普通", "color": "#aaaaaa", "price_mult": 1.0},
+    "uncommon":  {"name": "优秀", "color": "#1eff00", "price_mult": 1.3},
+    "rare":      {"name": "稀有", "color": "#0070dd", "price_mult": 1.8},
+    "epic":      {"name": "史诗", "color": "#a335ee", "price_mult": 2.5},
+    "legendary": {"name": "传说", "color": "#ff8000", "price_mult": 4.0},
 }
 
 
@@ -66,182 +76,182 @@ TIERS = {
 # 每个模板指定 prefix（材质前缀），避免不合理的组合如"皮剑"
 
 WEAPON_TEMPLATES = [
-    {"name": "木剑", "id": "wood_sword", "tier": "tier1", "type": "weapon", "equip_slot": "weapon",
+    {"name": "木剑", "id": "wood_sword", "tier": "tier1", "rarity": "common", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.8, "defense": 0.0, "speed": 0.2, "max_hp": 0.0},
      "desc": "用硬木削成的剑，虽然简陋但聊胜于无。"},
-    {"name": "石剑", "id": "stone_sword", "tier": "tier1", "type": "weapon", "equip_slot": "weapon",
+    {"name": "石剑", "id": "stone_sword", "tier": "tier1", "rarity": "common", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.9, "defense": 0.0, "speed": 0.0, "max_hp": 0.0},
      "desc": "用磨利的石头制成的剑，比木剑锋利。"},
-    {"name": "铜剑", "id": "copper_sword", "tier": "tier1", "type": "weapon", "equip_slot": "weapon",
+    {"name": "铜剑", "id": "copper_sword", "tier": "tier1", "rarity": "uncommon", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 1.0, "defense": 0.0, "speed": 0.0, "max_hp": 0.0},
      "desc": "铜铸的剑，适合初出茅庐的冒险者。"},
-    {"name": "铁剑", "id": "iron_sword", "tier": "tier1", "type": "weapon", "equip_slot": "weapon",
+    {"name": "铁剑", "id": "iron_sword", "tier": "tier1", "rarity": "uncommon", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 1.0, "defense": 0.0, "speed": 0.0, "max_hp": 0.0},
      "desc": "一把坚固的铁剑，适合初级冒险者。"},
-    {"name": "铁匕首", "id": "iron_dagger", "tier": "tier1", "type": "weapon", "equip_slot": "weapon",
+    {"name": "铁匕首", "id": "iron_dagger", "tier": "tier1", "rarity": "uncommon", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.6, "defense": 0.0, "speed": 0.5, "max_hp": 0.0},
      "desc": "轻便的匕首，适合快速攻击。"},
-    {"name": "猎人弓", "id": "hunter_bow", "tier": "tier1", "type": "weapon", "equip_slot": "weapon",
+    {"name": "猎人弓", "id": "hunter_bow", "tier": "tier1", "rarity": "uncommon", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.5, "defense": 0.0, "speed": 0.6, "max_hp": 0.0},
      "desc": "灵活的猎弓，攻速快射程远。"},
-    {"name": "法师杖", "id": "mage_staff", "tier": "tier1", "type": "weapon", "equip_slot": "weapon",
+    {"name": "法师杖", "id": "mage_staff", "tier": "tier1", "rarity": "uncommon", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.7, "defense": 0.0, "speed": 0.3, "max_hp": 0.0},
      "desc": "蕴含魔力的法杖，适合施法者。"},
-    {"name": "铁斧", "id": "iron_axe", "tier": "tier1", "type": "weapon", "equip_slot": "weapon",
+    {"name": "铁斧", "id": "iron_axe", "tier": "tier1", "rarity": "uncommon", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 1.1, "defense": 0.0, "speed": -0.2, "max_hp": 0.0},
      "desc": "沉重的铁斧，攻击力强但影响速度。"},
 
-    {"name": "精钢剑", "id": "steel_sword", "tier": "tier2", "type": "weapon", "equip_slot": "weapon",
+    {"name": "精钢剑", "id": "steel_sword", "tier": "tier2", "rarity": "rare", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 1.0, "defense": 0.0, "speed": 0.0, "max_hp": 0.0},
      "desc": "用精钢打造的利剑，锋利无比。"},
-    {"name": "银匕首", "id": "silver_dagger", "tier": "tier2", "type": "weapon", "equip_slot": "weapon",
+    {"name": "银匕首", "id": "silver_dagger", "tier": "tier2", "rarity": "rare", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.6, "defense": 0.0, "speed": 0.5, "max_hp": 0.0},
      "desc": "银制的匕首，对暗系生物有额外伤害。"},
-    {"name": "银弓", "id": "silver_bow", "tier": "tier2", "type": "weapon", "equip_slot": "weapon",
+    {"name": "银弓", "id": "silver_bow", "tier": "tier2", "rarity": "rare", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.5, "defense": 0.0, "speed": 0.6, "max_hp": 0.0},
      "desc": "银制的猎弓，精准而有力。"},
-    {"name": "合金法杖", "id": "alloy_staff", "tier": "tier2", "type": "weapon", "equip_slot": "weapon",
+    {"name": "合金法杖", "id": "alloy_staff", "tier": "tier2", "rarity": "rare", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.7, "defense": 0.0, "speed": 0.3, "max_hp": 0.0},
      "desc": "合金打造的法杖，魔力传导更顺畅。"},
-    {"name": "精钢斧", "id": "steel_axe", "tier": "tier2", "type": "weapon", "equip_slot": "weapon",
+    {"name": "精钢斧", "id": "steel_axe", "tier": "tier2", "rarity": "rare", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 1.1, "defense": 0.0, "speed": -0.2, "max_hp": 0.0},
      "desc": "精钢锻造的战斧，劈砍力惊人。"},
-    {"name": "青铜锤", "id": "bronze_hammer", "tier": "tier2", "type": "weapon", "equip_slot": "weapon",
+    {"name": "青铜锤", "id": "bronze_hammer", "tier": "tier2", "rarity": "rare", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.9, "defense": 0.2, "speed": -0.3, "max_hp": 0.0},
      "desc": "青铜铸成的战锤，攻防兼备。"},
 
-    {"name": "秘银剑", "id": "mithril_sword", "tier": "tier3", "type": "weapon", "equip_slot": "weapon",
+    {"name": "秘银剑", "id": "mithril_sword", "tier": "tier3", "rarity": "epic", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 1.0, "defense": 0.0, "speed": 0.0, "max_hp": 0.0},
      "desc": "秘银铸造的神剑，锋芒毕露。"},
-    {"name": "暗金匕首", "id": "dark_gold_dagger", "tier": "tier3", "type": "weapon", "equip_slot": "weapon",
+    {"name": "暗金匕首", "id": "dark_gold_dagger", "tier": "tier3", "rarity": "epic", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.6, "defense": 0.0, "speed": 0.5, "max_hp": 0.0},
      "desc": "暗金打造的匕首，快如闪电。"},
-    {"name": "玄铁弓", "id": "dark_iron_bow", "tier": "tier3", "type": "weapon", "equip_slot": "weapon",
+    {"name": "玄铁弓", "id": "dark_iron_bow", "tier": "tier3", "rarity": "epic", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.5, "defense": 0.0, "speed": 0.6, "max_hp": 0.0},
      "desc": "玄铁制成的强弓，箭无虚发。"},
-    {"name": "魔晶法杖", "id": "crystal_staff", "tier": "tier3", "type": "weapon", "equip_slot": "weapon",
+    {"name": "魔晶法杖", "id": "crystal_staff", "tier": "tier3", "rarity": "epic", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.7, "defense": 0.0, "speed": 0.3, "max_hp": 0.0},
      "desc": "镶嵌魔晶的法杖，魔力澎湃。"},
-    {"name": "玄铁斧", "id": "dark_iron_axe", "tier": "tier3", "type": "weapon", "equip_slot": "weapon",
+    {"name": "玄铁斧", "id": "dark_iron_axe", "tier": "tier3", "rarity": "epic", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 1.1, "defense": 0.0, "speed": -0.2, "max_hp": 0.0},
      "desc": "玄铁锻造的巨斧，一击必杀。"},
-    {"name": "暗金锤", "id": "dark_gold_hammer", "tier": "tier3", "type": "weapon", "equip_slot": "weapon",
+    {"name": "暗金锤", "id": "dark_gold_hammer", "tier": "tier3", "rarity": "legendary", "type": "weapon", "equip_slot": "weapon",
      "stat_weights": {"attack": 0.9, "defense": 0.2, "speed": -0.3, "max_hp": 0.0},
      "desc": "暗金铸成的神锤，震天动地。"},
 ]
 
 SHIELD_TEMPLATES = [
-    {"name": "木盾", "id": "wood_shield", "tier": "tier1", "type": "armor", "equip_slot": "shield",
+    {"name": "木盾", "id": "wood_shield", "tier": "tier1", "rarity": "common", "type": "armor", "equip_slot": "shield",
      "stat_weights": {"attack": 0.0, "defense": 0.7, "speed": -0.2, "max_hp": 0.1},
      "desc": "简陋的木盾，总比没有强。"},
-    {"name": "铁盾", "id": "iron_shield", "tier": "tier1", "type": "armor", "equip_slot": "shield",
+    {"name": "铁盾", "id": "iron_shield", "tier": "tier1", "rarity": "uncommon", "type": "armor", "equip_slot": "shield",
      "stat_weights": {"attack": 0.0, "defense": 1.0, "speed": -0.3, "max_hp": 0.0},
      "desc": "厚实的铁盾，能挡住不少伤害。"},
 
-    {"name": "精钢盾", "id": "steel_shield", "tier": "tier2", "type": "armor", "equip_slot": "shield",
+    {"name": "精钢盾", "id": "steel_shield", "tier": "tier2", "rarity": "rare", "type": "armor", "equip_slot": "shield",
      "stat_weights": {"attack": 0.0, "defense": 1.0, "speed": -0.3, "max_hp": 0.0},
      "desc": "精钢锻造的盾牌，防御力极强。"},
-    {"name": "银圆盾", "id": "silver_round_shield", "tier": "tier2", "type": "armor", "equip_slot": "shield",
+    {"name": "银圆盾", "id": "silver_round_shield", "tier": "tier2", "rarity": "rare", "type": "armor", "equip_slot": "shield",
      "stat_weights": {"attack": 0.0, "defense": 0.8, "speed": -0.15, "max_hp": 0.1},
      "desc": "银制的圆盾，轻便而坚固。"},
 
-    {"name": "秘银盾", "id": "mithril_shield", "tier": "tier3", "type": "armor", "equip_slot": "shield",
+    {"name": "秘银盾", "id": "mithril_shield", "tier": "tier3", "rarity": "epic", "type": "armor", "equip_slot": "shield",
      "stat_weights": {"attack": 0.0, "defense": 1.0, "speed": -0.3, "max_hp": 0.0},
      "desc": "秘银铸造的盾牌，坚不可摧。"},
-    {"name": "暗金圆盾", "id": "dark_gold_round_shield", "tier": "tier3", "type": "armor", "equip_slot": "shield",
+    {"name": "暗金圆盾", "id": "dark_gold_round_shield", "tier": "tier3", "rarity": "legendary", "type": "armor", "equip_slot": "shield",
      "stat_weights": {"attack": 0.0, "defense": 0.8, "speed": -0.15, "max_hp": 0.1},
      "desc": "暗金打造的圆盾，轻巧而强大。"},
 ]
 
 HEAD_TEMPLATES = [
-    {"name": "皮帽", "id": "leather_hat", "tier": "tier1", "type": "armor", "equip_slot": "head",
+    {"name": "皮帽", "id": "leather_hat", "tier": "tier1", "rarity": "common", "type": "armor", "equip_slot": "head",
      "stat_weights": {"attack": 0.0, "defense": 0.2, "speed": 0.15, "max_hp": 0.15},
      "desc": "轻便的皮帽，适合游侠和盗贼。"},
-    {"name": "铁盔", "id": "iron_helmet", "tier": "tier1", "type": "armor", "equip_slot": "head",
+    {"name": "铁盔", "id": "iron_helmet", "tier": "tier1", "rarity": "uncommon", "type": "armor", "equip_slot": "head",
      "stat_weights": {"attack": 0.0, "defense": 0.5, "speed": -0.15, "max_hp": 0.35},
      "desc": "沉重的铁盔，保护头部安全。"},
 
-    {"name": "硬皮帽", "id": "hard_leather_hat", "tier": "tier2", "type": "armor", "equip_slot": "head",
+    {"name": "硬皮帽", "id": "hard_leather_hat", "tier": "tier2", "rarity": "rare", "type": "armor", "equip_slot": "head",
      "stat_weights": {"attack": 0.0, "defense": 0.2, "speed": 0.15, "max_hp": 0.15},
      "desc": "硬化处理的皮帽，防护更佳。"},
-    {"name": "银盔", "id": "silver_helmet", "tier": "tier2", "type": "armor", "equip_slot": "head",
+    {"name": "银盔", "id": "silver_helmet", "tier": "tier2", "rarity": "rare", "type": "armor", "equip_slot": "head",
      "stat_weights": {"attack": 0.0, "defense": 0.5, "speed": -0.15, "max_hp": 0.35},
      "desc": "银制的头盔，既美观又实用。"},
-    {"name": "青铜冠", "id": "bronze_crown", "tier": "tier2", "type": "armor", "equip_slot": "head",
+    {"name": "青铜冠", "id": "bronze_crown", "tier": "tier2", "rarity": "rare", "type": "armor", "equip_slot": "head",
      "stat_weights": {"attack": 0.15, "defense": 0.15, "speed": 0.1, "max_hp": 0.1},
      "desc": "华丽的青铜冠，彰显身份。"},
 
-    {"name": "龙皮帽", "id": "dragon_hat", "tier": "tier3", "type": "armor", "equip_slot": "head",
+    {"name": "龙皮帽", "id": "dragon_hat", "tier": "tier3", "rarity": "epic", "type": "armor", "equip_slot": "head",
      "stat_weights": {"attack": 0.0, "defense": 0.2, "speed": 0.15, "max_hp": 0.15},
      "desc": "龙皮缝制的帽子，轻如鸿毛坚如磐石。"},
-    {"name": "秘银盔", "id": "mithril_helmet", "tier": "tier3", "type": "armor", "equip_slot": "head",
+    {"name": "秘银盔", "id": "mithril_helmet", "tier": "tier3", "rarity": "epic", "type": "armor", "equip_slot": "head",
      "stat_weights": {"attack": 0.0, "defense": 0.5, "speed": -0.15, "max_hp": 0.35},
      "desc": "秘银铸成的头盔，轻便而坚固。"},
-    {"name": "魔晶冠", "id": "crystal_crown", "tier": "tier3", "type": "armor", "equip_slot": "head",
+    {"name": "魔晶冠", "id": "crystal_crown", "tier": "tier3", "rarity": "legendary", "type": "armor", "equip_slot": "head",
      "stat_weights": {"attack": 0.15, "defense": 0.15, "speed": 0.1, "max_hp": 0.1},
      "desc": "镶嵌魔晶的王冠，散发着神秘光芒。"},
 ]
 
 BODY_TEMPLATES = [
-    {"name": "布袍", "id": "cloth_robe", "tier": "tier1", "type": "armor", "equip_slot": "body",
+    {"name": "布袍", "id": "cloth_robe", "tier": "tier1", "rarity": "common", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.15, "speed": 0.15, "max_hp": 0.2},
      "desc": "轻柔的布袍，适合法师穿着。"},
-    {"name": "皮甲", "id": "leather_armor", "tier": "tier1", "type": "armor", "equip_slot": "body",
+    {"name": "皮甲", "id": "leather_armor", "tier": "tier1", "rarity": "uncommon", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.4, "speed": 0.0, "max_hp": 0.3},
      "desc": "轻便的皮甲，提供基础防护。"},
-    {"name": "铁甲", "id": "iron_armor", "tier": "tier1", "type": "armor", "equip_slot": "body",
+    {"name": "铁甲", "id": "iron_armor", "tier": "tier1", "rarity": "uncommon", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.7, "speed": -0.25, "max_hp": 0.55},
      "desc": "沉重的铁甲，防御力极强但影响行动。"},
 
-    {"name": "硬皮衣", "id": "hard_leather_garb", "tier": "tier2", "type": "armor", "equip_slot": "body",
+    {"name": "硬皮衣", "id": "hard_leather_garb", "tier": "tier2", "rarity": "rare", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.4, "speed": 0.0, "max_hp": 0.3},
      "desc": "硬化处理的皮衣，防护力大增。"},
-    {"name": "银袍", "id": "silver_robe", "tier": "tier2", "type": "armor", "equip_slot": "body",
+    {"name": "银袍", "id": "silver_robe", "tier": "tier2", "rarity": "rare", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.15, "speed": 0.15, "max_hp": 0.2},
      "desc": "银线织成的法袍，魔力流转其中。"},
-    {"name": "精钢甲", "id": "steel_armor", "tier": "tier2", "type": "armor", "equip_slot": "body",
+    {"name": "精钢甲", "id": "steel_armor", "tier": "tier2", "rarity": "rare", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.7, "speed": -0.25, "max_hp": 0.55},
      "desc": "精钢锻造的铠甲，坚如磐石。"},
 
-    {"name": "龙皮衣", "id": "dragon_garb", "tier": "tier3", "type": "armor", "equip_slot": "body",
+    {"name": "龙皮衣", "id": "dragon_garb", "tier": "tier3", "rarity": "epic", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.4, "speed": 0.0, "max_hp": 0.3},
      "desc": "龙皮缝制的战衣，轻巧而坚韧。"},
-    {"name": "魔晶袍", "id": "crystal_robe", "tier": "tier3", "type": "armor", "equip_slot": "body",
+    {"name": "魔晶袍", "id": "crystal_robe", "tier": "tier3", "rarity": "epic", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.15, "speed": 0.15, "max_hp": 0.2},
      "desc": "魔晶织成的法袍，魔力无穷。"},
-    {"name": "玄铁甲", "id": "dark_iron_armor", "tier": "tier3", "type": "armor", "equip_slot": "body",
+    {"name": "玄铁甲", "id": "dark_iron_armor", "tier": "tier3", "rarity": "legendary", "type": "armor", "equip_slot": "body",
      "stat_weights": {"attack": 0.0, "defense": 0.7, "speed": -0.25, "max_hp": 0.55},
      "desc": "玄铁锻造的铠甲，刀枪不入。"},
 ]
 
 ACCESSORY_TEMPLATES = [
-    {"name": "力量戒指", "id": "ring_of_power", "tier": "tier1", "type": "accessory", "equip_slot": "accessory",
+    {"name": "力量戒指", "id": "ring_of_power", "tier": "tier1", "rarity": "uncommon", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.3, "defense": 0.2, "speed": 0.2, "max_hp": 0.1},
      "desc": "蕴含力量的神秘戒指，全面提升能力。"},
-    {"name": "生命项链", "id": "necklace_of_life", "tier": "tier1", "type": "accessory", "equip_slot": "accessory",
+    {"name": "生命项链", "id": "necklace_of_life", "tier": "tier1", "rarity": "uncommon", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.1, "defense": 0.3, "speed": 0.1, "max_hp": 0.4},
      "desc": "温暖的项链，佩戴后生命力旺盛。"},
-    {"name": "疾风护符", "id": "charm_of_wind", "tier": "tier1", "type": "accessory", "equip_slot": "accessory",
+    {"name": "疾风护符", "id": "charm_of_wind", "tier": "tier1", "rarity": "uncommon", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.2, "defense": 0.1, "speed": 0.3, "max_hp": 0.2},
      "desc": "轻灵的护符，佩戴后身轻如燕。"},
 
-    {"name": "银戒指", "id": "silver_ring", "tier": "tier2", "type": "accessory", "equip_slot": "accessory",
+    {"name": "银戒指", "id": "silver_ring", "tier": "tier2", "rarity": "rare", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.3, "defense": 0.2, "speed": 0.2, "max_hp": 0.1},
      "desc": "银制的戒指，散发着柔和的光芒。"},
-    {"name": "守护项链", "id": "necklace_of_guard", "tier": "tier2", "type": "accessory", "equip_slot": "accessory",
+    {"name": "守护项链", "id": "necklace_of_guard", "tier": "tier2", "rarity": "rare", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.1, "defense": 0.3, "speed": 0.1, "max_hp": 0.4},
      "desc": "守护之力的项链，危难时庇护佩戴者。"},
-    {"name": "迅捷护符", "id": "charm_of_swift", "tier": "tier2", "type": "accessory", "equip_slot": "accessory",
+    {"name": "迅捷护符", "id": "charm_of_swift", "tier": "tier2", "rarity": "rare", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.2, "defense": 0.1, "speed": 0.3, "max_hp": 0.2},
      "desc": "迅捷之力的护符，佩戴后行动如风。"},
 
-    {"name": "暗金戒指", "id": "dark_gold_ring", "tier": "tier3", "type": "accessory", "equip_slot": "accessory",
+    {"name": "暗金戒指", "id": "dark_gold_ring", "tier": "tier3", "rarity": "epic", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.3, "defense": 0.2, "speed": 0.2, "max_hp": 0.1},
      "desc": "暗金打造的戒指，蕴含远古之力。"},
-    {"name": "永恒项链", "id": "necklace_of_eternity", "tier": "tier3", "type": "accessory", "equip_slot": "accessory",
+    {"name": "永恒项链", "id": "necklace_of_eternity", "tier": "tier3", "rarity": "epic", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.1, "defense": 0.3, "speed": 0.1, "max_hp": 0.4},
      "desc": "永恒之力的项链，据说能延年益寿。"},
-    {"name": "幻影护符", "id": "charm_of_phantom", "tier": "tier3", "type": "accessory", "equip_slot": "accessory",
+    {"name": "幻影护符", "id": "charm_of_phantom", "tier": "tier3", "rarity": "legendary", "type": "accessory", "equip_slot": "accessory",
      "stat_weights": {"attack": 0.2, "defense": 0.1, "speed": 0.3, "max_hp": 0.2},
      "desc": "幻影之力的护符，佩戴后如鬼魅般飘忽。"},
 ]
@@ -405,7 +415,7 @@ class ItemGenerator:
 
     def _calc_stats(self, template, tier_key):
         tier = TIERS[tier_key]
-        level_mid = sum(tier["level_range"]) / 2
+        level_mid = tier["level_max"] / 2
         total_budget = level_mid * 1.5
 
         weights = template["stat_weights"]
@@ -421,7 +431,7 @@ class ItemGenerator:
 
         return stats
 
-    def _calc_price(self, stats, tier_key, equip_slot):
+    def _calc_price(self, stats, tier_key, equip_slot, rarity="common"):
         tier = TIERS[tier_key]
         total_stat_value = sum(
             max(0, stats.get(k, 0)) * w
@@ -432,9 +442,31 @@ class ItemGenerator:
             for k, w in [("speed", 3)]
         )
         base_price = total_stat_value - neg_value
-        buy_price = max(10, round(base_price * tier["price_multiplier"]))
+        rarity_mult = RARITY_DEF.get(rarity, RARITY_DEF["common"])["price_mult"]
+        buy_price = max(10, round(base_price * tier["price_multiplier"] * rarity_mult))
         sell_price = buy_price // 2
         return buy_price, sell_price
+
+    def _update_existing_item(self, item_id, template, tier_key):
+        item = self.items[item_id]
+        changed = False
+        if "rarity" not in item:
+            item["rarity"] = template.get("rarity", "common")
+            changed = True
+        if "tier" not in item:
+            item["tier"] = tier_key
+            changed = True
+        if "level_range" not in item:
+            item["level_range"] = TIERS[tier_key]["level_max"]
+            changed = True
+        if "affixes" not in item:
+            item["affixes"] = []
+            changed = True
+        if "forge_info" not in item:
+            item["forge_info"] = None
+            changed = True
+        if changed:
+            self._save_items()
 
     def generate_equip(self, tier_key):
         if tier_key == "all":
@@ -457,10 +489,11 @@ class ItemGenerator:
             item_id = template["id"]
 
             if item_id in self.items:
+                self._update_existing_item(item_id, template, tier_key)
                 continue
 
             stats = self._calc_stats(template, tier_key)
-            buy_price, sell_price = self._calc_price(stats, tier_key, template["equip_slot"])
+            buy_price, sell_price = self._calc_price(stats, tier_key, template["equip_slot"], template.get("rarity", "common"))
 
             item = {
                 "id": item_id,
@@ -472,6 +505,11 @@ class ItemGenerator:
                 "stackable": False,
                 "equip_slot": template["equip_slot"],
                 "stats": stats,
+                "rarity": template.get("rarity", "common"),
+                "tier": tier_key,
+                "level_range": tier["level_max"],
+                "affixes": [],
+                "forge_info": None,
             }
             generated[item_id] = item
 

@@ -45,6 +45,20 @@ const STAT_LABELS = {
   max_hp: "HP",
 };
 
+const RARITY_DEF_PI = {
+  common:    { name: "普通", color: "#aaaaaa" },
+  uncommon:  { name: "优秀", color: "#1eff00" },
+  rare:      { name: "稀有", color: "#0070dd" },
+  epic:      { name: "史诗", color: "#a335ee" },
+  legendary: { name: "传说", color: "#ff8000" },
+};
+
+const TIER_NAMES_PI = {
+  tier1: "初级",
+  tier2: "中级",
+  tier3: "高级",
+};
+
 async function fetchPlayerInfo() {
   try {
     const resp = await fetch("/api/player");
@@ -82,7 +96,7 @@ async function fetchEquipmentInfo() {
 }
 
 function openPlayerInfo() {
-  if (dialogueOpen || shopOpen || gameMenuOpen) return;
+  if (dialogueOpen || shopOpen || gameMenuOpen || combatOpen) return;
   playerInfoOpen = true;
   Promise.all([fetchPlayerInfo(), fetchEquipmentInfo()]).then(() => renderPlayerInfo());
   document.getElementById("player-info-panel").classList.add("active");
@@ -169,14 +183,31 @@ function renderEquipment() {
     const slotData = equipment[slot];
 
     if (slotData && slotData.item_id) {
+      const rarity = slotData.rarity || "common";
+      const rarityColor = (RARITY_DEF_PI[rarity] || RARITY_DEF_PI.common).color;
+      const rarityName = (RARITY_DEF_PI[rarity] || RARITY_DEF_PI.common).name;
+      const tierName = slotData.tier ? (TIER_NAMES_PI[slotData.tier] || "") : "";
+      const levelText = slotData.level_range ? `Lv.${slotData.level_range}` : "";
+
       itemEl.textContent = slotData.name;
       itemEl.className = "equip-slot-item equipped";
-      statsEl.innerHTML = formatStatsText(slotData.stats);
+      itemEl.style.color = rarityColor;
+
+      let detailParts = [];
+      if (tierName) detailParts.push(tierName);
+      if (levelText) detailParts.push(levelText);
+      detailParts.push(`[${rarityName}]`);
+      const detailStr = detailParts.join(" ");
+
+      statsEl.innerHTML = `${detailStr} ${formatStatsText(slotData.stats)}`;
+      statsEl.style.color = rarityColor;
       btnEl.style.display = "inline-block";
     } else {
       itemEl.textContent = "-";
       itemEl.className = "equip-slot-item";
+      itemEl.style.color = "";
       statsEl.innerHTML = "";
+      statsEl.style.color = "";
       btnEl.style.display = "none";
     }
   }
@@ -284,7 +315,7 @@ function updatePlayerHUD() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "p" && !dialogueOpen && !gameMenuOpen) {
+  if (e.key.toLowerCase() === "p" && !dialogueOpen && !gameMenuOpen && !combatOpen) {
     if (playerInfoOpen) {
       closePlayerInfo();
     } else {

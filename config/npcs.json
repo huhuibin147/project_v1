@@ -34,7 +34,7 @@
       "inventory": [
         {
           "item_id": "wood_sword",
-          "quantity": 2
+          "quantity": 5
         },
         {
           "item_id": "stone_sword",
@@ -50,11 +50,11 @@
         },
         {
           "item_id": "iron_dagger",
-          "quantity": 3
+          "quantity": 4
         },
         {
           "item_id": "hunter_bow",
-          "quantity": 4
+          "quantity": 5
         },
         {
           "item_id": "mage_staff",
@@ -62,35 +62,35 @@
         },
         {
           "item_id": "iron_axe",
-          "quantity": 5
+          "quantity": 4
         },
         {
           "item_id": "wood_shield",
-          "quantity": 5
+          "quantity": 4
         },
         {
           "item_id": "iron_shield",
-          "quantity": 5
-        },
-        {
-          "item_id": "leather_hat",
-          "quantity": 5
-        },
-        {
-          "item_id": "iron_helmet",
           "quantity": 2
         },
         {
-          "item_id": "cloth_robe",
+          "item_id": "leather_hat",
+          "quantity": 3
+        },
+        {
+          "item_id": "iron_helmet",
           "quantity": 5
+        },
+        {
+          "item_id": "cloth_robe",
+          "quantity": 3
         },
         {
           "item_id": "leather_armor",
-          "quantity": 5
+          "quantity": 4
         },
         {
           "item_id": "iron_armor",
-          "quantity": 3
+          "quantity": 5
         },
         {
           "item_id": "steel_sword",
@@ -102,7 +102,7 @@
         },
         {
           "item_id": "silver_bow",
-          "quantity": 1
+          "quantity": 2
         },
         {
           "item_id": "alloy_staff",
@@ -126,7 +126,7 @@
         },
         {
           "item_id": "hard_leather_hat",
-          "quantity": 2
+          "quantity": 1
         },
         {
           "item_id": "silver_helmet",
@@ -134,7 +134,7 @@
         },
         {
           "item_id": "bronze_crown",
-          "quantity": 2
+          "quantity": 1
         },
         {
           "item_id": "hard_leather_garb",
@@ -150,27 +150,27 @@
         },
         {
           "item_id": "health_potion",
-          "quantity": 10
+          "quantity": 12
         },
         {
           "item_id": "antidote",
-          "quantity": 5
+          "quantity": 7
         },
         {
           "item_id": "bandage",
-          "quantity": 15
+          "quantity": 8
         },
         {
           "item_id": "torch",
-          "quantity": 11
+          "quantity": 12
         },
         {
           "item_id": "rope",
-          "quantity": 18
+          "quantity": 17
         },
         {
           "item_id": "iron_ore",
-          "quantity": 5
+          "quantity": 8
         }
       ]
     },
@@ -215,55 +215,55 @@
         },
         {
           "item_id": "leather_armor",
-          "quantity": 3
-        },
-        {
-          "item_id": "iron_armor",
           "quantity": 1
         },
         {
+          "item_id": "iron_armor",
+          "quantity": 2
+        },
+        {
           "item_id": "health_potion",
-          "quantity": 19
+          "quantity": 21
         },
         {
           "item_id": "bandage",
-          "quantity": 23
-        },
-        {
-          "item_id": "candle",
-          "quantity": 14
-        },
-        {
-          "item_id": "rope",
-          "quantity": 23
-        },
-        {
-          "item_id": "torch",
-          "quantity": 22
-        },
-        {
-          "item_id": "cloth",
-          "quantity": 12
-        },
-        {
-          "item_id": "bread",
           "quantity": 20
         },
         {
-          "item_id": "dried_meat",
+          "item_id": "candle",
+          "quantity": 28
+        },
+        {
+          "item_id": "rope",
           "quantity": 15
         },
         {
-          "item_id": "wine",
-          "quantity": 26
+          "item_id": "torch",
+          "quantity": 28
         },
         {
-          "item_id": "jam",
+          "item_id": "cloth",
+          "quantity": 16
+        },
+        {
+          "item_id": "bread",
+          "quantity": 24
+        },
+        {
+          "item_id": "dried_meat",
           "quantity": 27
         },
         {
+          "item_id": "wine",
+          "quantity": 17
+        },
+        {
+          "item_id": "jam",
+          "quantity": 15
+        },
+        {
           "item_id": "honey",
-          "quantity": 28
+          "quantity": 11
         }
       ]
     },
@@ -316,7 +316,7 @@
         },
         {
           "item_id": "leather_armor",
-          "quantity": 2
+          "quantity": 1
         },
         {
           "item_id": "iron_armor",
@@ -336,7 +336,7 @@
         },
         {
           "item_id": "health_potion",
-          "quantity": 17
+          "quantity": 16
         },
         {
           "item_id": "antidote",
@@ -344,7 +344,7 @@
         },
         {
           "item_id": "bandage",
-          "quantity": 14
+          "quantity": 19
         },
         {
           "item_id": "greater_health_potion",
@@ -352,39 +352,39 @@
         },
         {
           "item_id": "purify_potion",
-          "quantity": 15
+          "quantity": 20
         },
         {
           "item_id": "mana_potion",
-          "quantity": 14
+          "quantity": 20
         },
         {
           "item_id": "candle",
-          "quantity": 6
+          "quantity": 11
         },
         {
           "item_id": "torch",
-          "quantity": 15
+          "quantity": 13
         },
         {
           "item_id": "herb",
-          "quantity": 17
+          "quantity": 20
         },
         {
           "item_id": "mushroom",
-          "quantity": 12
-        },
-        {
-          "item_id": "magic_crystal",
           "quantity": 22
         },
         {
+          "item_id": "magic_crystal",
+          "quantity": 18
+        },
+        {
           "item_id": "mushroom",
-          "quantity": 12
+          "quantity": 14
         },
         {
           "item_id": "honey",
-          "quantity": 9
+          "quantity": 13
         }
       ]
     },

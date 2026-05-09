@@ -58,6 +58,15 @@
       [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
     ]
   },
+  "monsters": [
+    {"monster_id": "slime", "x": 15, "y": 12},
+    {"monster_id": "slime", "x": 22, "y": 8},
+    {"monster_id": "wild_wolf", "x": 40, "y": 20, "patrol": [{"x": 38, "y": 20}, {"x": 42, "y": 20}, {"x": 42, "y": 24}]},
+    {"monster_id": "wild_wolf", "x": 10, "y": 35, "patrol": [{"x": 8, "y": 35}, {"x": 14, "y": 35}]},
+    {"monster_id": "forest_spider", "x": 48, "y": 30},
+    {"monster_id": "goblin", "x": 35, "y": 40},
+    {"monster_id": "dark_bear", "x": 50, "y": 15}
+  ],
   "objects": [
     {
       "id": "portal_to_village",

@@ -13,6 +13,7 @@ function getDialogueState(npcId) {
 }
 
 async function openDialogue(npc) {
+  if (combatOpen) return;
   dialogueOpen = true;
   activeNpcId = npc.npc_id;
   const state = getDialogueState(npc.npc_id);

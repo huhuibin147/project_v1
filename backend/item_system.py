@@ -59,6 +59,10 @@ class Inventory:
                 "sell_price": info.get("sell_price", 0),
                 "equip_slot": info.get("equip_slot"),
                 "stats": info.get("stats"),
+                "rarity": info.get("rarity", "common"),
+                "tier": info.get("tier"),
+                "level_range": info.get("level_range"),
+                "affixes": info.get("affixes", []),
             })
         return result
 

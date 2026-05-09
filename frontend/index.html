@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>青石村 - LLM NPC 冒险</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
   <!-- 开始界面（独立画面） -->
   <div id="start-screen">
@@ -91,6 +93,7 @@
       <div class="game-menu-actions">
         <button class="btn-interact" onclick="closeGameMenu(); openInventory()">背包 (I)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openPlayerInfo()">角色信息 (P)</button>
+        <button class="btn-interact" onclick="closeGameMenu(); openHelp()">帮助 (H)</button>
         <button class="btn-interact" onclick="saveGame()">保存游戏</button>
         <button class="btn-interact btn-danger" onclick="returnToMainMenu()">返回主菜单</button>
       </div>
@@ -177,31 +180,36 @@
               <div class="equip-slot-label">武器</div>
               <div class="equip-slot-item" id="equip-weapon">-</div>
               <div class="equip-slot-stats" id="equip-weapon-stats"></div>
-              <button class="btn-unequip" id="btn-unequip-weapon" style="display:none" onclick="doUnequip('weapon')">卸下</button>
+              <button class="btn-unequip" id="btn-unequip-weapon" style="display:none"
+                onclick="doUnequip('weapon')">卸下</button>
             </div>
             <div class="equip-slot" data-slot="shield">
               <div class="equip-slot-label">盾牌</div>
               <div class="equip-slot-item" id="equip-shield">-</div>
               <div class="equip-slot-stats" id="equip-shield-stats"></div>
-              <button class="btn-unequip" id="btn-unequip-shield" style="display:none" onclick="doUnequip('shield')">卸下</button>
+              <button class="btn-unequip" id="btn-unequip-shield" style="display:none"
+                onclick="doUnequip('shield')">卸下</button>
             </div>
             <div class="equip-slot" data-slot="head">
               <div class="equip-slot-label">头部</div>
               <div class="equip-slot-item" id="equip-head">-</div>
               <div class="equip-slot-stats" id="equip-head-stats"></div>
-              <button class="btn-unequip" id="btn-unequip-head" style="display:none" onclick="doUnequip('head')">卸下</button>
+              <button class="btn-unequip" id="btn-unequip-head" style="display:none"
+                onclick="doUnequip('head')">卸下</button>
             </div>
             <div class="equip-slot" data-slot="body">
               <div class="equip-slot-label">身体</div>
               <div class="equip-slot-item" id="equip-body">-</div>
               <div class="equip-slot-stats" id="equip-body-stats"></div>
-              <button class="btn-unequip" id="btn-unequip-body" style="display:none" onclick="doUnequip('body')">卸下</button>
+              <button class="btn-unequip" id="btn-unequip-body" style="display:none"
+                onclick="doUnequip('body')">卸下</button>
             </div>
             <div class="equip-slot" data-slot="accessory">
               <div class="equip-slot-label">饰品</div>
               <div class="equip-slot-item" id="equip-accessory">-</div>
               <div class="equip-slot-stats" id="equip-accessory-stats"></div>
-              <button class="btn-unequip" id="btn-unequip-accessory" style="display:none" onclick="doUnequip('accessory')">卸下</button>
+              <button class="btn-unequip" id="btn-unequip-accessory" style="display:none"
+                onclick="doUnequip('accessory')">卸下</button>
             </div>
           </div>
         </div>
@@ -249,6 +257,150 @@
         </div>
       </div>
     </div>
+
+    <!-- 帮助面板 -->
+    <div id="help-panel">
+      <div class="panel-header">
+        <span class="panel-title">游戏帮助</span>
+        <button class="panel-close" onclick="closeHelp()">×</button>
+      </div>
+      <div class="help-body">
+        <div class="help-section">
+          <div class="help-section-title">基本操作</div>
+          <div class="help-content">
+            <p><b>WASD / 方向键</b> — 移动角色</p>
+            <p><b>E</b> — 与NPC交互</p>
+            <p><b>I</b> — 打开/关闭背包</p>
+            <p><b>P</b> — 打开/关闭角色信息</p>
+            <p><b>H</b> — 打开/关闭帮助</p>
+            <p><b>ESC</b> — 关闭面板/打开菜单</p>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">装备系统</div>
+          <div class="help-content">
+            <p>装备分为5个槽位：<b>武器、盾牌、头部、身体、饰品</b></p>
+            <p>装备后提升角色属性（攻击、防御、速度、生命值）</p>
+            <p>同一槽位只能装备一件，新装备会替换旧装备</p>
+            <p>背包中点击"装备"按钮穿戴，角色面板点击"卸下"按钮脱下</p>
+            <p>装备对比：背包/商店中可预览与当前装备的属性差异</p>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">装备稀有度</div>
+          <div class="help-content">
+            <p>装备按稀有度分为5个等级，稀有度越高属性越强：</p>
+            <div class="help-rarity-list">
+              <span class="help-rarity" style="color:#aaaaaa">■ 普通</span>
+              <span class="help-rarity" style="color:#1eff00">■ 优秀</span>
+              <span class="help-rarity" style="color:#0070dd">■ 稀有</span>
+              <span class="help-rarity" style="color:#a335ee">■ 史诗</span>
+              <span class="help-rarity" style="color:#ff8000">■ 传说</span>
+            </div>
+            <p>稀有度影响装备的基础价格和属性强度</p>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">装备等级段</div>
+          <div class="help-content">
+            <p>装备按等级段分为3类，Lv.X 中的 X 为使用上限：</p>
+            <p><b>初级</b> — Lv.4，适合新手冒险者（Lv.1~4可用）</p>
+            <p><b>中级</b> — Lv.9，适合有经验的冒险者（Lv.1~9可用）</p>
+            <p><b>高级</b> — Lv.15，只有顶尖冒险者才配得上（Lv.1~15可用）</p>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">交易系统</div>
+          <div class="help-content">
+            <p>与NPC对话后可打开商店，购买和出售物品</p>
+            <p>商店有库存限制和金币限制</p>
+            <p>出售价格为购买价格的一半</p>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">特殊词条（即将推出）</div>
+          <div class="help-content">
+            <p>部分高级装备可能附带特殊词条，提供额外效果</p>
+            <p>词条系统正在开发中，敬请期待...</p>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">装备锻造（即将推出）</div>
+          <div class="help-content">
+            <p>收集材料，在铁匠铺锻造更强大的装备</p>
+            <p>锻造系统正在开发中，敬请期待...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 战斗面板 -->
+    <div id="combat-panel">
+      <div id="combat-header">
+        <span id="combat-title">战斗</span>
+        <span id="combat-turn-info">第 1 回合</span>
+      </div>
+      <div id="combat-body">
+        <div id="combat-monster-area">
+          <canvas id="monster-sprite-canvas" width="96" height="96"></canvas>
+          <div id="combat-monster-name">史莱姆</div>
+          <div class="combat-hp-bar-row">
+            <span class="combat-hp-label">HP</span>
+            <div class="combat-hp-bar">
+              <div class="combat-hp-fill monster-hp" id="combat-monster-hp-bar"></div>
+            </div>
+            <span class="combat-hp-text" id="combat-monster-hp-text">30/30</span>
+          </div>
+          <div id="combat-monster-effects"></div>
+        </div>
+
+        <div id="combat-log"></div>
+
+        <div id="combat-player-area">
+          <div class="combat-hp-bar-row">
+            <span class="combat-hp-label">HP</span>
+            <div class="combat-hp-bar">
+              <div class="combat-hp-fill player-hp" id="combat-player-hp-bar"></div>
+            </div>
+            <span class="combat-hp-text" id="combat-player-hp-text">120/120</span>
+          </div>
+          <div id="combat-player-effects"></div>
+        </div>
+      </div>
+
+      <div id="combat-actions">
+        <button class="btn-combat" id="btn-combat-attack" onclick="combatAction('attack')">
+          攻击 (1)
+        </button>
+        <button class="btn-combat" id="btn-combat-defend" onclick="combatAction('defend')">
+          防御 (2)
+        </button>
+        <button class="btn-combat" id="btn-combat-item" onclick="openCombatItemSelect()">
+          物品 (3)
+        </button>
+        <button class="btn-combat btn-flee" id="btn-combat-flee" onclick="combatAction('flee')">
+          逃跑 (4)
+        </button>
+      </div>
+
+      <div id="combat-item-panel">
+        <div class="panel-header">
+          <span class="panel-title">选择物品</span>
+          <button class="panel-close" onclick="closeCombatItemSelect()">×</button>
+        </div>
+        <div id="combat-items"></div>
+      </div>
+
+      <div id="combat-result-overlay" style="display:none">
+        <div id="combat-result-content"></div>
+      </div>
+    </div>
   </div>
 
   <script src="/static/js/map.js"></script>
@@ -257,7 +409,10 @@
   <script src="/static/js/dialogue.js"></script>
   <script src="/static/js/inventory.js"></script>
   <script src="/static/js/player_info.js"></script>
+  <script src="/static/js/combat.js"></script>
+  <script src="/static/js/help.js"></script>
   <script src="/static/js/start_screen.js"></script>
   <script src="/static/js/game.js"></script>
 </body>
+
 </html>

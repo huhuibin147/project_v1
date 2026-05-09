@@ -430,6 +430,12 @@ async def save_position(req: PositionRequest):
 
 MAPS_DIR = ROOT_DIR / "config" / "maps"
 TILES_FILE = ROOT_DIR / "config" / "tiles.json"
+MONSTERS_FILE = ROOT_DIR / "config" / "monsters.json"
+
+MONSTERS_DB = {}
+if MONSTERS_FILE.exists():
+    with open(MONSTERS_FILE, "r", encoding="utf-8") as f:
+        MONSTERS_DB = json.load(f)
 
 
 class TransferRequest(BaseModel):
@@ -535,6 +541,192 @@ async def interact_object(req: ObjectInteractRequest):
     else:
         result["message"] = "无法交互。"
     return result
+
+
+# ===== 锻造系统预留接口 =====
+
+class ForgeRequest(BaseModel):
+    item_id: str
+    materials: list[dict] = []
+
+@app.get("/api/forge/recipes")
+async def get_forge_recipes():
+    """获取可用锻造配方列表（预留接口）。"""
+    return {"recipes": [], "message": "锻造系统开发中，敬请期待"}
+
+
+@app.post("/api/forge/craft")
+async def forge_craft(req: ForgeRequest):
+    """锻造装备（预留接口）。"""
+    return {"success": False, "message": "锻造系统开发中，敬请期待"}
+
+
+# ===== 词条系统预留接口 =====
+
+@app.get("/api/affixes/types")
+async def get_affix_types():
+    """获取可用词条类型列表（预留接口）。"""
+    return {"affixes": [], "message": "词条系统开发中，敬请期待"}
+
+
+@app.post("/api/affixes/enchant")
+async def enchant_item(req: ForgeRequest):
+    """为装备附加词条（预留接口）。"""
+    return {"success": False, "message": "词条系统开发中，敬请期待"}
+
+
+# ===== 战斗系统 =====
+
+from combat_engine import (
+    create_combat_session, get_session, remove_session,
+    resolve_turn, CombatPhase, cleanup_expired_sessions
+)
+
+
+@app.get("/api/monsters")
+async def get_monsters_config():
+    """返回所有怪物定义（供前端渲染使用）。"""
+    return MONSTERS_DB
+
+
+class CombatStartRequest(BaseModel):
+    monster_instance_id: str
+    map_id: str
+
+
+class CombatActionRequest(BaseModel):
+    session_id: str
+    action: str
+    item_id: str = None
+
+
+class CombatEndRequest(BaseModel):
+    session_id: str
+
+
+@app.post("/api/combat/start")
+async def combat_start(req: CombatStartRequest):
+    """发起战斗。"""
+    cleanup_expired_sessions()
+
+    map_file = MAPS_DIR / f"{req.map_id}.json"
+    if not map_file.exists():
+        raise HTTPException(404, "地图不存在")
+    with open(map_file, "r", encoding="utf-8") as f:
+        map_data = json.load(f)
+
+    monster_spawn = None
+    monsters_list = map_data.get("monsters", [])
+    for idx, m in enumerate(monsters_list):
+        instance_id = f"{m['monster_id']}_{idx}"
+        if instance_id == req.monster_instance_id:
+            monster_spawn = m
+            break
+
+    if not monster_spawn:
+        raise HTTPException(404, "怪物不存在")
+
+    monster_id = monster_spawn["monster_id"]
+    monster_config = MONSTERS_DB.get(monster_id)
+    if not monster_config:
+        raise HTTPException(404, "怪物配置不存在")
+
+    player_snapshot = {
+        "hp": player_profile.hp,
+        "max_hp": player_profile.max_hp,
+        "attack": player_profile.attack,
+        "defense": player_profile.defense,
+        "speed": player_profile.speed,
+    }
+
+    session = create_combat_session(monster_id, monster_config, player_snapshot)
+
+    return {
+        "session_id": session.session_id,
+        "monster": {
+            "id": monster_id,
+            "name": monster_config["name"],
+            "hp": session.monster_hp,
+            "max_hp": session.monster_max_hp,
+            "sprite_color": monster_config.get("sprite_color", "#888"),
+            "sprite_accent": monster_config.get("sprite_accent", "#555"),
+        },
+        "player": {
+            "hp": session.player_hp,
+            "max_hp": session.player_max_hp,
+            "attack": session.player_attack,
+            "defense": session.player_defense,
+            "speed": session.player_speed,
+        },
+        "phase": session.phase.value,
+        "log": session.log,
+    }
+
+
+@app.post("/api/combat/action")
+async def combat_action(req: CombatActionRequest):
+    """提交战斗动作。"""
+    session = get_session(req.session_id)
+    if not session:
+        raise HTTPException(404, "战斗会话不存在或已过期")
+
+    if session.phase != CombatPhase.PLAYER_TURN:
+        raise HTTPException(400, "当前不是你的回合")
+
+    if req.action == "use_item":
+        if not req.item_id:
+            raise HTTPException(400, "使用物品需要指定item_id")
+        if player_profile.get_item_quantity(req.item_id) <= 0:
+            raise HTTPException(400, "你没有这个物品")
+        player_profile.remove_item(req.item_id, 1)
+
+    state = resolve_turn(session, req.action, {"item_id": req.item_id})
+
+    if session.phase == CombatPhase.VICTORY and not state.get("fled"):
+        exp_leveled = player_profile.gain_exp(session.exp_reward)
+        state["level_up"] = exp_leveled
+
+        if session.gold_reward > 0:
+            player_profile.add_gold(session.gold_reward)
+
+        for drop in session.drops:
+            player_profile.add_item(drop["item_id"], drop["quantity"])
+
+        # Add item names to drops for frontend display
+        for drop in state.get("drops", []):
+            item_info = ITEMS_DB.get(drop["item_id"], {})
+            drop["name"] = item_info.get("name", drop["item_id"])
+
+        state["player_inventory"] = player_profile.get_inventory()
+        state["player_gold"] = player_profile.gold
+
+    elif session.phase == CombatPhase.DEFEAT:
+        gold_loss = min(player_profile.gold, max(10, session.monster_config.get("gold_reward", [10])[0]))
+        if gold_loss > 0:
+            player_profile.spend_gold(gold_loss)
+        player_profile.hp = 1
+        player_profile._save()
+        state["gold_lost"] = gold_loss
+
+    if session.phase == CombatPhase.PLAYER_TURN:
+        player_profile.hp = session.player_hp
+        player_profile._save()
+
+    state["phase"] = session.phase.value
+    state["player_hp"] = session.player_hp
+    state["player_max_hp"] = session.player_max_hp
+    state["monster_hp"] = session.monster_hp
+    state["monster_max_hp"] = session.monster_max_hp
+
+    return state
+
+
+@app.post("/api/combat/end")
+async def combat_end(req: CombatEndRequest):
+    """结束战斗会话。"""
+    remove_session(req.session_id)
+    player_profile._save()
+    return {"success": True, "player_info": player_profile.get_info()}
 
 
 # 挂载静态文件（放在路由之后）

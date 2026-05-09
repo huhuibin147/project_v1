@@ -122,7 +122,7 @@ function drawNPC(ctx, npc) {
   ctx.fillText(npc.name, x + s / 2, y - 4);
 
   // 交互提示
-  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen) {
+  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen && !combatOpen) {
     npc.showPrompt = true;
     const prompt = "按 E 交互";
     const pw = ctx.measureText(prompt).width + 10;
@@ -142,16 +142,22 @@ function drawAllNpcs(ctx) {
   }
 }
 
-// E 键交互：找最近的 NPC 或物件
+// E 键交互：找最近的 NPC 或物件或怪物
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen) {
-    // 优先检查 NPC
+  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen && !combatOpen) {
+    // 优先检查怪物
+    const nearMonster = typeof getNearestMonster === "function" ? getNearestMonster() : null;
+    if (nearMonster) {
+      initiateCombat(nearMonster.instance_id);
+      return;
+    }
+    // 其次检查 NPC
     const nearest = getNearestNpc();
     if (nearest) {
       openNpcInteract(nearest);
       return;
     }
-    // 其次检查地图物件
+    // 最后检查地图物件
     const nearObj = getNearbyInteractableObject();
     if (nearObj) {
       interactWithObject(nearObj);

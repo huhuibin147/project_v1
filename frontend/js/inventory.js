@@ -24,6 +24,20 @@ const STAT_LABELS_INV = {
   max_hp: "HP",
 };
 
+const RARITY_DEF = {
+  common:    { name: "普通", color: "#aaaaaa" },
+  uncommon:  { name: "优秀", color: "#1eff00" },
+  rare:      { name: "稀有", color: "#0070dd" },
+  epic:      { name: "史诗", color: "#a335ee" },
+  legendary: { name: "传说", color: "#ff8000" },
+};
+
+const TIER_NAMES = {
+  tier1: "初级",
+  tier2: "中级",
+  tier3: "高级",
+};
+
 function formatItemStats(stats) {
   if (!stats) return "";
   const parts = [];
@@ -34,6 +48,48 @@ function formatItemStats(stats) {
     parts.push(`<span class="${cls}">${label}${val > 0 ? "+" : ""}${val}</span>`);
   }
   return parts.join(" ");
+}
+
+function getRarityColor(rarity) {
+  return (RARITY_DEF[rarity] || RARITY_DEF.common).color;
+}
+
+function getRarityName(rarity) {
+  return (RARITY_DEF[rarity] || RARITY_DEF.common).name;
+}
+
+function getTierName(tier) {
+  return TIER_NAMES[tier] || "";
+}
+
+function getLevelRangeText(item) {
+  if (!item.level_range) return "";
+  return `Lv.${item.level_range}`;
+}
+
+function buildCompareHtml(item) {
+  if (!item.equip_slot) return "";
+  const equipped = playerInfo.equipment || {};
+  const current = equipped[item.equip_slot];
+  if (!current || !current.stats) return "";
+
+  const diff = {};
+  for (const key of ["attack", "defense", "speed", "max_hp"]) {
+    const newVal = (item.stats && item.stats[key]) || 0;
+    const oldVal = (current.stats && current.stats[key]) || 0;
+    const d = newVal - oldVal;
+    if (d !== 0) diff[key] = d;
+  }
+
+  if (Object.keys(diff).length === 0) return "";
+
+  const parts = [];
+  for (const [key, d] of Object.entries(diff)) {
+    const label = STAT_LABELS_INV[key] || key;
+    const cls = d > 0 ? "compare-up" : "compare-down";
+    parts.push(`<span class="${cls}">${label}${d > 0 ? "+" : ""}${d}</span>`);
+  }
+  return `<div class="item-compare">对比${current.name}: ${parts.join(" ")}</div>`;
 }
 
 async function fetchInventory() {
@@ -61,7 +117,7 @@ async function fetchShop(npcId) {
 }
 
 function openInventory() {
-  if (dialogueOpen || gameMenuOpen) return;
+  if (dialogueOpen || gameMenuOpen || combatOpen) return;
   inventoryOpen = true;
   inventoryPage.current = 1;
   fetchInventory().then(() => renderInventory());
@@ -91,7 +147,8 @@ function renderInventory() {
 
   for (const item of pageItems) {
     const div = document.createElement("div");
-    div.className = `item-card ${item.type}`;
+    const rarityCls = item.rarity || "common";
+    div.className = `item-card ${item.type} rarity-${rarityCls}`;
 
     const canEquip = item.equip_slot && item.stats;
     const isEquipped = isItemEquipped(item.item_id);
@@ -108,13 +165,26 @@ function renderInventory() {
       equipBtnHtml = `<span style="color:#6bafff;font-size:11px;font-weight:bold;">已装备</span>`;
     }
 
+    const rarityColor = getRarityColor(rarityCls);
+    const rarityName = getRarityName(rarityCls);
+    const tierName = item.tier ? getTierName(item.tier) : "";
+    const levelText = getLevelRangeText(item);
+    const compareHtml = canEquip && !isEquipped ? buildCompareHtml(item) : "";
+
+    let affixesHtml = "";
+    if (item.affixes && item.affixes.length > 0) {
+      affixesHtml = `<div class="item-affixes">${item.affixes.map(a => `<span class="affix-tag">${a}</span>`).join("")}</div>`;
+    }
+
     div.innerHTML = `
       <div class="item-header">
-        <span class="item-name">${item.name}</span>
+        <span class="item-name" style="color:${rarityColor}">${item.name}</span>
         <span class="item-qty">x${item.quantity}</span>
       </div>
-      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}</div>
+      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span></div>
       ${statsHtml}
+      ${affixesHtml}
+      ${compareHtml}
       <div class="item-desc">${item.description}</div>
       <div class="item-actions">
         <span class="item-price">出售价: ${item.sell_price} 金</span>
@@ -150,6 +220,7 @@ function getSlotLabel(slot) {
 }
 
 function openShop(npcId) {
+  if (combatOpen) return;
   shopOpen = true;
   shopNpcId = npcId || activeNpcId || "blacksmith";
   shopPage.current = 1;
@@ -188,21 +259,35 @@ function renderShop() {
   for (const item of pageItems) {
     const playerQty = getPlayerItemQty(item.item_id);
     const canEquip = item.equip_slot && item.stats;
+    const rarityCls = item.rarity || "common";
+    const rarityColor = getRarityColor(rarityCls);
+    const rarityName = getRarityName(rarityCls);
+    const tierName = item.tier ? getTierName(item.tier) : "";
+    const levelText = getLevelRangeText(item);
 
     let statsHtml = "";
     if (canEquip && item.stats) {
       statsHtml = `<div class="item-stats-line">${formatItemStats(item.stats)}</div>`;
     }
 
+    const compareHtml = canEquip ? buildCompareHtml(item) : "";
+
+    let affixesHtml = "";
+    if (item.affixes && item.affixes.length > 0) {
+      affixesHtml = `<div class="item-affixes">${item.affixes.map(a => `<span class="affix-tag">${a}</span>`).join("")}</div>`;
+    }
+
     const div = document.createElement("div");
-    div.className = `item-card shop-item ${item.type}`;
+    div.className = `item-card shop-item ${item.type} rarity-${rarityCls}`;
     div.innerHTML = `
       <div class="item-header">
-        <span class="item-name">${item.name}</span>
+        <span class="item-name" style="color:${rarityColor}">${item.name}</span>
         <span class="item-qty">库存: ${item.quantity}</span>
       </div>
-      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}</div>
+      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span></div>
       ${statsHtml}
+      ${affixesHtml}
+      ${compareHtml}
       <div class="item-desc">${item.description}</div>
       <div class="item-actions">
         <span class="item-price">售价: ${item.buy_price} 金</span>
@@ -307,7 +392,7 @@ function updateGoldDisplay() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "i" && !dialogueOpen && !gameMenuOpen) {
+  if (e.key.toLowerCase() === "i" && !dialogueOpen && !gameMenuOpen && !combatOpen) {
     if (inventoryOpen) {
       closeInventory();
     } else {

@@ -229,6 +229,10 @@ class PlayerProfile:
                     "type": info.get("type", "unknown"),
                     "description": info.get("description", ""),
                     "stats": info.get("stats", {}),
+                    "rarity": info.get("rarity", "common"),
+                    "tier": info.get("tier"),
+                    "level_range": info.get("level_range"),
+                    "affixes": info.get("affixes", []),
                 }
             else:
                 result[slot_name] = None
