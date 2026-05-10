@@ -197,6 +197,9 @@ async function startGame() {
   await fetchAllNpcs();
   loadMapMonsters();
   fetchInventory();
+  await fetchAllQuests();
+  updateQuestTracker();
+  startExploreCheck();
 
   // 立即更新一次摄像机，确保初始位置正确
   updateCamera();

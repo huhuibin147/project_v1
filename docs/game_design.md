@@ -524,6 +524,7 @@ ITEM_EFFECTS = {
 | E | 与 NPC/物件/怪物交互 |
 | I | 打开背包（可使用消耗品/食物） |
 | P | 打开角色信息 |
+| Q | 打开任务管理 |
 | O | 游戏菜单 |
 | H | 帮助面板 |
 | 1/2/3 | NPC 交互选项（对话/治疗/商店或对话/学习/商店） |
@@ -551,6 +552,7 @@ project_v1/
 │   ├── player_default.json # 职业配置
 │   ├── skills.json         # 技能定义
 │   ├── tiles.json          # 瓦片定义
+│   ├── quests.json         # 任务定义（14个任务，5种类型）
 │   └── maps/               # 地图数据
 ├── data/                   # 存档数据
 ├── backend/
@@ -560,6 +562,7 @@ project_v1/
 │   ├── item_system.py      # 物品系统
 │   ├── combat_engine.py    # 战斗引擎
 │   ├── skill_system.py     # 技能系统
+│   ├── quest_manager.py    # 任务系统
 │   ├── llm_client.py       # LLM 调用
 │   └── config.py           # 配置加载
 ├── frontend/
@@ -574,31 +577,381 @@ project_v1/
 │       ├── dialogue.js     # 对话系统
 │       ├── inventory.js    # 背包/商店
 │       ├── player_info.js  # 角色信息
+│       ├── quest.js        # 任务系统（追踪器、管理器、NPC任务面板）
 │       ├── help.js         # 帮助面板
 │       └── start_screen.js # 开始界面
 ├── docs/                   # 文档
 ├── tools/                  # 工具脚本
 │   ├── item_generator.py   # 物品生成器
 │   ├── npc_generator.py    # NPC 生成器
-│   └── monster_generator.py # 怪物生成器
+│   ├── monster_generator.py # 怪物生成器
+│   └── generate_quests.py  # 任务生成器
 ```
+
+## 任务系统
+
+### 概述
+
+任务系统为玩家提供目标导向的游戏体验，NPC 通过对话或任务面板下发任务，玩家完成后获得经验、金币和好感度奖励。
+
+### 任务数据结构
+
+```json
+{
+  "quest_id": "blacksmith_collect_iron",
+  "name": "铁矿收集",
+  "description": "铁匠老王需要一些铁矿石来打造武器",
+  "npc_id": "blacksmith",
+  "type": "collect",
+  "level_requirement": 1,
+  "prerequisites": [],
+  "objectives": [
+    {"type": "collect", "item_id": "iron_ore", "quantity": 5}
+  ],
+  "rewards": {
+    "exp": 50,
+    "gold": 30,
+    "items": [{"item_id": "health_potion", "quantity": 2}],
+    "affinity": 10
+  },
+  "dialogue": {
+    "accept": "帮我收集一些铁矿石吧！",
+    "progress": "还需要更多铁矿石",
+    "complete": "太感谢了！这些铁矿石足够打造一把好剑了",
+    "abandon": "没关系，等你有空再说吧"
+  }
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `quest_id` | 唯一标识 |
+| `name` | 任务名称 |
+| `description` | 任务描述 |
+| `npc_id` | 发布任务的 NPC |
+| `type` | 任务类型 |
+| `level_requirement` | 等级要求 |
+| `prerequisites` | 前置任务 ID 列表 |
+| `objectives` | 任务目标列表 |
+| `rewards` | 任务奖励 |
+| `dialogue` | NPC 对话文本 |
+
+### 任务类型
+
+| 类型 | 说明 | 目标示例 |
+|------|------|----------|
+| collect | 收集物品 | 收集 5 个铁矿石 |
+| kill | 击杀怪物 | 击杀 3 只野狼 |
+| talk | 与 NPC 对话 | 与祭司阿雅对话 |
+| deliver | 递送物品 | 将草药送给祭司阿雅 |
+| explore | 探索区域 | 探索幽暗森林深处 |
+
+### 任务状态
+
+| 状态 | 说明 |
+|------|------|
+| available | 可接取（满足等级和前置条件） |
+| active | 进行中 |
+| completed | 已完成（可交付） |
+| turned_in | 已交付 |
+| abandoned | 已放弃 |
+
+### 任务进度追踪
+
+- **自动追踪**：战斗击杀、物品拾取、NPC 对话自动更新进度
+- **UI 面板**：右上角实时显示进行中的任务目标
+- **任务管理器**：按 Q 键打开，分进行中/可接取/已完成三个标签页
+- **存档保存**：任务进度随玩家存档保存
+
+### 任务奖励
+
+| 奖励类型 | 说明 |
+|----------|------|
+| 经验值 | 基于任务等级和难度计算 |
+| 金币 | 固定或随机范围 |
+| 物品 | 药水、材料、装备等 |
+| 好感度 | 提升对应 NPC 的好感度 |
+
+### 任务生成工具
+
+使用 `tools/generate_quests.py` 可批量生成任务配置：
+
+```bash
+python tools/generate_quests.py
+```
+
+支持：
+- 自定义任务链和前置条件
+- NPC 人格化对话模板
+- 奖励自动计算（基于等级）
+- 多种任务类型混合生成
+
+## 装备系统
+
+### 装备槽位
+
+| 槽位 | 说明 |
+|------|------|
+| 武器 | 增加攻击力 |
+| 盾牌 | 增加防御力 |
+| 头部 | 增加防御力 |
+| 身体 | 增加防御力和HP |
+| 饰品 | 增加各种属性 |
+
+### 稀有度
+
+| 稀有度 | 颜色 | 价格倍率 |
+|--------|------|----------|
+| 普通 | 灰色 | ×1.0 |
+| 优秀 | 绿色 | ×1.3 |
+| 稀有 | 蓝色 | ×1.8 |
+| 史诗 | 紫色 | ×2.5 |
+| 传说 | 橙色 | ×4.0 |
+
+### 等级段
+
+| 等级段 | 等级上限 | 价格倍率 |
+|--------|----------|----------|
+| 初级 | Lv.4 | ×1.0 |
+| 中级 | Lv.9 | ×2.5 |
+| 高级 | Lv.15 | ×6.0 |
+
+## 任务系统
+
+### 概述
+
+任务系统为玩家提供目标导向的游戏体验，NPC 通过对话或任务面板下发任务，玩家完成后获得经验、金币和好感度奖励。
+
+### 任务数据结构
+
+```json
+{
+  "id": "blacksmith_ore",
+  "name": "铁匠的委托",
+  "description": "铁匠老王最近铁矿储备不足，需要冒险者帮忙收集铁矿来维持铁匠铺的运转。",
+  "type": "side",
+  "npc_id": "blacksmith",
+  "prerequisites": {
+    "level": 1,
+    "quests_completed": [],
+    "npc_affinity": 0
+  },
+  "objectives": [
+    {
+      "type": "collect",
+      "item_id": "iron_ore",
+      "count": 3,
+      "description": "收集3个铁矿石"
+    }
+  ],
+  "rewards": {
+    "exp": 31,
+    "gold": 30,
+    "items": [],
+    "affinity": {
+      "npc_id": "blacksmith",
+      "value": 7
+    }
+  },
+  "dialogue": {
+    "offer": "俺最近缺铁矿石，你能不能帮俺收集3个？",
+    "accept": "好嘞！俺等着你的好消息！",
+    "decline": "行吧，俺再找别人帮忙。",
+    "progress": "铁矿石还没凑齐呢？别急，慢慢来。",
+    "complete": "太好了！铁矿石到手了！拿着，这是你的报酬！",
+    "reminder": "铁矿石的事别忘了，俺这边急用。"
+  }
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `id` | 任务唯一标识 |
+| `name` | 任务名称 |
+| `description` | 任务描述 |
+| `type` | 任务类型（side-支线） |
+| `npc_id` | 发布任务的 NPC |
+| `prerequisites` | 前置条件（等级、已完成任务、好感度） |
+| `objectives` | 任务目标列表 |
+| `rewards` | 任务奖励 |
+| `dialogue` | NPC 对话文本（6种场景） |
+
+### 任务类型
+
+| 类型 | 说明 | 目标示例 |
+|------|------|----------|
+| collect | 收集物品 | 收集 3 个铁矿石 |
+| kill | 击杀怪物 | 击杀 2 只野狼 |
+| talk | 与 NPC 对话 | 与祭司阿雅对话 |
+| deliver | 递送物品 | 将草药送给祭司阿雅 |
+| explore | 探索区域 | 探索幽暗森林深处 |
+
+### 任务状态
+
+| 状态 | 说明 |
+|------|------|
+| available | 可接取（满足等级和前置条件） |
+| active | 进行中 |
+| completed | 已完成（已交付） |
+| locked | 未解锁（前置条件未满足） |
+
+### NPC 任务链
+
+每个 NPC 有独立的任务链，需按顺序完成：
+
+| NPC | 任务链 |
+|-----|--------|
+| 铁匠老王 | 铁矿收集 → 清理野狼 → 暗熊威胁 |
+| 杂货婆刘婶 | 草药收集 → 跑腿送货 → 蘑菇美食 |
+| 采药人老林 | 稀有草药 → 毒蛛之患 → 森林深处 |
+| 祭司阿雅 | 神圣净化 → 圣水传递 |
+| 导师艾尔文 | 初级试炼 → 哥布林骚扰 → 骨材收集 |
+
+### 任务进度追踪
+
+- **自动追踪**：战斗击杀、物品拾取、NPC 对话自动更新进度
+- **UI 面板**：右上角实时显示进行中的任务目标
+- **任务管理器**：按 Q 键打开，分进行中/可接取/已完成三个标签页
+- **存档保存**：任务进度随玩家存档保存
+
+### 任务奖励
+
+| 奖励类型 | 说明 |
+|----------|------|
+| 经验值 | 基于任务等级和难度计算 |
+| 金币 | 固定或随机范围 |
+| 物品 | 药水、材料、装备等 |
+| 好感度 | 提升对应 NPC 的好感度 |
+
+### 任务生成工具
+
+使用 `tools/generate_quests.py` 可批量生成任务配置：
+
+```bash
+python tools/generate_quests.py
+```
+
+支持：
+- 自定义任务链和前置条件
+- NPC 人格化对话模板
+- 奖励自动计算（基于等级）
+- 多种任务类型混合生成
+
+## API 接口
+
+### 玩家相关
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/player/status` | GET | 获取玩家状态（等级、经验、属性等） |
+| `/api/player/move` | POST | 玩家移动 |
+| `/api/player/save` | POST | 保存游戏 |
+| `/api/player/load` | POST | 加载游戏 |
+
+### NPC 交互
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/npc/chat` | POST | 与 NPC 对话 |
+| `/api/npc/trade` | POST | 与 NPC 交易 |
+| `/api/npc/service/heal` | POST | 治疗服务 |
+| `/api/npc/service/skills` | GET | 获取可学技能列表 |
+| `/api/npc/service/learn_skill` | POST | 学习技能 |
+
+### 战斗系统
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/combat/start` | POST | 开始战斗 |
+| `/api/combat/action` | POST | 战斗动作（攻击/防御/技能/逃跑） |
+| `/api/combat/end` | POST | 结束战斗 |
+
+### 任务系统
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/quests` | GET | 获取所有任务 |
+| `/api/quests/npc/{npc_id}` | GET | 获取 NPC 的任务 |
+| `/api/quests/accept` | POST | 接取任务 |
+| `/api/quests/abandon` | POST | 放弃任务 |
+| `/api/quests/complete` | POST | 完成任务 |
+| `/api/quests/progress` | GET | 获取任务进度 |
+
+### 物品系统
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/inventory` | GET | 获取背包物品 |
+| `/api/inventory/use` | POST | 使用物品 |
+| `/api/inventory/equip` | POST | 装备物品 |
+| `/api/inventory/unequip` | POST | 卸下装备 |
+
+## 前端 UI 系统
+
+### UI 面板
+
+| 面板 | 快捷键 | 说明 |
+|------|--------|------|
+| 游戏菜单 | O | 包含背包、角色信息、任务管理、帮助、保存、返回主菜单 |
+| 背包 | I | 显示背包物品，支持使用、装备、出售 |
+| 角色信息 | P | 显示角色属性、等级、经验、装备 |
+| 任务管理 | Q | 分进行中/可接取/已完成三个标签页 |
+| 帮助 | H | 显示操作指南 |
+| 对话面板 | - | NPC 对话交互 |
+| 战斗面板 | - | 回合制战斗 UI |
+| 商店面板 | - | NPC 商店交互 |
+| 任务追踪器 | - | 右上角实时显示进行中的任务 |
+
+### UI 互斥机制
+
+所有 UI 面板共享以下标志位，确保同一时间只有一个面板打开：
+
+- `combatOpen` - 战斗面板
+- `dialogueOpen` - 对话面板
+- `inventoryOpen` - 背包
+- `playerInfoOpen` - 角色信息
+- `questManagerOpen` - 任务管理
+- `helpOpen` - 帮助面板
+- `shopOpen` - 商店
+- `npcInteractOpen` - NPC 交互
+- `gameMenuOpen` - 游戏菜单
+
+### 快捷键系统
+
+快捷键在 `game.js`、`inventory.js`、`player_info.js`、`quest.js`、`help.js` 等文件中分别注册，确保在不同场景下正确响应。
+
+## 事件系统
+
+### 任务进度事件
+
+任务进度通过以下事件自动更新：
+
+| 事件 | 触发条件 | 更新类型 |
+|------|----------|----------|
+| `on_kill` | 击杀怪物 | 更新 kill 类型任务进度 |
+| `on_collect` | 获得物品 | 更新 collect 类型任务进度 |
+| `on_talk` | 与 NPC 对话 | 更新 talk/deliver 类型任务进度 |
+| `on_explore` | 到达指定位置 | 更新 explore 类型任务进度 |
+
+### 事件处理流程
+
+1. 玩家执行动作（击杀、拾取、对话、移动）
+2. 前端调用对应 API
+3. 后端 `QuestManager` 检查进行中的任务
+4. 匹配任务目标，更新进度
+5. 返回更新的任务列表
+6. 前端刷新 UI 显示
 
 ## 扩展方向
 
-### 任务系统（优先级：高）
-
-- NPC 下发任务（收集物品、击杀怪物、传递消息）
-- 任务进度追踪 UI
-- 怪物 `tags` 字段已预留，支持任务击杀匹配
-
-### NPC 增强
+### NPC 增强（优先级：高）
 
 - 更多 NPC（酒馆老板、村长、猎人）
 - NPC 日程系统（按时段切换行为）
 - 传闻系统（NPC 间信息传递）
 - NPC 关系网络
 
-### 世界扩展
+### 世界扩展（优先级：中）
 
 - 更多地图（洞穴、城镇、沙漠）
 - 天气/昼夜系统

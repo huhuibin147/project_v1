@@ -202,13 +202,15 @@ document.addEventListener("keydown", (e) => {
     }
   }
   
-  // NPC交互选项快捷键：1-对话，2-商店，3-治疗服务/学习技能
+  // NPC交互选项快捷键：1-对话，2-任务，3-商店，4-治疗/技能
   if (npcInteractOpen) {
     if (e.key === "1") {
       interactTalk();
     } else if (e.key === "2") {
-      interactShop();
+      interactQuest();
     } else if (e.key === "3") {
+      interactShop();
+    } else if (e.key === "4") {
       if (interactNpcId === "priest") {
         interactHeal();
       } else if (interactNpcId === "skill_master") {
@@ -226,14 +228,15 @@ function openNpcInteract(npc) {
   // 根据NPC类型显示不同的交互按钮
   const actionsDiv = document.getElementById("npc-interact-actions");
   let html = '<button class="btn-interact" onclick="interactTalk()">对话 (1)</button>';
+  html += '<button class="btn-interact" onclick="interactQuest()">任务 (2)</button>';
   if (npc.npc_id === "priest") {
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (2)</button>';
-    html += '<button class="btn-interact" onclick="interactHeal()">治疗服务 (3)</button>';
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
+    html += '<button class="btn-interact" onclick="interactHeal()">治疗服务 (4)</button>';
   } else if (npc.npc_id === "skill_master") {
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (2)</button>';
-    html += '<button class="btn-interact" onclick="interactLearnSkill()">学习技能 (3)</button>';
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
+    html += '<button class="btn-interact" onclick="interactLearnSkill()">学习技能 (4)</button>';
   } else {
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (2)</button>';
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
   }
   actionsDiv.innerHTML = html;
   document.getElementById("npc-interact-panel").classList.add("active");
@@ -259,6 +262,13 @@ function interactShop() {
   if (!interactNpcId) return;
   closeNpcInteract();
   openShop(interactNpcId);
+}
+
+function interactQuest() {
+  if (!interactNpcId) return;
+  const npcId = interactNpcId;
+  closeNpcInteract();
+  openQuestPanel(npcId);
 }
 
 // ===== 治疗服务 =====

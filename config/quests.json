@@ -1,0 +1,606 @@
+{
+  "blacksmith_ore": {
+    "id": "blacksmith_ore",
+    "name": "铁匠的委托",
+    "description": "铁匠老王最近铁矿储备不足，需要冒险者帮忙收集铁矿来维持铁匠铺的运转。",
+    "type": "side",
+    "npc_id": "blacksmith",
+    "prerequisites": {
+      "level": 1,
+      "quests_completed": [],
+      "npc_affinity": 0
+    },
+    "objectives": [
+      {
+        "type": "collect",
+        "item_id": "iron_ore",
+        "count": 3,
+        "description": "收集3个铁矿石"
+      }
+    ],
+    "rewards": {
+      "exp": 31,
+      "gold": 30,
+      "items": [],
+      "affinity": {
+        "npc_id": "blacksmith",
+        "value": 7
+      }
+    },
+    "dialogue": {
+      "offer": "俺最近缺铁矿石，你能不能帮俺收集3个？",
+      "accept": "好嘞！俺等着你的好消息！",
+      "decline": "行吧，俺再找别人帮忙。",
+      "progress": "铁矿石还没凑齐呢？别急，慢慢来。",
+      "complete": "太好了！铁矿石到手了！拿着，这是你的报酬！",
+      "reminder": "铁矿石的事别忘了，俺这边急用。"
+    }
+  },
+  "blacksmith_wolf": {
+    "id": "blacksmith_wolf",
+    "name": "狼患",
+    "description": "森林里的野狼越来越猖狂，铁匠老王希望有人能清理一些，保护村民安全。",
+    "type": "side",
+    "npc_id": "blacksmith",
+    "prerequisites": {
+      "level": 2,
+      "quests_completed": [
+        "blacksmith_ore"
+      ],
+      "npc_affinity": 0
+    },
+    "objectives": [
+      {
+        "type": "kill",
+        "target": "wild_wolf",
+        "target_tags": [],
+        "count": 2,
+        "description": "击杀2只野狼"
+      }
+    ],
+    "rewards": {
+      "exp": 56,
+      "gold": 58,
+      "items": [
+        {
+          "item_id": "bandage",
+          "quantity": 3
+        }
+      ],
+      "affinity": {
+        "npc_id": "blacksmith",
+        "value": 12
+      }
+    },
+    "dialogue": {
+      "offer": "俺有个活儿，去宰了2只野狼。敢不敢？",
+      "accept": "行！别给俺丢脸啊！",
+      "decline": "行吧，俺再找别人帮忙。",
+      "progress": "野狼还没清理完？小心点，别受伤了。",
+      "complete": "好样的！这下俺能安心了。来，重赏！",
+      "reminder": "别忘了清理野狼啊，俺还等着呢。"
+    }
+  },
+  "blacksmith_bear": {
+    "id": "blacksmith_bear",
+    "name": "暗熊之威胁",
+    "description": "森林深处出现了一只凶暴的暗熊，铁匠老王希望有实力的冒险者能除掉它。",
+    "type": "side",
+    "npc_id": "blacksmith",
+    "prerequisites": {
+      "level": 4,
+      "quests_completed": [
+        "blacksmith_wolf"
+      ],
+      "npc_affinity": 20
+    },
+    "objectives": [
+      {
+        "type": "kill",
+        "target": "dark_bear",
+        "target_tags": [],
+        "count": 1,
+        "description": "击杀1只暗熊"
+      }
+    ],
+    "rewards": {
+      "exp": 88,
+      "gold": 78,
+      "items": [
+        {
+          "item_id": "strength_elixir",
+          "quantity": 1
+        }
+      ],
+      "affinity": {
+        "npc_id": "blacksmith",
+        "value": 11
+      }
+    },
+    "dialogue": {
+      "offer": "最近暗熊越来越猖狂了，你能去清理1只吗？",
+      "accept": "行！别给俺丢脸啊！",
+      "decline": "也是，这活确实不轻松。",
+      "progress": "咋样了？暗熊搞定没？",
+      "complete": "好样的！这下俺能安心了。来，重赏！",
+      "reminder": "别忘了清理暗熊啊，俺还等着呢。"
+    }
+  },
+  "merchant_herb": {
+    "id": "merchant_herb",
+    "name": "草药收集",
+    "description": "杂货婆刘婶的草药库存告急，需要冒险者帮忙收集草药。",
+    "type": "side",
+    "npc_id": "merchant",
+    "prerequisites": {
+      "level": 1,
+      "quests_completed": [],
+      "npc_affinity": 0
+    },
+    "objectives": [
+      {
+        "type": "collect",
+        "item_id": "herb",
+        "count": 5,
+        "description": "收集5个草药"
+      }
+    ],
+    "rewards": {
+      "exp": 26,
+      "gold": 42,
+      "items": [
+        {
+          "item_id": "bread",
+          "quantity": 3
+        }
+      ],
+      "affinity": {
+        "npc_id": "merchant",
+        "value": 5
+      }
+    },
+    "dialogue": {
+      "offer": "哎呀，我铺子里缺草药！你能不能帮我去收集5个？",
+      "accept": "哎呀，太感谢你了！",
+      "decline": "哎，那我自己想办法吧。",
+      "progress": "咋样了？草药找到没？",
+      "complete": "哎呀，太感谢了！这是给你的谢礼！",
+      "reminder": "别忘了帮我去收集草药啊。"
+    }
+  },
+  "merchant_deliver": {
+    "id": "merchant_deliver",
+    "name": "跑腿送货",
+    "description": "刘婶有一批货物需要送到神殿给祭司阿雅，但她走不开，需要冒险者帮忙跑腿。",
+    "type": "side",
+    "npc_id": "merchant",
+    "prerequisites": {
+      "level": 1,
+      "quests_completed": [
+        "merchant_herb"
+      ],
+      "npc_affinity": 0
+    },
+    "objectives": [
+      {
+        "type": "talk",
+        "npc_id": "priest",
+        "description": "与祭司阿雅对话"
+      }
+    ],
+    "rewards": {
+      "exp": 33,
+      "gold": 41,
+      "items": [],
+      "affinity": {
+        "npc_id": "merchant",
+        "value": 5
+      }
+    },
+    "dialogue": {
+      "offer": "哎哟，你能帮我去找祭司阿雅聊聊吗？",
+      "accept": "太好了！你真是个勤快的孩子！",
+      "decline": "好吧，我再找别人帮忙。",
+      "progress": "咋样了？祭司阿雅那边有消息没？",
+      "complete": "哎呀，太感谢了！你真是个大好人！",
+      "reminder": "别忘了去找祭司阿雅啊，我还等着回信呢。"
+    }
+  },
+  "merchant_mushroom": {
+    "id": "merchant_mushroom",
+    "name": "蘑菇美食",
+    "description": "刘婶想尝试一道新菜，需要新鲜的蘑菇作为食材。",
+    "type": "side",
+    "npc_id": "merchant",
+    "prerequisites": {
+      "level": 1,
+      "quests_completed": [],
+      "npc_affinity": 0
+    },
+    "objectives": [
+      {
+        "type": "collect",
+        "item_id": "mushroom",
+        "count": 3,
+        "description": "收集3个蘑菇"
+      }
+    ],
+    "rewards": {
+      "exp": 32,
+      "gold": 31,
+      "items": [
+        {
+          "item_id": "dried_meat",
+          "quantity": 2
+        }
+      ],
+      "affinity": {
+        "npc_id": "merchant",
+        "value": 6
+      }
+    },
+    "dialogue": {
+      "offer": "说起来，我最近蘑菇快卖完了呢。你去帮我弄3个来咋样？",
+      "accept": "太好了！你真是个勤快的孩子！",
+      "decline": "哎，那我自己想办法吧。",
+      "progress": "蘑菇还没收齐？慢慢来，不着急。",
+      "complete": "哎呀，太感谢了！这是给你的谢礼！",
+      "reminder": "别忘了帮我去收集蘑菇啊。"
+    }
+  },
+  "herbalist_herb": {
+    "id": "herbalist_herb",
+    "name": "稀有草药",
+    "description": "采药人老林需要一些草药和魔法水晶来炼制特殊药剂。",
+    "type": "side",
+    "npc_id": "herbalist",
+    "prerequisites": {
+      "level": 2,
+      "quests_completed": [],
+      "npc_affinity": 0
+    },
+    "objectives": [
+      {
+        "type": "collect",
+        "item_id": "herb",
+        "count": 5,
+        "description": "收集5个草药"
+      }
+    ],
+    "rewards": {
+      "exp": 39,
+      "gold": 52,
+      "items": [
+        {
+          "item_id": "greater_health_potion",
+          "quantity": 2
+        }
+      ],
+      "affinity": {
+        "npc_id": "herbalist",
+        "value": 6
+      }
+    },
+    "dialogue": {
+      "offer": "……缺草药。你去帮我找5个？",
+      "accept": "……多谢。",
+      "decline": "……也罢。",
+      "progress": "……慢慢来。",
+      "complete": "……很好。这些草药品质不错。这是你的报酬。",
+      "reminder": "……草药的事，别忘了。"
+    }
+  },
+  "herbalist_spider": {
+    "id": "herbalist_spider",
+    "name": "毒蛛之患",
+    "description": "森林中的毒蛛越来越多，威胁到采药人的安全，需要清理一些。",
+    "type": "side",
+    "npc_id": "herbalist",
+    "prerequisites": {
+      "level": 3,
+      "quests_completed": [
+        "herbalist_herb"
+      ],
+      "npc_affinity": 10
+    },
+    "objectives": [
+      {
+        "type": "kill",
+        "target": "forest_spider",
+        "target_tags": [],
+        "count": 2,
+        "description": "击杀2只毒蛛"
+      }
+    ],
+    "rewards": {
+      "exp": 81,
+      "gold": 70,
+      "items": [
+        {
+          "item_id": "antidote",
+          "quantity": 3
+        }
+      ],
+      "affinity": {
+        "npc_id": "herbalist",
+        "value": 14
+      }
+    },
+    "dialogue": {
+      "offer": "……毒蛛挡路了。去干掉2只？",
+      "accept": "……多谢。",
+      "decline": "……那我自己去。",
+      "progress": "……毒蛛还没清理？注意安全。",
+      "complete": "……多谢。这些对你有用。",
+      "reminder": "……毒蛛的事，别忘了。"
+    }
+  },
+  "herbalist_explore": {
+    "id": "herbalist_explore",
+    "name": "森林深处",
+    "description": "老林希望有人能探索森林深处的区域，那里可能隐藏着珍贵的药材。",
+    "type": "side",
+    "npc_id": "herbalist",
+    "prerequisites": {
+      "level": 3,
+      "quests_completed": [
+        "herbalist_spider"
+      ],
+      "npc_affinity": 15
+    },
+    "objectives": [
+      {
+        "type": "explore",
+        "map_id": "forest",
+        "x": 42,
+        "y": 38,
+        "radius": 5,
+        "description": "探索forest地图的(42,38)附近区域"
+      }
+    ],
+    "rewards": {
+      "exp": 71,
+      "gold": 63,
+      "items": [
+        {
+          "item_id": "magic_crystal",
+          "quantity": 3
+        }
+      ],
+      "affinity": {
+        "npc_id": "herbalist",
+        "value": 13
+      }
+    },
+    "dialogue": {
+      "offer": "……forest那边有点不对劲。去探探。",
+      "accept": "……多谢。",
+      "decline": "……也罢。",
+      "progress": "……forest探完了？",
+      "complete": "……多谢。",
+      "reminder": "……去forest的事，别忘了。"
+    }
+  },
+  "priest_purify": {
+    "id": "priest_purify",
+    "name": "神圣净化",
+    "description": "祭司阿雅感应到森林中的邪恶气息，希望冒险者能清除一些森林怪物来净化这片土地。",
+    "type": "side",
+    "npc_id": "priest",
+    "prerequisites": {
+      "level": 2,
+      "quests_completed": [],
+      "npc_affinity": 0
+    },
+    "objectives": [
+      {
+        "type": "kill",
+        "target": "",
+        "target_tags": [
+          "slime",
+          "forest",
+          "common"
+        ],
+        "count": 3,
+        "description": "击杀3只slime怪物"
+      }
+    ],
+    "rewards": {
+      "exp": 58,
+      "gold": 55,
+      "items": [
+        {
+          "item_id": "health_potion",
+          "quantity": 2
+        }
+      ],
+      "affinity": {
+        "npc_id": "priest",
+        "value": 11
+      }
+    },
+    "dialogue": {
+      "offer": "我感应到slime怪物的邪恶气息……冒险者，你能去清除3只吗？这对净化这片土地很重要。",
+      "accept": "感谢你。光明与你同在。",
+      "decline": "我理解，这确实不是轻松的差事。",
+      "progress": "还没有完成吗？继续努力吧，光明与你同在。",
+      "complete": "愿光明永远照耀你。这是你的报酬。",
+      "reminder": "slime怪物的事，别忘了。"
+    }
+  },
+  "priest_deliver": {
+    "id": "priest_deliver",
+    "name": "圣水传递",
+    "description": "祭司阿雅需要将一瓶圣水送到森林中的采药人老林手中，以保护他免受邪恶侵害。",
+    "type": "side",
+    "npc_id": "priest",
+    "prerequisites": {
+      "level": 2,
+      "quests_completed": [
+        "priest_purify"
+      ],
+      "npc_affinity": 10
+    },
+    "objectives": [
+      {
+        "type": "talk",
+        "npc_id": "herbalist",
+        "description": "与采药人老林对话"
+      }
+    ],
+    "rewards": {
+      "exp": 46,
+      "gold": 44,
+      "items": [
+        {
+          "item_id": "purify_potion",
+          "quantity": 1
+        }
+      ],
+      "affinity": {
+        "npc_id": "priest",
+        "value": 6
+      }
+    },
+    "dialogue": {
+      "offer": "我感应到需要你去跟采药人老林说一声……冒险者，你愿意帮忙吗？这对维系这片土地的和谐很重要。",
+      "accept": "太好了，愿神灵保佑你。",
+      "decline": "没关系，光明会找到合适的人。",
+      "progress": "还没有完成吗？继续努力吧，光明与你同在。",
+      "complete": "感谢你！采药人老林那边搞定了。这是神殿的谢礼。",
+      "reminder": "别忘了去跟采药人老林说一声的使命。"
+    }
+  },
+  "skillmaster_test": {
+    "id": "skillmaster_test",
+    "name": "初级试炼",
+    "description": "导师艾尔文要求你通过一个简单的试炼——击杀几只史莱姆来证明你的实力。",
+    "type": "side",
+    "npc_id": "skill_master",
+    "prerequisites": {
+      "level": 1,
+      "quests_completed": [],
+      "npc_affinity": 0
+    },
+    "objectives": [
+      {
+        "type": "kill",
+        "target": "slime",
+        "target_tags": [],
+        "count": 3,
+        "description": "击杀3只史莱姆"
+      }
+    ],
+    "rewards": {
+      "exp": 38,
+      "gold": 43,
+      "items": [
+        {
+          "item_id": "bandage",
+          "quantity": 2
+        }
+      ],
+      "affinity": {
+        "npc_id": "skill_master",
+        "value": 11
+      }
+    },
+    "dialogue": {
+      "offer": "年轻人，去击杀3只史莱姆，这是对你的考验。",
+      "accept": "有种！去吧。",
+      "decline": "也罢，等你准备好了再来。",
+      "progress": "加把劲，别让老夫等太久。",
+      "complete": "做得好！但还不够，继续努力。",
+      "reminder": "考验还没完成，别让老夫等太久。"
+    }
+  },
+  "skillmaster_goblin": {
+    "id": "skillmaster_goblin",
+    "name": "哥布林骚扰",
+    "description": "哥布林不断骚扰过往的旅人，导师艾尔文希望你能处理这个问题。",
+    "type": "side",
+    "npc_id": "skill_master",
+    "prerequisites": {
+      "level": 3,
+      "quests_completed": [
+        "skillmaster_test"
+      ],
+      "npc_affinity": 10
+    },
+    "objectives": [
+      {
+        "type": "kill",
+        "target": "goblin",
+        "target_tags": [],
+        "count": 2,
+        "description": "击杀2只哥布林"
+      }
+    ],
+    "rewards": {
+      "exp": 85,
+      "gold": 65,
+      "items": [
+        {
+          "item_id": "mana_potion",
+          "quantity": 2
+        }
+      ],
+      "affinity": {
+        "npc_id": "skill_master",
+        "value": 13
+      }
+    },
+    "dialogue": {
+      "offer": "老夫想看看你的实力。去干掉2只哥布林。",
+      "accept": "很好，不要让老夫失望。",
+      "decline": "也罢，等你准备好了再来。",
+      "progress": "加把劲，别让老夫等太久。",
+      "complete": "不错，哥布林清理干净了。拿着，这是你的奖励。",
+      "reminder": "别忘了击杀哥布林，这是对你的考验。"
+    }
+  },
+  "skillmaster_bone": {
+    "id": "skillmaster_bone",
+    "name": "骨材收集",
+    "description": "导师艾尔文需要一些兽骨来研究古代战斗技艺，需要冒险者帮忙收集。",
+    "type": "side",
+    "npc_id": "skill_master",
+    "prerequisites": {
+      "level": 2,
+      "quests_completed": [
+        "skillmaster_goblin"
+      ],
+      "npc_affinity": 5
+    },
+    "objectives": [
+      {
+        "type": "collect",
+        "item_id": "beast_bone",
+        "count": 2,
+        "description": "收集2个兽骨"
+      }
+    ],
+    "rewards": {
+      "exp": 44,
+      "gold": 63,
+      "items": [
+        {
+          "item_id": "strength_elixir",
+          "quantity": 1
+        }
+      ],
+      "affinity": {
+        "npc_id": "skill_master",
+        "value": 10
+      }
+    },
+    "dialogue": {
+      "offer": "年轻人，去收集2个兽骨，这是对你的考验。",
+      "accept": "好！让老夫看看你的本事。",
+      "decline": "哼，果然是缺乏勇气。",
+      "progress": "加把劲，别让老夫等太久。",
+      "complete": "不错，兽骨收集齐了。拿着，这是你的奖励。",
+      "reminder": "考验还没完成，别让老夫等太久。"
+    }
+  }
+}

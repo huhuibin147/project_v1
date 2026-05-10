@@ -290,6 +290,24 @@ body {
   border-color: #f0c060;
 }
 
+#hud-quest-btn {
+  background: rgba(0,0,0,0.7);
+  color: #6bafff;
+  border: 1px solid rgba(107, 175, 255, 0.4);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  pointer-events: auto;
+}
+
+#hud-quest-btn:hover {
+  background: rgba(107, 175, 255, 0.2);
+  border-color: #6bafff;
+}
+
 /* 游戏菜单面板 */
 #game-menu-panel {
   display: none;
@@ -2276,5 +2294,501 @@ body {
   color: #666;
   padding: 30px;
   font-size: 14px;
+}
+
+/* ===== 任务面板 ===== */
+#quest-panel {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 520px;
+  max-height: 80vh;
+  background: rgba(20, 20, 40, 0.95);
+  border: 2px solid #f0c060;
+  border-radius: 6px;
+  color: #eee;
+  font-size: 13px;
+  z-index: 100;
+  flex-direction: column;
+}
+
+#quest-panel.active {
+  display: flex;
+}
+
+.quest-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quest-empty {
+  text-align: center;
+  color: #666;
+  padding: 30px;
+  font-size: 14px;
+}
+
+.quest-section-title {
+  color: #f0c060;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 6px 0 4px;
+  border-bottom: 1px solid rgba(240, 192, 96, 0.2);
+  margin-top: 6px;
+}
+
+.quest-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.quest-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.quest-item.quest-status-completed {
+  opacity: 0.6;
+}
+
+.quest-item.quest-status-locked {
+  opacity: 0.5;
+}
+
+.quest-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.quest-name {
+  font-weight: bold;
+  font-size: 14px;
+  color: #eee;
+}
+
+.quest-npc-label {
+  font-size: 11px;
+  color: #888;
+  margin-left: auto;
+}
+
+.quest-status-badge {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.badge-available {
+  background: rgba(68, 255, 68, 0.15);
+  color: #44ff44;
+  border: 1px solid rgba(68, 255, 68, 0.3);
+}
+
+.badge-active {
+  background: rgba(107, 175, 255, 0.15);
+  color: #6bafff;
+  border: 1px solid rgba(107, 175, 255, 0.3);
+}
+
+.badge-completed {
+  background: rgba(255, 255, 255, 0.08);
+  color: #888;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.badge-locked {
+  background: rgba(255, 255, 255, 0.05);
+  color: #555;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.quest-desc {
+  color: #aaa;
+  font-size: 12px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.quest-objectives {
+  margin-bottom: 6px;
+}
+
+.quest-obj {
+  font-size: 12px;
+  color: #ccc;
+  padding: 1px 0;
+}
+
+.quest-obj.obj-done {
+  color: #66BB6A;
+  text-decoration: line-through;
+}
+
+.quest-rewards {
+  font-size: 11px;
+  color: #f0c060;
+  margin-bottom: 6px;
+}
+
+.reward-exp { color: #6bafff; }
+.reward-gold { color: #f0c060; }
+.reward-item { color: #88ff88; }
+.reward-affinity { color: #ff88cc; }
+
+.quest-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.btn-quest-action {
+  padding: 4px 14px;
+  background: rgba(107, 175, 255, 0.15);
+  border: 1px solid rgba(107, 175, 255, 0.4);
+  color: #6bafff;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.btn-quest-action:hover {
+  background: rgba(107, 175, 255, 0.3);
+}
+
+.btn-quest-action.btn-complete {
+  background: rgba(68, 255, 68, 0.15);
+  border-color: rgba(68, 255, 68, 0.4);
+  color: #44ff44;
+}
+
+.btn-quest-action.btn-complete:hover {
+  background: rgba(68, 255, 68, 0.3);
+}
+
+.btn-quest-action.btn-abandon {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.3);
+  color: #ff6666;
+}
+
+.btn-quest-action.btn-abandon:hover {
+  background: rgba(255, 68, 68, 0.2);
+}
+
+.quest-message {
+  padding: 8px 14px;
+  font-size: 13px;
+  text-align: center;
+  border-bottom: 1px solid rgba(240, 192, 96, 0.15);
+}
+
+.quest-message.success {
+  color: #66BB6A;
+  background: rgba(68, 255, 68, 0.08);
+}
+
+.quest-message.error {
+  color: #ff6666;
+  background: rgba(255, 68, 68, 0.08);
+}
+
+/* ===== 任务追踪器 (HUD) ===== */
+#quest-tracker {
+  position: absolute;
+  top: 70px;
+  right: 10px;
+  width: 240px;
+  max-height: 40vh;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(107, 175, 255, 0.4);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #eee;
+  font-size: 12px;
+  z-index: 50;
+  pointer-events: auto;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+#quest-tracker::-webkit-scrollbar {
+  width: 4px;
+}
+
+#quest-tracker::-webkit-scrollbar-thumb {
+  background: rgba(107, 175, 255, 0.3);
+  border-radius: 2px;
+}
+
+.tracker-title {
+  color: #f0c060;
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(240, 192, 96, 0.2);
+  padding-bottom: 4px;
+}
+
+.tracker-quest {
+  margin-bottom: 6px;
+}
+
+.tracker-quest-name {
+  color: #6bafff;
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.tracker-obj {
+  font-size: 10px;
+  color: #aaa;
+  padding-left: 8px;
+}
+
+.tracker-obj.obj-done {
+  color: #66BB6A;
+}
+
+.tracker-more {
+  color: #666;
+  font-size: 10px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* ===== 任务管理面板 ===== */
+#quest-manager-panel {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  max-height: 85vh;
+  background: rgba(20, 20, 40, 0.96);
+  border: 2px solid #6bafff;
+  border-radius: 8px;
+  color: #eee;
+  font-size: 13px;
+  z-index: 110;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+}
+
+#quest-manager-panel.active {
+  display: flex;
+}
+
+.quest-manager-tabs {
+  display: flex;
+  gap: 0;
+  background: rgba(107, 175, 255, 0.08);
+  border-bottom: 1px solid rgba(107, 175, 255, 0.2);
+  padding: 0;
+}
+
+.quest-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #888;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.quest-tab:hover {
+  color: #6bafff;
+  background: rgba(107, 175, 255, 0.1);
+}
+
+.quest-tab.active {
+  color: #6bafff;
+  background: rgba(107, 175, 255, 0.15);
+  border-bottom-color: #6bafff;
+}
+
+.quest-manager-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quest-manager-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quest-manager-content::-webkit-scrollbar-thumb {
+  background: rgba(107, 175, 255, 0.3);
+  border-radius: 3px;
+}
+
+.quest-manager-empty {
+  text-align: center;
+  color: #666;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+.quest-manager-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 14px;
+  transition: all 0.15s;
+}
+
+.quest-manager-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(107, 175, 255, 0.2);
+}
+
+.quest-manager-item.quest-completed {
+  opacity: 0.6;
+}
+
+.quest-manager-item.quest-locked {
+  opacity: 0.4;
+}
+
+.qm-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.qm-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: #eee;
+  flex: 1;
+}
+
+.qm-npc {
+  font-size: 11px;
+  color: #888;
+}
+
+.qm-desc {
+  color: #aaa;
+  font-size: 12px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.qm-objectives {
+  margin-bottom: 10px;
+}
+
+.qm-obj {
+  font-size: 12px;
+  color: #ccc;
+  padding: 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qm-obj.obj-done {
+  color: #66BB6A;
+  text-decoration: line-through;
+}
+
+.qm-obj-icon {
+  width: 14px;
+  text-align: center;
+}
+
+.qm-rewards {
+  font-size: 11px;
+  color: #f0c060;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: rgba(240, 192, 96, 0.06);
+  border-radius: 4px;
+}
+
+.qm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.qm-btn {
+  padding: 5px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid;
+  transition: all 0.15s;
+}
+
+.qm-btn-accept {
+  background: rgba(107, 175, 255, 0.15);
+  border-color: rgba(107, 175, 255, 0.4);
+  color: #6bafff;
+}
+
+.qm-btn-accept:hover {
+  background: rgba(107, 175, 255, 0.3);
+}
+
+.qm-btn-complete {
+  background: rgba(68, 255, 68, 0.15);
+  border-color: rgba(68, 255, 68, 0.4);
+  color: #44ff44;
+}
+
+.qm-btn-complete:hover {
+  background: rgba(68, 255, 68, 0.3);
+}
+
+.qm-btn-abandon {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.3);
+  color: #ff6666;
+}
+
+.qm-btn-abandon:hover {
+  background: rgba(255, 68, 68, 0.2);
+}
+
+.qm-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.qm-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6bafff, #4CAF50);
+  border-radius: 3px;
+  transition: width 0.3s;
 }
 

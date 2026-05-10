@@ -56,7 +56,8 @@ class PlayerProfile:
         self.current_map = "village"
         self.map_states = {}
         self.skills = list(defaults.get("skills", {}).get(self.class_id, []))
-        self.learned_skills = []  # 通过技能书学习的技能
+        self.learned_skills = []
+        self.quests = {"active": {}, "completed": [], "daily_reset": ""}
 
     def _save(self):
         if self.current_slot is None:
@@ -85,6 +86,7 @@ class PlayerProfile:
             "player_y": self.player_y,
             "current_map": self.current_map,
             "map_states": self.map_states,
+            "quests": self.quests,
             "save_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
         with open(save_path(self.current_slot), "w", encoding="utf-8") as f:
@@ -123,6 +125,7 @@ class PlayerProfile:
             self.player_y = data.get("player_y", 20)
             self.current_map = data.get("current_map", "village")
             self.map_states = data.get("map_states", {})
+            self.quests = data.get("quests", {"active": {}, "completed": [], "daily_reset": ""})
             self._recalc_stats()
             return True
         except (json.JSONDecodeError, KeyError):

@@ -82,6 +82,7 @@
           <span id="hud-gold">0</span>
         </div>
         <button id="hud-menu-btn" onclick="toggleGameMenu()">菜单</button>
+        <button id="hud-quest-btn" onclick="openQuestList()">任务</button>
       </div>
     </div>
 
@@ -94,6 +95,7 @@
       <div class="game-menu-actions">
         <button class="btn-interact" onclick="closeGameMenu(); openInventory()">背包 (I)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openPlayerInfo()">角色信息 (P)</button>
+        <button class="btn-interact" onclick="closeGameMenu(); openQuestManager()">任务管理 (Q)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openHelp()">帮助 (H)</button>
         <button class="btn-interact" onclick="saveGame()">保存游戏</button>
         <button class="btn-interact btn-danger" onclick="returnToMainMenu()">返回主菜单</button>
@@ -320,6 +322,7 @@
             <p><b>E</b> — 与NPC交互</p>
             <p><b>I</b> — 打开/关闭背包</p>
             <p><b>P</b> — 打开/关闭角色信息</p>
+            <p><b>Q</b> — 打开/关闭任务管理</p>
             <p><b>H</b> — 打开/关闭帮助</p>
             <p><b>ESC</b> — 关闭面板/打开菜单</p>
           </div>
@@ -467,6 +470,33 @@
         <div id="combat-result-content"></div>
       </div>
     </div>
+
+    <!-- 任务面板 -->
+    <div id="quest-panel">
+      <div class="panel-header">
+        <span class="panel-title" id="quest-panel-title">任务</span>
+        <button class="panel-close" onclick="closeQuestPanel(); closeQuestList()">×</button>
+      </div>
+      <div id="quest-message" class="quest-message" style="display:none"></div>
+      <div id="quest-list" class="quest-list"></div>
+    </div>
+
+    <!-- 任务管理面板 -->
+    <div id="quest-manager-panel">
+      <div class="panel-header">
+        <span class="panel-title">任务管理</span>
+        <button class="panel-close" onclick="closeQuestManager()">×</button>
+      </div>
+      <div class="quest-manager-tabs">
+        <button class="quest-tab active" data-tab="active" onclick="switchQuestTab('active')">进行中</button>
+        <button class="quest-tab" data-tab="available" onclick="switchQuestTab('available')">可接取</button>
+        <button class="quest-tab" data-tab="completed" onclick="switchQuestTab('completed')">已完成</button>
+      </div>
+      <div id="quest-manager-content" class="quest-manager-content"></div>
+    </div>
+
+    <!-- 任务追踪器 (HUD) -->
+    <div id="quest-tracker" style="display:none"></div>
   </div>
 
   <script src="/static/js/map.js"></script>
@@ -476,6 +506,7 @@
   <script src="/static/js/inventory.js"></script>
   <script src="/static/js/player_info.js"></script>
   <script src="/static/js/combat.js"></script>
+  <script src="/static/js/quest.js"></script>
   <script src="/static/js/help.js"></script>
   <script src="/static/js/start_screen.js"></script>
   <script src="/static/js/game.js"></script>

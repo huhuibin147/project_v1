@@ -40,6 +40,9 @@ from npc_agent import NPCAgent, NPC_CONFIG_FILE
 from player_profile import player as player_profile
 from item_system import Inventory, buy_item, sell_item, get_item_info, ITEMS_DB, ITEM_EFFECTS
 from skill_system import format_skill_for_frontend
+from quest_manager import QuestManager
+
+quest_manager = QuestManager(player_profile)
 
 app = FastAPI(title="LLM NPC Game")
 
@@ -201,11 +204,14 @@ async def list_npcs():
     return result
 
 
-@app.post("/api/chat", response_model=ChatResponse)
+@app.post("/api/chat")
 async def chat(req: ChatRequest):
     npc = get_npc(req.npc_id)
     result = npc.chat(req.message)
-    return ChatResponse(**result)
+    quest_updates = quest_manager.on_talk(req.npc_id)
+    if quest_updates:
+        result["quest_updates"] = quest_updates
+    return result
 
 
 @app.get("/api/npc/status")
@@ -282,6 +288,8 @@ async def trade(req: TradeRequest):
         npc.shop_inventory.gold += total
         npc.shop_inventory.remove_item(req.item_id, req.quantity)
         message = f"好嘞！{req.quantity} 个{item_info['name']}，收你 {total} 金币。"
+        # 任务进度：收集物品
+        quest_manager.on_collect(req.item_id)
 
     elif req.action == "sell":
         sell_price = item_info["sell_price"]
@@ -562,6 +570,9 @@ async def interact_object(req: ObjectInteractRequest):
             player_profile._save()
             result["message"] = f"获得物品！"
             result["items"] = items
+            # 任务进度：收集物品
+            for item in items:
+                quest_manager.on_collect(item["item_id"])
     elif obj_type == "gather":
         item_id = props.get("item_id")
         if item_id:
@@ -572,6 +583,7 @@ async def interact_object(req: ObjectInteractRequest):
             player_profile.map_states[req.map_id]["objects"][req.object_id] = {"last_gathered": int(time.time())}
             player_profile._save()
             result["message"] = f"采集了 1 个物品。"
+            quest_manager.on_collect(item_id)
     elif obj_type == "decoration":
         result["message"] = props.get("interact_text", "")
     else:
@@ -762,6 +774,79 @@ async def enchant_item(req: ForgeRequest):
     return {"success": False, "message": "词条系统开发中，敬请期待"}
 
 
+# ===== 任务系统 =====
+
+class QuestAcceptRequest(BaseModel):
+    quest_id: str
+
+class QuestAbandonRequest(BaseModel):
+    quest_id: str
+
+class QuestCompleteRequest(BaseModel):
+    quest_id: str
+
+class QuestProgressRequest(BaseModel):
+    event_type: str
+    data: dict = {}
+
+
+@app.get("/api/quests")
+async def get_quests():
+    return {"quests": quest_manager.get_all_quests()}
+
+
+@app.get("/api/quests/active")
+async def get_active_quests():
+    return {"quests": quest_manager.get_active_quests()}
+
+
+@app.get("/api/quests/npc/{npc_id}")
+async def get_npc_quests(npc_id: str):
+    return {"quests": quest_manager.get_npc_quests(npc_id)}
+
+
+@app.post("/api/quests/accept")
+async def accept_quest(req: QuestAcceptRequest):
+    result = quest_manager.accept_quest(req.quest_id)
+    if result["success"]:
+        result["player_info"] = player_profile.get_info()
+    return result
+
+
+@app.post("/api/quests/abandon")
+async def abandon_quest(req: QuestAbandonRequest):
+    return quest_manager.abandon_quest(req.quest_id)
+
+
+@app.post("/api/quests/complete")
+async def complete_quest(req: QuestCompleteRequest):
+    result = quest_manager.complete_quest(req.quest_id)
+    if result["success"]:
+        result["player_info"] = player_profile.get_info()
+    return result
+
+
+@app.post("/api/quests/progress")
+async def update_quest_progress(req: QuestProgressRequest):
+    updated = []
+    if req.event_type == "kill":
+        monster_id = req.data.get("monster_id", "")
+        monster_tags = req.data.get("monster_tags", [])
+        updated = quest_manager.on_kill(monster_id, monster_tags)
+    elif req.event_type == "collect":
+        item_id = req.data.get("item_id", "")
+        updated = quest_manager.on_collect(item_id)
+    elif req.event_type == "talk":
+        npc_id = req.data.get("npc_id", "")
+        updated = quest_manager.on_talk(npc_id)
+    elif req.event_type == "explore":
+        map_id = req.data.get("map_id", "")
+        x = req.data.get("x", 0)
+        y = req.data.get("y", 0)
+        updated = quest_manager.on_explore(map_id, x, y)
+    return {"updated": updated}
+
+
 # ===== 战斗系统 =====
 
 from combat_engine import (
@@ -900,6 +985,12 @@ async def combat_action(req: CombatActionRequest):
 
         state["player_inventory"] = player_profile.get_inventory()
         state["player_gold"] = player_profile.gold
+
+        # 任务进度：击杀怪物
+        monster_tags = session.monster_config.get("tags", [])
+        quest_updates = quest_manager.on_kill(session.monster_id, monster_tags)
+        if quest_updates:
+            state["quest_updates"] = quest_updates
 
     elif session.phase == CombatPhase.DEFEAT:
         gold_loss = min(player_profile.gold, max(10, session.monster_config.get("gold_reward", [10])[0]))

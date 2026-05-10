@@ -61,7 +61,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function updatePlayer() {
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || combatOpen) return; // 面板打开时不允许移动
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen) return;
 
   let dx = 0, dy = 0;
 
