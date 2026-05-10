@@ -55,6 +55,9 @@ class CombatSession:
         self.player_attack = player_snapshot["attack"]
         self.player_defense = player_snapshot["defense"]
         self.player_speed = player_snapshot["speed"]
+        self.base_player_attack = player_snapshot["attack"]
+        self.base_player_defense = player_snapshot["defense"]
+        self.base_player_speed = player_snapshot["speed"]
         self.player_skills = player_snapshot.get("skills", [])
         self.player_defending = False
         self.player_effects: list[StatusEffect] = []
@@ -114,6 +117,31 @@ def calc_drops(monster_config: dict) -> tuple[list[dict], int]:
 
 # --- Status effect processing ---
 
+STAT_BUFF_MAP = {
+    "attack_up": ("attack", "base_player_attack"),
+    "defense_up": ("defense", "base_player_defense"),
+    "speed_up": ("speed", "base_player_speed"),
+    "defense_down": ("defense", "base_player_defense"),
+}
+
+def _apply_buff(session: CombatSession, eff: StatusEffect) -> None:
+    if eff.effect_type == "attack_up":
+        session.player_attack = session.base_player_attack + eff.value
+    elif eff.effect_type == "defense_up":
+        session.player_defense = session.base_player_defense + eff.value
+    elif eff.effect_type == "speed_up":
+        session.player_speed = session.base_player_speed + eff.value
+    elif eff.effect_type == "defense_down":
+        session.player_defense = max(0, session.base_player_defense - eff.value)
+
+def _recalculate_player_buffs(session: CombatSession) -> None:
+    session.player_attack = session.base_player_attack
+    session.player_defense = session.base_player_defense
+    session.player_speed = session.base_player_speed
+    for eff in session.player_effects:
+        if eff.effect_type in STAT_BUFF_MAP:
+            _apply_buff(session, eff)
+
 def _process_effects(session: CombatSession, is_player: bool) -> list[dict]:
     if is_player:
         effects = session.player_effects
@@ -126,6 +154,7 @@ def _process_effects(session: CombatSession, is_player: bool) -> list[dict]:
 
     logs = []
     remaining = []
+    expired_buffs = []
     for eff in effects:
         if eff.effect_type == "poison":
             dmg = max(1, int(max_hp * 0.05))
@@ -142,11 +171,15 @@ def _process_effects(session: CombatSession, is_player: bool) -> list[dict]:
         if eff.duration > 0:
             remaining.append(eff)
         else:
+            if eff.effect_type in STAT_BUFF_MAP:
+                expired_buffs.append(eff)
             logs.append({"type": "effect_end", "text": f"{eff.effect_type}效果消失了。"})
 
     if is_player:
         session.player_hp = hp
         session.player_effects = remaining
+        if expired_buffs:
+            _recalculate_player_buffs(session)
     else:
         session.monster_hp = hp
         session.monster_effects = remaining
@@ -449,6 +482,13 @@ def _execute_skill(session: CombatSession, skill_id: str) -> dict:
 
     if skill_type == "damage":
         damage_type = skill.get("damage_type", "physical")
+        damage_type_names = {"physical": "物理", "magic": "魔法"}
+        damage_type_cn = damage_type_names.get(damage_type, damage_type)
+        effect_type_names = {
+            "poison": "中毒", "burn": "灼烧", "freeze": "冻结", "stun": "眩晕",
+            "defense_down": "防御降低", "attack_down": "攻击降低", "speed_down": "速度降低",
+            "evasion_up": "闪避提升", "attack_up": "攻击提升", "defense_up": "防御提升",
+        }
         base_atk = session.player_attack
         if damage_type == "magic":
             base_atk = session.player_attack + session.player_max_mp // 5
@@ -471,7 +511,7 @@ def _execute_skill(session: CombatSession, skill_id: str) -> dict:
         session.monster_hp = max(0, session.monster_hp - result["damage"])
         entry = {"type": "skill", "skill_id": skill_id, "success": True,
                  "damage": result["damage"], "crit": result["is_crit"],
-                 "text": f"使用 {skill['name']}！对{monster_name}造成 {result['damage']} 点{damage_type}伤害。"}
+                 "text": f"使用 {skill['name']}！对{monster_name}造成 {result['damage']} 点{damage_type_cn}伤害。"}
         if defense_ignore > 0:
             entry["text"] += f" (无视 {defense_ignore}% 防御)"
         # Apply effects
@@ -480,7 +520,8 @@ def _execute_skill(session: CombatSession, skill_id: str) -> dict:
                 continue
             if random.random() < eff.get("chance", 1.0):
                 session.monster_effects.append(StatusEffect(eff["type"], eff["duration"]))
-                entry["text"] += f" [{eff['type']}]"
+                eff_name_cn = effect_type_names.get(eff["type"], eff["type"])
+                entry["text"] += f" [{eff_name_cn}]"
         return entry
 
     elif skill_type == "heal":
@@ -495,10 +536,19 @@ def _execute_skill(session: CombatSession, skill_id: str) -> dict:
                 "text": f"使用 {skill['name']}！但没有任何效果。"}
 
     elif skill_type == "buff":
+        buff_names = []
+        buff_name_map = {
+            "evasion_up": "闪避提升", "attack_up": "攻击提升", "defense_up": "防御提升",
+            "speed_up": "速度提升", "damage_reduction": "伤害减免",
+        }
         for eff in effects:
-            session.player_effects.append(StatusEffect(eff["type"], eff["duration"], eff.get("value", 0)))
+            se = StatusEffect(eff["type"], eff["duration"], eff.get("value", 0))
+            session.player_effects.append(se)
+            if eff["type"] in STAT_BUFF_MAP:
+                _apply_buff(session, se)
+            buff_names.append(buff_name_map.get(eff["type"], eff["type"]))
         return {"type": "skill", "skill_id": skill_id, "success": True,
-                "text": f"使用 {skill['name']}！获得了增益效果。"}
+                "text": f"使用 {skill['name']}！获得了{'+'.join(buff_names)}效果。"}
 
     return {"type": "skill", "success": False, "text": "技能类型未实现。"}
 

@@ -223,7 +223,12 @@ function renderInventoryList(container, pageItems) {
 
     let equipBtnHtml = "";
     if (canEquip && !isEquipped) {
-      equipBtnHtml = `<button class="btn-equip" onclick="doEquip('${item.item_id}')">装备</button>`;
+      if (canPlayerEquipItem(item)) {
+        equipBtnHtml = `<button class="btn-equip" onclick="doEquip('${item.item_id}')">装备</button>`;
+      } else {
+        const clsName = getClassLabel(item.required_class);
+        equipBtnHtml = `<span style="color:#ff6b6b;font-size:11px;">${clsName}专属</span>`;
+      }
     } else if (isEquipped) {
       equipBtnHtml = `<span style="color:#6bafff;font-size:11px;font-weight:bold;">已装备</span>`;
     }
@@ -244,12 +249,14 @@ function renderInventoryList(container, pageItems) {
       affixesHtml = `<div class="item-affixes">${item.affixes.map(a => `<span class="affix-tag">${a}</span>`).join("")}</div>`;
     }
 
+    const classRestrictionHtml = getClassRestrictionHtml(item);
+
     div.innerHTML = `
       <div class="item-header">
         <span class="item-name" style="color:${rarityColor}">${item.name}</span>
         <span class="item-qty">x${item.quantity}</span>
       </div>
-      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span></div>
+      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span>${classRestrictionHtml}</div>
       ${statsHtml}
       ${healHtml}
       ${mpHtml}
@@ -288,19 +295,26 @@ function renderInventoryGrid(container, pageItems) {
 
     let actionBtn = "";
     if (canEquip && !isEquipped) {
-      actionBtn = `<button class="grid-action" onclick="doEquip('${item.item_id}')">装备</button>`;
+      if (canPlayerEquipItem(item)) {
+        actionBtn = `<button class="grid-action" onclick="doEquip('${item.item_id}')">装备</button>`;
+      } else {
+        const clsName = getClassLabel(item.required_class);
+        actionBtn = `<span class="grid-action text" style="color:#ff6b6b;">${clsName}专属</span>`;
+      }
     } else if (isEquipped) {
       actionBtn = `<span class="grid-action text">已装备</span>`;
     } else if (item.type === "consumable" || item.type === "food") {
       actionBtn = `<button class="grid-action" onclick="doUseItem('${item.item_id}')">使用</button>`;
     }
 
+    const classRestrictionHtml = getClassRestrictionHtml(item);
+
     div.innerHTML = `
       ${equipMark}
       ${qtyBadge}
       <div class="grid-icon">${getTypeIcon(item.type)}</div>
       <div class="grid-name" style="color:${rarityColor}">${item.name}</div>
-      <div class="grid-type">${getTypeLabel(item.type)}</div>
+      <div class="grid-type">${getTypeLabel(item.type)}${classRestrictionHtml}</div>
       ${actionBtn}
     `;
 
@@ -356,6 +370,7 @@ function showItemTooltip(item, anchorEl) {
   }
 
   let compareHtml = canEquip && !isEquipped ? buildCompareHtml(item) : "";
+  const classRestrictionHtml = getClassRestrictionHtml(item);
 
   const tt = document.createElement("div");
   tt.className = "item-tooltip";
@@ -364,7 +379,7 @@ function showItemTooltip(item, anchorEl) {
       <span class="tt-name" style="color:${rarityColor}">${item.name}</span>
       <span class="tt-qty">x${item.quantity}</span>
     </div>
-    <div class="tt-meta">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span></div>
+    <div class="tt-meta">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span>${classRestrictionHtml}</div>
     ${statsHtml}
     ${healHtml}
     ${mpHtml}
@@ -487,6 +502,10 @@ function renderShop() {
       affixesHtml = `<div class="item-affixes">${item.affixes.map(a => `<span class="affix-tag">${a}</span>`).join("")}</div>`;
     }
 
+    const classRestrictionHtml = getClassRestrictionHtml(item);
+    const canBuy = item.buy_price && item.buy_price > 0;
+    const canBuyEquip = canEquip ? canPlayerEquipItem(item) : true;
+
     const div = document.createElement("div");
     div.className = `item-card shop-item ${item.type} rarity-${rarityCls}`;
     div.innerHTML = `
@@ -494,7 +513,7 @@ function renderShop() {
         <span class="item-name" style="color:${rarityColor}">${item.name}</span>
         <span class="item-qty">库存: ${item.quantity}</span>
       </div>
-      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span></div>
+      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span>${classRestrictionHtml}</div>
       ${statsHtml}
       ${healHtml}
       ${mpHtml}
@@ -502,8 +521,8 @@ function renderShop() {
       ${compareHtml}
       <div class="item-desc">${item.description}</div>
       <div class="item-actions">
-        <span class="item-price">售价: ${item.buy_price} 金</span>
-        <button class="btn-buy" onclick="doTrade('buy', '${item.item_id}')">购买</button>
+        <span class="item-price">售价: ${item.buy_price || "—"} 金</span>
+        ${canBuy && canBuyEquip ? `<button class="btn-buy" onclick="doTrade('buy', '${item.item_id}')">购买</button>` : (canBuy && !canBuyEquip ? `<span style="color:#ff6b6b;font-size:11px;">${getClassLabel(item.required_class)}专属</span>` : (canBuy ? "" : `<span style="color:#888;font-size:11px;">不出售</span>`))}
         ${playerQty > 0 ? `<button class="btn-sell" onclick="doTrade('sell', '${item.item_id}')">出售 (${playerQty})</button>` : ""}
       </div>
     `;
@@ -596,6 +615,26 @@ function getTypeLabel(type) {
     accessory: "饰品",
   };
   return labels[type] || type;
+}
+
+function getClassLabel(cls) {
+  const labels = {
+    warrior: "战士",
+    rogue: "盗贼",
+    mage: "法师",
+  };
+  return labels[cls] || cls;
+}
+
+function getClassRestrictionHtml(item) {
+  if (!item.required_class) return "";
+  const clsName = getClassLabel(item.required_class);
+  return `<span class="class-restriction">[仅限${clsName}]</span>`;
+}
+
+function canPlayerEquipItem(item) {
+  if (!item.required_class) return true;
+  return item.required_class === playerInfo.class_id;
 }
 
 function updateGoldDisplay() {

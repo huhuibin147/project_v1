@@ -1,5 +1,83 @@
 # 更新日志
 
+## 2026-05-10 — 职业初始技能修复 + NPC商店0金币物品处理
+
+- **修复**：各职业初始技能不完整
+  - 根因：`player_default.json` 中各职业初始技能少于设计文档要求
+  - 修复：
+    - 战士：`heavy_strike` → `["heavy_strike", "shield_wall"]`（重击 + 盾墙）
+    - 盗贼：`backstab` → `["backstab", "poison_blade"]`（背刺 + 毒刃）
+    - 法师：`["fireball", "heal"]` → `["fireball", "heal", "frost_bolt"]`（火球术 + 治愈术 + 冰冻术）
+  - 修改文件：`config/player_default.json`
+- **修复**：NPC商店中0金币物品显示问题
+  - 根因：材料类物品（狼皮、草药等）`buy_price` 为 0，商店显示"售价: 0 金"且有购买按钮
+  - 修复：前端判断 `buy_price > 0` 才显示购买按钮，否则显示"不出售"
+  - 修复：NPC出售物品时至少保留 `default_gold` 金币，防止NPC金币耗尽
+  - 修改文件：`frontend/js/inventory.js`、`backend/main.py`
+- **更新**：本文档（changelog.md）
+
+## 2026-05-10 — 武器职业限定显示优化 + 传送回村位置修正 + 战斗技能中文文案
+
+- **优化**：武器职业限定显示
+  - 背包列表/网格视图中，非本职业装备按钮显示为"XX专属"（红色），无法点击装备
+  - 商店中非本职业装备购买按钮替换为"XX专属"提示，防止误购
+  - 新增 `canPlayerEquipItem()` 函数统一判断逻辑
+  - 修改文件：`frontend/js/inventory.js`
+- **修复**：传送回青石村位置不正确
+  - 根因：森林传送门返回村庄的目标位置为 (25, 3)，在地图边缘
+  - 修复：将目标位置调整为 (25, 21)，位于村庄传送点附近
+  - 修改文件：`config/maps/forest.json`
+- **修复**：战斗使用技能造成伤害显示英文
+  - 根因：`damage_type`（physical/magic）和效果类型（poison/burn等）直接使用英文字段
+  - 修复：新增 `damage_type_names` 和 `effect_type_names` 映射表，转换为中文
+  - 修复：Buff技能效果名称也转换为中文（闪避提升、攻击提升等）
+  - 修改文件：`backend/combat_engine.py`
+- **更新**：本文档（changelog.md）
+
+## 2026-05-10 — 村庄传送点位置调整 + 装备职业限定 + 中文文案优化
+
+- **调整**：青石村传送点位置
+  - 将传送点从地图边缘 (25, 2) 移动到地图中心位置 (25, 19)
+  - 确保传送点位于泥土路面上，方便玩家到达
+  - 修改文件：`config/maps/village.json`
+- **新增**：装备职业限定系统
+  - 为 43 件装备添加了 `required_class` 字段
+  - 战士限定：剑、斧、锤、重甲、头盔、盾牌
+  - 盗贼限定：匕首、弓、轻甲、皮帽
+  - 法师限定：法杖、布袍、头冠
+  - 饰品无职业限制，所有职业均可使用
+  - 修改文件：`config/items.json`
+- **新增**：装备职业限定验证逻辑
+  - 后端：`equip_item()` 方法增加职业检查，非本职业装备无法使用
+  - 前端：背包、商店、物品提示中显示职业限制标识
+  - 新增 CSS 样式：`.class-restriction` 红色高亮显示
+  - 修改文件：`backend/player_profile.py`、`frontend/js/inventory.js`、`frontend/css/style.css`
+- **优化**：游戏中文案
+  - 检查并确认游戏界面文案已全面使用中文
+  - 保留通用游戏缩写：HP、MP、Lv. 等（符合中文游戏习惯）
+- **更新**：本文档（changelog.md）
+
+## 2026-05-10 — 职业初始技能修复 + NPC金币系统修复 + 狂暴Buff逻辑修复
+
+- **修复**：每个职业的初始技能，法师不再与战士相同
+  - 战士初始技能：`heavy_strike`（重击）
+  - 盗贼初始技能：`backstab`（背刺）
+  - 法师初始技能：`fireball`（火球术）+ `heal`（治疗术）
+  - 修改文件：`config/player_default.json`
+- **修复**：NPC治疗和学习金币系统
+  - 根因：`npc.js` 中调用了未定义的 `updatePlayerInfo()` 函数，导致治疗/学习后玩家信息无法正确更新
+  - 修复：改用 `updatePlayerHUD()` + `Object.assign(playerInfo, data.player_info)` 正确更新HUD
+  - 修复：金币显示在治疗/学习后正确同步到所有面板
+  - 修改文件：`frontend/js/npc.js`
+- **修复**：狂暴Buff对技能的加成逻辑
+  - 根因：`_process_effects()` 只处理了 poison/burn/stun 等负面效果，未处理 attack_up/defense_down 等增益效果
+  - 修复：新增 `STAT_BUFF_MAP` 映射表，记录所有增益/减益效果类型
+  - 修复：新增 `_apply_buff()` 函数，在技能使用时立即修改玩家属性
+  - 修复：新增 `_recalculate_player_buffs()` 函数，在Buff过期时重新计算属性
+  - 修复：Buff技能使用后会显示具体的效果名称（如 attack_up+defense_down）
+  - 修改文件：`backend/combat_engine.py`
+- **更新**：本文档（changelog.md）
+
 ## 2026-05-09 — 战斗系统修复 + 技能系统完善 + 金币统一
 
 - **修复**：战斗系统进入时 HP/MP/技能显示 undefined

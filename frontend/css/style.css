@@ -582,6 +582,13 @@ body {
   border-radius: 2px;
 }
 
+.class-restriction {
+  font-size: 11px;
+  color: #ff6b6b;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
 /* 交易消息 */
 .trade-message {
   padding: 6px 14px;

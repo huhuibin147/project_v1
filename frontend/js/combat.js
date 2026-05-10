@@ -474,6 +474,9 @@ async function combatAction(action, itemId) {
   if (combatItemSelectOpen) {
     closeCombatItemSelect();
   }
+  if (combatSkillSelectOpen) {
+    closeCombatSkillSelect();
+  }
 
   try {
     const body = { session_id: combatSessionId, action: action };

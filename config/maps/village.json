@@ -54,7 +54,7 @@
       "id": "portal_to_forest",
       "type": "portal",
       "x": 25,
-      "y": 2,
+      "y": 19,
       "properties": {
         "target_map": "forest",
         "target_x": 30,

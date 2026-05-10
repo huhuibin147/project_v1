@@ -202,12 +202,18 @@ document.addEventListener("keydown", (e) => {
     }
   }
   
-  // NPC交互选项快捷键：1-对话，2-商店
+  // NPC交互选项快捷键：1-对话，2-商店，3-治疗服务/学习技能
   if (npcInteractOpen) {
     if (e.key === "1") {
       interactTalk();
     } else if (e.key === "2") {
       interactShop();
+    } else if (e.key === "3") {
+      if (interactNpcId === "priest") {
+        interactHeal();
+      } else if (interactNpcId === "skill_master") {
+        interactLearnSkill();
+      }
     }
   }
 });
@@ -221,11 +227,11 @@ function openNpcInteract(npc) {
   const actionsDiv = document.getElementById("npc-interact-actions");
   let html = '<button class="btn-interact" onclick="interactTalk()">对话 (1)</button>';
   if (npc.npc_id === "priest") {
-    html += '<button class="btn-interact" onclick="interactHeal()">治疗服务 (2)</button>';
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (2)</button>';
+    html += '<button class="btn-interact" onclick="interactHeal()">治疗服务 (3)</button>';
   } else if (npc.npc_id === "skill_master") {
-    html += '<button class="btn-interact" onclick="interactLearnSkill()">学习技能 (2)</button>';
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (2)</button>';
+    html += '<button class="btn-interact" onclick="interactLearnSkill()">学习技能 (3)</button>';
   } else {
     html += '<button class="btn-interact" onclick="interactShop()">商店 (2)</button>';
   }
@@ -259,8 +265,9 @@ function interactShop() {
 
 function interactHeal() {
   if (!interactNpcId) return;
+  const npcId = interactNpcId;
   closeNpcInteract();
-  openHealPanel(interactNpcId);
+  openHealPanel(npcId);
 }
 
 function openHealPanel(npcId) {
@@ -300,6 +307,16 @@ function renderHealServices(npcId) {
 }
 
 async function requestHealService(npcId, serviceType) {
+  if (!npcId) {
+    console.error("requestHealService called with invalid npcId:", npcId);
+    const msgEl = document.getElementById("heal-message");
+    if (msgEl) {
+      msgEl.textContent = "错误：NPC信息无效，请重新打开治疗服务";
+      msgEl.style.display = "block";
+      msgEl.className = "trade-message error";
+    }
+    return;
+  }
   try {
     const resp = await fetch("/api/npc/service/heal", {
       method: "POST",
@@ -314,7 +331,12 @@ async function requestHealService(npcId, serviceType) {
     if (data.success) {
       // 更新玩家信息
       if (data.player_info) {
-        updatePlayerInfo(data.player_info);
+        if (typeof updatePlayerHUD === "function") {
+          if (typeof playerInfo !== "undefined") {
+            Object.assign(playerInfo, data.player_info);
+          }
+          updatePlayerHUD();
+        }
         if (data.player_info.gold !== undefined) {
           inventoryState.gold = data.player_info.gold;
           if (typeof updateGoldDisplay === "function") updateGoldDisplay();
@@ -331,8 +353,9 @@ async function requestHealService(npcId, serviceType) {
 
 function interactLearnSkill() {
   if (!interactNpcId) return;
+  const npcId = interactNpcId;
   closeNpcInteract();
-  openSkillLearnPanel(interactNpcId);
+  openSkillLearnPanel(npcId);
 }
 
 function openSkillLearnPanel(npcId) {
@@ -396,11 +419,22 @@ function renderSkillList(skills) {
 }
 
 async function requestLearnSkill(skillId, cost) {
+  const npcId = interactNpcId || "skill_master";
+  if (!npcId) {
+    console.error("requestLearnSkill called with invalid npcId:", npcId);
+    const msgEl = document.getElementById("skill-learn-message");
+    if (msgEl) {
+      msgEl.textContent = "错误：NPC信息无效，请重新打开技能学习";
+      msgEl.style.display = "block";
+      msgEl.className = "trade-message error";
+    }
+    return;
+  }
   try {
     const resp = await fetch("/api/npc/service/learn_skill", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ npc_id: "skill_master", skill_id: skillId }),
+      body: JSON.stringify({ npc_id: npcId, skill_id: skillId }),
     });
     const data = await resp.json();
     const msgEl = document.getElementById("skill-learn-message");
@@ -409,7 +443,12 @@ async function requestLearnSkill(skillId, cost) {
     msgEl.className = data.success ? "trade-message success" : "trade-message error";
     if (data.success) {
       if (data.player_info) {
-        updatePlayerInfo(data.player_info);
+        if (typeof updatePlayerHUD === "function") {
+          if (typeof playerInfo !== "undefined") {
+            Object.assign(playerInfo, data.player_info);
+          }
+          updatePlayerHUD();
+        }
         if (data.player_info.gold !== undefined) {
           inventoryState.gold = data.player_info.gold;
           if (typeof updateGoldDisplay === "function") updateGoldDisplay();
@@ -420,7 +459,7 @@ async function requestLearnSkill(skillId, cost) {
       }
       document.getElementById("player-gold-skill").textContent = inventoryState.gold || 0;
       // 刷新技能列表
-      fetchAvailableSkills("skill_master");
+      fetchAvailableSkills(npcId);
     }
   } catch (e) {
     console.error("学习技能请求失败:", e);

@@ -106,6 +106,7 @@ class Inventory:
                 "affixes": info.get("affixes", []),
                 "heal_value": heal_value,
                 "mp_value": mp_value,
+                "required_class": info.get("required_class"),
             })
         return result
 

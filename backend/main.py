@@ -291,8 +291,12 @@ async def trade(req: TradeRequest):
         player_qty = player_profile.get_item_quantity(req.item_id)
         if player_qty < req.quantity:
             return {"success": False, "message": f"你没有那么多{item_info['name']}。你只有 {player_qty} 个。"}
-        if npc.shop_inventory.gold < total:
-            return {"success": False, "message": "俺手头紧，没那么多金币收你的货。"}
+        
+        # 确保 NPC 出售后至少保留 default_gold 的金币
+        min_gold = npc.cfg.get("default_gold", 0)
+        available_gold = npc.shop_inventory.gold - min_gold
+        if available_gold < total:
+            return {"success": False, "message": f"俺手头紧，最多只能收 {available_gold // max(sell_price, 1)} 个{item_info['name']}。"}
 
         # 执行出售
         player_profile.add_gold(total)
@@ -826,7 +830,11 @@ async def combat_start(req: CombatStartRequest):
         "skills": getattr(player_profile, "skills", []),
     }
 
+    from skill_system import format_skill_for_frontend
     session = create_combat_session(monster_id, monster_config, player_snapshot)
+
+    formatted_skills = [format_skill_for_frontend(s) for s in session.player_skills]
+    formatted_skills = [s for s in formatted_skills if s is not None]
 
     return {
         "session_id": session.session_id,
@@ -846,7 +854,7 @@ async def combat_start(req: CombatStartRequest):
             "attack": session.player_attack,
             "defense": session.player_defense,
             "speed": session.player_speed,
-            "skills": session.player_skills,
+            "skills": formatted_skills,
         },
         "phase": session.phase.value,
         "log": session.log,

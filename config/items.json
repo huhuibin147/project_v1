@@ -18,7 +18,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "steel_sword": {
     "id": "steel_sword",
@@ -39,7 +40,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "iron_dagger": {
     "id": "iron_dagger",
@@ -60,7 +62,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "mage_staff": {
     "id": "mage_staff",
@@ -82,7 +85,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "mage"
   },
   "hunter_bow": {
     "id": "hunter_bow",
@@ -103,7 +107,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "iron_shield": {
     "id": "iron_shield",
@@ -124,7 +129,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "steel_shield": {
     "id": "steel_shield",
@@ -145,7 +151,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "iron_helmet": {
     "id": "iron_helmet",
@@ -166,7 +173,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "leather_armor": {
     "id": "leather_armor",
@@ -187,7 +195,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "iron_armor": {
     "id": "iron_armor",
@@ -208,7 +217,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "cloth_robe": {
     "id": "cloth_robe",
@@ -230,7 +240,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "mage"
   },
   "ring_of_power": {
     "id": "ring_of_power",
@@ -398,7 +409,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "stone_sword": {
     "id": "stone_sword",
@@ -419,7 +431,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "copper_sword": {
     "id": "copper_sword",
@@ -440,7 +453,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "iron_axe": {
     "id": "iron_axe",
@@ -461,7 +475,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "wood_shield": {
     "id": "wood_shield",
@@ -482,7 +497,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "leather_hat": {
     "id": "leather_hat",
@@ -503,7 +519,8 @@
     "tier": "tier1",
     "level_range": 4,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "necklace_of_life": {
     "id": "necklace_of_life",
@@ -566,7 +583,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "silver_bow": {
     "id": "silver_bow",
@@ -587,7 +605,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "alloy_staff": {
     "id": "alloy_staff",
@@ -609,7 +628,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "mage"
   },
   "steel_axe": {
     "id": "steel_axe",
@@ -630,7 +650,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "bronze_hammer": {
     "id": "bronze_hammer",
@@ -651,7 +672,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "silver_round_shield": {
     "id": "silver_round_shield",
@@ -672,7 +694,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "hard_leather_hat": {
     "id": "hard_leather_hat",
@@ -693,7 +716,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "silver_helmet": {
     "id": "silver_helmet",
@@ -714,7 +738,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "bronze_crown": {
     "id": "bronze_crown",
@@ -735,7 +760,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "mage"
   },
   "hard_leather_garb": {
     "id": "hard_leather_garb",
@@ -756,7 +782,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "silver_robe": {
     "id": "silver_robe",
@@ -778,7 +805,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "mage"
   },
   "steel_armor": {
     "id": "steel_armor",
@@ -799,7 +827,8 @@
     "tier": "tier2",
     "level_range": 9,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "silver_ring": {
     "id": "silver_ring",
@@ -883,7 +912,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "dark_gold_dagger": {
     "id": "dark_gold_dagger",
@@ -904,7 +934,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "dark_iron_bow": {
     "id": "dark_iron_bow",
@@ -925,7 +956,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "crystal_staff": {
     "id": "crystal_staff",
@@ -947,7 +979,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "mage"
   },
   "dark_iron_axe": {
     "id": "dark_iron_axe",
@@ -968,7 +1001,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "dark_gold_hammer": {
     "id": "dark_gold_hammer",
@@ -989,7 +1023,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "mithril_shield": {
     "id": "mithril_shield",
@@ -1010,7 +1045,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "dark_gold_round_shield": {
     "id": "dark_gold_round_shield",
@@ -1031,7 +1067,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "dragon_hat": {
     "id": "dragon_hat",
@@ -1052,7 +1089,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "mithril_helmet": {
     "id": "mithril_helmet",
@@ -1073,7 +1111,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "crystal_crown": {
     "id": "crystal_crown",
@@ -1094,7 +1133,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "mage"
   },
   "dragon_garb": {
     "id": "dragon_garb",
@@ -1115,7 +1155,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "rogue"
   },
   "crystal_robe": {
     "id": "crystal_robe",
@@ -1137,7 +1178,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "mage"
   },
   "dark_iron_armor": {
     "id": "dark_iron_armor",
@@ -1158,7 +1200,8 @@
     "tier": "tier3",
     "level_range": 15,
     "affixes": [],
-    "forge_info": null
+    "forge_info": null,
+    "required_class": "warrior"
   },
   "dark_gold_ring": {
     "id": "dark_gold_ring",
@@ -1236,9 +1279,9 @@
     "id": "mana_potion",
     "name": "魔力药水",
     "type": "consumable",
-    "description": "恢复少量魔力。",
-    "buy_price": 35,
-    "sell_price": 17,
+    "description": "恢复中等魔法值。",
+    "buy_price": 60,
+    "sell_price": 30,
     "stackable": true
   },
   "purify_potion": {
@@ -1383,15 +1426,6 @@
     "description": "恢复少量魔法值。",
     "buy_price": 30,
     "sell_price": 15,
-    "stackable": true
-  },
-  "mana_potion": {
-    "id": "mana_potion",
-    "name": "魔力药水",
-    "type": "consumable",
-    "description": "恢复中等魔法值。",
-    "buy_price": 60,
-    "sell_price": 30,
     "stackable": true
   },
   "greater_mana_potion": {

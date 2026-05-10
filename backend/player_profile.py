@@ -181,6 +181,11 @@ class PlayerProfile:
         if self.get_item_quantity(item_id) <= 0:
             return {"success": False, "message": "背包中没有该物品"}
 
+        required_class = item_info.get("required_class")
+        if required_class and self.class_id != required_class:
+            class_names = {"warrior": "战士", "rogue": "盗贼", "mage": "法师"}
+            return {"success": False, "message": f"该装备仅限{class_names.get(required_class, required_class)}使用"}
+
         unequipped = None
         old_item_id = self.equipment.get(equip_slot)
         if old_item_id:
@@ -311,7 +316,8 @@ class PlayerProfile:
             return False
         if slot < 1 or slot > SAVE_SLOTS:
             return False
-        self._reset_to_defaults()
+        defaults = load_defaults()
+        self._reset_to_defaults(defaults)
         self.name = name
         self.class_id = class_id
         cls = self.classes[class_id]
@@ -322,6 +328,8 @@ class PlayerProfile:
         self.attack = cls["base_attack"]
         self.defense = cls["base_defense"]
         self.speed = cls["base_speed"]
+        self.skills = list(defaults.get("skills", {}).get(class_id, []))
+        self.learned_skills = []
         self.current_slot = slot
         self._save()
         return True
@@ -481,6 +489,7 @@ class PlayerProfile:
             info = ITEMS_DB.get(item_id, {})
             effect = ITEM_EFFECTS.get(item_id, {})
             heal_value = effect.get("value") if effect.get("type") == "heal" else None
+            mp_value = effect.get("value") if effect.get("type") == "restore_mp" else None
             result.append({
                 "item_id": item_id,
                 "name": info.get("name", item_id),
@@ -492,6 +501,12 @@ class PlayerProfile:
                 "equip_slot": info.get("equip_slot"),
                 "stats": info.get("stats"),
                 "heal_value": heal_value,
+                "mp_value": mp_value,
+                "rarity": info.get("rarity", "common"),
+                "tier": info.get("tier"),
+                "level_range": info.get("level_range"),
+                "affixes": info.get("affixes", []),
+                "required_class": info.get("required_class"),
             })
         return result
 
