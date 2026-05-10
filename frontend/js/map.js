@@ -15,6 +15,58 @@ const camera = {
   viewportHeight: 0,
 };
 
+// 粒子系统
+const particleSystem = {
+  particles: [],
+  emit(type, x, y, count = 1) {
+    for (let i = 0; i < count; i++) {
+      this.particles.push(createParticle(type, x, y));
+    }
+  },
+  update(dt) {
+    this.particles = this.particles.filter(p => {
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      if (p.gravity) p.vy += p.gravity * dt;
+      if (p.fade) p.alpha = Math.max(0, p.life / p.maxLife);
+      return p.life > 0;
+    });
+  },
+  render(ctx) {
+    for (const p of this.particles) {
+      ctx.globalAlpha = p.alpha || 1;
+      ctx.fillStyle = p.color;
+      if (p.shape === "circle") {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+};
+
+function createParticle(type, x, y) {
+  const base = { x, y, life: 1, maxLife: 1, alpha: 1, size: 2, shape: "rect", gravity: 0, fade: true };
+  switch (type) {
+    case "leaf":
+      return { ...base, vx: (Math.random() - 0.5) * 20, vy: 10 + Math.random() * 20, life: 2 + Math.random(), maxLife: 3, color: ["#4a8c3f", "#6abf5a", "#8ee07a"][Math.floor(Math.random() * 3)], size: 2 + Math.random() * 2 };
+    case "snow":
+      return { ...base, vx: (Math.random() - 0.5) * 10, vy: 15 + Math.random() * 15, life: 3 + Math.random() * 2, maxLife: 5, color: "#fff", size: 1 + Math.random() * 2, gravity: 5 };
+    case "sparkle":
+      return { ...base, vx: (Math.random() - 0.5) * 30, vy: (Math.random() - 0.5) * 30, life: 0.5 + Math.random() * 0.5, maxLife: 1, color: ["#ffd700", "#fff", "#6bafff"][Math.floor(Math.random() * 3)], size: 1 + Math.random() * 2, fade: true };
+    case "dust":
+      return { ...base, vx: (Math.random() - 0.5) * 15, vy: -5 - Math.random() * 10, life: 0.3 + Math.random() * 0.3, maxLife: 0.6, color: "#c4a66a", size: 1 + Math.random(), fade: true };
+    case "water_splash":
+      return { ...base, vx: (Math.random() - 0.5) * 25, vy: -20 - Math.random() * 15, life: 0.4 + Math.random() * 0.3, maxLife: 0.7, color: "#7ab8f0", size: 1 + Math.random() * 2, gravity: 40, fade: true };
+    default:
+      return { ...base, vx: 0, vy: 0, life: 1, color: "#fff" };
+  }
+}
+
 // 瓦片渲染器注册表
 const tileRenderers = {};
 
@@ -116,8 +168,38 @@ function drawMap(ctx) {
       if (detailName && tileRenderers[detailName]) {
         tileRenderers[detailName](ctx, x, y);
       }
+
+      // 阴影效果（树木、建筑等）
+      if (!tileInfo.walkable) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
+        ctx.fillRect(x + 2, y + 2, TILE_SIZE, TILE_SIZE);
+      }
     }
   }
+}
+
+// 绘制环境粒子效果
+function drawEnvironmentParticles(ctx) {
+  if (!currentMap) return;
+
+  const time = Date.now() / 1000;
+  const mapId = currentMap.id;
+
+  // 根据地图类型生成环境粒子
+  if (mapId === "forest" && Math.random() < 0.1) {
+    const px = camera.x + Math.random() * camera.viewportWidth;
+    const py = camera.y - 10;
+    particleSystem.emit("leaf", px, py, 1);
+  }
+
+  if (mapId === "village" && Math.random() < 0.05) {
+    const px = camera.x + Math.random() * camera.viewportWidth;
+    const py = camera.y - 10;
+    particleSystem.emit("leaf", px, py, 1);
+  }
+
+  particleSystem.update(0.016);
+  particleSystem.render(ctx);
 }
 
 // 绘制交互物件
@@ -356,6 +438,102 @@ function initTileRenderers() {
     ctx.fillStyle = "#5a5a4a";
     const seed = (x * 9 + y * 13) % 100;
     if (seed < 15) ctx.fillRect(x + p * 3, y + p * 3, p, p);
+  });
+
+  registerTileRenderer("flowers", (ctx, x, y) => {
+    ctx.fillStyle = "#3d7a33";
+    const seed = (x * 7 + y * 13) % 100;
+    if (seed < 30) ctx.fillRect(x + p * 2, y + p * 3, p, p);
+    const flowerColors = ["#ff6b8a", "#ffd76b", "#6bafff", "#ff9a6b"];
+    const fi = (x * 3 + y * 7) % flowerColors.length;
+    ctx.fillStyle = flowerColors[fi];
+    ctx.fillRect(x + p * 3, y + p * 2, p, p);
+    ctx.fillRect(x + p * 6, y + p * 5, p, p);
+  });
+
+  registerTileRenderer("river", (ctx, x, y) => {
+    const time = Date.now() / 1000;
+    const offset = Math.sin(time * 2 + x * 0.1) * 2;
+    ctx.fillStyle = "#5a9ae8";
+    ctx.fillRect(x + p * 1 + offset, y + p * 2, p * 3, p);
+    ctx.fillRect(x + p * 4 - offset, y + p * 5, p * 3, p);
+    ctx.fillStyle = "#7ab8f0";
+    ctx.fillRect(x + p * 2 + offset, y + p * 3, p * 2, p);
+  });
+
+  registerTileRenderer("bridge", (ctx, x, y) => {
+    ctx.fillStyle = "#7a6a4a";
+    ctx.fillRect(x + p * 0, y + p * 0, TILE_SIZE, p);
+    ctx.fillRect(x + p * 0, y + p * 7, TILE_SIZE, p);
+    ctx.fillStyle = "#6a5a3a";
+    ctx.fillRect(x + p * 1, y + p * 1, p * 2, p * 6);
+    ctx.fillRect(x + p * 5, y + p * 1, p * 2, p * 6);
+  });
+
+  registerTileRenderer("bush", (ctx, x, y) => {
+    ctx.fillStyle = "#2a5a1a";
+    ctx.fillRect(x + p * 1, y + p * 3, p * 6, p * 4);
+    ctx.fillStyle = "#3a7a2a";
+    ctx.fillRect(x + p * 2, y + p * 2, p * 4, p * 2);
+    ctx.fillStyle = "#4a8a3a";
+    ctx.fillRect(x + p * 3, y + p * 1, p * 2, p);
+  });
+
+  registerTileRenderer("dead_tree", (ctx, x, y) => {
+    ctx.fillStyle = "#4a3a2a";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 5);
+    ctx.fillRect(x + p * 1, y + p * 3, p * 2, p);
+    ctx.fillRect(x + p * 5, y + p * 2, p * 2, p);
+    ctx.fillRect(x + p * 2, y + p * 1, p, p);
+  });
+
+  registerTileRenderer("flower_patch", (ctx, x, y) => {
+    ctx.fillStyle = "#3d7a33";
+    const seed = (x * 7 + y * 13) % 100;
+    if (seed < 40) ctx.fillRect(x + p * 2, y + p * 3, p, p);
+    const time = Date.now() / 1000;
+    const bloom = 0.5 + Math.sin(time * 2 + x + y) * 0.5;
+    ctx.fillStyle = `rgba(255, 107, 138, ${bloom})`;
+    ctx.fillRect(x + p * 3, y + p * 2, p, p);
+    ctx.fillStyle = `rgba(255, 215, 107, ${bloom})`;
+    ctx.fillRect(x + p * 5, y + p * 4, p, p);
+  });
+
+  registerTileRenderer("deep_grass", (ctx, x, y) => {
+    ctx.fillStyle = "#2a6a23";
+    const seed = (x * 7 + y * 13) % 100;
+    if (seed < 40) ctx.fillRect(x + p * 2, y + p * 3, p, p * 2);
+    if (seed < 60) ctx.fillRect(x + p * 5, y + p * 5, p, p * 2);
+    if (seed < 80) ctx.fillRect(x + p * 1, y + p * 6, p, p);
+  });
+
+  registerTileRenderer("stone_tile", (ctx, x, y) => {
+    ctx.fillStyle = "#7a7a6a";
+    ctx.fillRect(x + p * 0, y + p * 0, p * 4, p * 4);
+    ctx.fillRect(x + p * 4, y + p * 4, p * 4, p * 4);
+    ctx.fillStyle = "#9a9a8a";
+    ctx.fillRect(x + p * 1, y + p * 1, p * 2, p * 2);
+    ctx.fillRect(x + p * 5, y + p * 5, p * 2, p * 2);
+  });
+
+  registerTileRenderer("lava", (ctx, x, y) => {
+    const time = Date.now() / 1000;
+    const glow = 0.5 + Math.sin(time * 3 + x * 0.2) * 0.3;
+    ctx.fillStyle = `rgba(255, 100, 0, ${glow})`;
+    ctx.fillRect(x + p * 1, y + p * 2, p * 3, p * 2);
+    ctx.fillRect(x + p * 4, y + p * 5, p * 3, p * 2);
+    ctx.fillStyle = `rgba(255, 200, 0, ${glow * 0.7})`;
+    ctx.fillRect(x + p * 2, y + p * 3, p * 2, p);
+  });
+
+  registerTileRenderer("ice", (ctx, x, y) => {
+    const time = Date.now() / 1000;
+    const shimmer = 0.3 + Math.sin(time * 2 + x * 0.3 + y * 0.3) * 0.2;
+    ctx.fillStyle = `rgba(255, 255, 255, ${shimmer})`;
+    ctx.fillRect(x + p * 1, y + p * 2, p * 3, p);
+    ctx.fillRect(x + p * 4, y + p * 5, p * 3, p);
+    ctx.fillStyle = "#a0c8e0";
+    ctx.fillRect(x + p * 2, y + p * 3, p * 2, p);
   });
 }
 

@@ -52,6 +52,7 @@ function render() {
 
   drawMap(ctx);
   drawObjects(ctx);
+  drawEnvironmentParticles(ctx);
 
   // 收集所有可绘制对象（NPC + 怪物 + 玩家），按 Y 坐标排序实现遮挡
   const drawables = [];

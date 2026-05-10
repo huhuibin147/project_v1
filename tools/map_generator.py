@@ -49,6 +49,16 @@ TILES = {
     12: {"name": "沙地", "symbol": "s", "color": "\033[93m", "walkable": True},
     13: {"name": "雪地", "symbol": "S", "color": "\033[97m", "walkable": True},
     14: {"name": "室内地板", "symbol": "F", "color": "\033[90m", "walkable": True},
+    15: {"name": "花丛草地", "symbol": "f", "color": "\033[32m", "walkable": True},
+    16: {"name": "小河", "symbol": "r", "color": "\033[34m", "walkable": False},
+    17: {"name": "木桥", "symbol": "B", "color": "\033[33m", "walkable": True},
+    18: {"name": "灌木丛", "symbol": "b", "color": "\033[32m", "walkable": False},
+    19: {"name": "枯树", "symbol": "D", "color": "\033[33m", "walkable": False},
+    20: {"name": "花朵", "symbol": "F", "color": "\033[35m", "walkable": True},
+    21: {"name": "深草地", "symbol": "g", "color": "\033[32m", "walkable": True},
+    22: {"name": "石板", "symbol": "P", "color": "\033[37m", "walkable": True},
+    23: {"name": "熔岩", "symbol": "L", "color": "\033[31m", "walkable": False},
+    24: {"name": "冰面", "symbol": "I", "color": "\033[96m", "walkable": True},
 }
 
 # 结构定义（可放置在地图上的建筑/装饰）
@@ -59,9 +69,9 @@ STRUCTURES = {
         "height": 5,
         "tiles": [
             [4, 4, 4, 4, 4],
-            [4, 0, 0, 0, 4],
-            [4, 0, 0, 0, 4],
-            [4, 0, 0, 0, 4],
+            [4, 14, 14, 14, 4],
+            [4, 14, 14, 14, 4],
+            [4, 14, 14, 14, 4],
             [4, 4, 1, 4, 4],
         ],
         "door": (2, 4),
@@ -72,26 +82,27 @@ STRUCTURES = {
         "height": 6,
         "tiles": [
             [4, 4, 4, 4, 4, 4, 4],
-            [4, 0, 0, 0, 0, 0, 4],
-            [4, 0, 0, 0, 0, 0, 4],
-            [4, 0, 0, 0, 0, 0, 4],
-            [4, 0, 0, 0, 0, 0, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 4],
             [4, 4, 4, 1, 4, 4, 4],
         ],
         "door": (3, 5),
     },
     "blacksmith": {
         "name": "铁匠铺",
-        "width": 7,
-        "height": 5,
+        "width": 8,
+        "height": 6,
         "tiles": [
-            [4, 4, 4, 4, 4, 4, 4],
-            [4, 0, 0, 0, 0, 0, 4],
-            [4, 0, 0, 0, 0, 0, 4],
-            [4, 0, 0, 0, 0, 0, 4],
-            [4, 4, 4, 1, 4, 4, 4],
+            [4, 4, 4, 4, 4, 4, 4, 4],
+            [4, 14, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 14, 4],
+            [4, 4, 4, 4, 1, 4, 4, 4],
         ],
-        "door": (3, 4),
+        "door": (4, 5),
     },
     "shop": {
         "name": "商店",
@@ -99,12 +110,56 @@ STRUCTURES = {
         "height": 5,
         "tiles": [
             [4, 4, 4, 4, 4, 4, 4],
-            [4, 0, 0, 0, 0, 0, 4],
-            [4, 0, 0, 0, 0, 0, 4],
-            [4, 0, 0, 0, 0, 0, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 4],
             [4, 4, 1, 4, 4, 4, 4],
         ],
         "door": (2, 4),
+    },
+    "temple": {
+        "name": "神殿",
+        "width": 7,
+        "height": 7,
+        "tiles": [
+            [4, 4, 4, 4, 4, 4, 4],
+            [4, 22, 22, 22, 22, 22, 4],
+            [4, 22, 22, 22, 22, 22, 4],
+            [4, 22, 22, 22, 22, 22, 4],
+            [4, 22, 22, 22, 22, 22, 4],
+            [4, 22, 22, 22, 22, 22, 4],
+            [4, 4, 4, 1, 4, 4, 4],
+        ],
+        "door": (3, 6),
+    },
+    "academy": {
+        "name": "学院",
+        "width": 8,
+        "height": 7,
+        "tiles": [
+            [4, 4, 4, 4, 4, 4, 4, 4],
+            [4, 22, 22, 22, 22, 22, 22, 4],
+            [4, 22, 22, 22, 22, 22, 22, 4],
+            [4, 22, 22, 22, 22, 22, 22, 4],
+            [4, 22, 22, 22, 22, 22, 22, 4],
+            [4, 22, 22, 22, 22, 22, 22, 4],
+            [4, 4, 4, 4, 1, 4, 4, 4],
+        ],
+        "door": (4, 6),
+    },
+    "tavern": {
+        "name": "酒馆",
+        "width": 7,
+        "height": 6,
+        "tiles": [
+            [4, 4, 4, 4, 4, 4, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 14, 14, 14, 14, 14, 4],
+            [4, 4, 4, 1, 4, 4, 4],
+        ],
+        "door": (3, 5),
     },
     "well": {
         "name": "水井",
@@ -137,6 +192,39 @@ STRUCTURES = {
             [0, 0, 0, 0, 0],
         ],
     },
+    "river_h": {
+        "name": "横向河流",
+        "width": 5,
+        "height": 2,
+        "tiles": [
+            [16, 16, 16, 16, 16],
+            [16, 16, 16, 16, 16],
+        ],
+    },
+    "river_v": {
+        "name": "纵向河流",
+        "width": 2,
+        "height": 5,
+        "tiles": [
+            [16, 16],
+            [16, 16],
+            [16, 16],
+            [16, 16],
+            [16, 16],
+        ],
+    },
+    "bridge_h": {
+        "name": "横向桥",
+        "width": 5,
+        "height": 1,
+        "tiles": [[17, 17, 17, 17, 17]],
+    },
+    "bridge_v": {
+        "name": "纵向桥",
+        "width": 1,
+        "height": 5,
+        "tiles": [[17], [17], [17], [17], [17]],
+    },
     "fence_h": {
         "name": "横向栅栏",
         "width": 5,
@@ -161,17 +249,25 @@ STRUCTURES = {
         "height": 5,
         "tiles": [[1], [1], [1], [1], [1]],
     },
-    "bridge_h": {
-        "name": "横向桥",
-        "width": 5,
-        "height": 1,
-        "tiles": [[3, 3, 3, 3, 3]],
+    "bush_cluster": {
+        "name": "灌木丛",
+        "width": 3,
+        "height": 3,
+        "tiles": [
+            [0, 18, 0],
+            [18, 0, 18],
+            [0, 18, 0],
+        ],
     },
-    "bridge_v": {
-        "name": "纵向桥",
-        "width": 1,
-        "height": 5,
-        "tiles": [[3], [3], [3], [3], [3]],
+    "flower_garden": {
+        "name": "花坛",
+        "width": 3,
+        "height": 3,
+        "tiles": [
+            [0, 20, 0],
+            [20, 0, 20],
+            [0, 20, 0],
+        ],
     },
 }
 
@@ -396,7 +492,7 @@ class MapGenerator:
         self.place_structure(ground, "shop", width - 17, 5)
         self.place_structure(ground, "house_small", 8, height - 10)
         self.place_structure(ground, "house_medium", width - 19, height - 11)
-        self.place_structure(ground, "house_small", width // 2 - 2, 5)
+        self.place_structure(ground, "temple", width // 2 - 3, 5)
         
         # 添加主要道路（十字路口）
         road_y = height // 2
@@ -412,15 +508,22 @@ class MapGenerator:
         self.place_structure(ground, "pond", 5, height // 2 - 3)
         
         # 添加花朵装饰
-        for _ in range(15):
+        for _ in range(20):
             x = random.randint(3, width - 4)
             y = random.randint(3, height - 4)
             if ground[y][x] == 0:  # 只在草地上放置
-                ground[y][x] = 7  # 花朵
+                ground[y][x] = random.choice([7, 15, 20])  # 花朵/花丛/花朵
         
         # 添加栅栏围栏
         self.place_structure(ground, "fence_h", 15, height // 2 + 8)
         self.place_structure(ground, "fence_v", 3, height // 2 - 5)
+        
+        # 添加灌木丛
+        for _ in range(8):
+            x = random.randint(3, width - 6)
+            y = random.randint(3, height - 6)
+            if ground[y][x] == 0:
+                self.place_structure(ground, "bush_cluster", x, y)
     
     def _generate_forest_content(self, ground: List[List[int]], 
                                   template: Dict) -> None:
@@ -454,15 +557,36 @@ class MapGenerator:
             if ground[y][path_x] == 9:
                 ground[y][path_x] = 1
         
+        # 添加河流
+        river_y = height // 3
+        for x in range(3, width - 3):
+            if ground[river_y][x] == 9:
+                ground[river_y][x] = 16
+                if river_y + 1 < height - 3 and ground[river_y + 1][x] == 9:
+                    ground[river_y + 1][x] = 16
+        
+        # 添加桥梁跨越河流
+        bridge_x = width // 2
+        for dy in range(-1, 2):
+            if ground[river_y + dy][bridge_x] == 16:
+                ground[river_y + dy][bridge_x] = 17
+        
         # 添加池塘和装饰
         self.add_random_decorations(ground, ["pond"], 3)
         
-        # 添加花朵和石头
+        # 添加花朵、石头和灌木
+        for _ in range(30):
+            x = random.randint(3, width - 4)
+            y = random.randint(3, height - 4)
+            if ground[y][x] == 9:
+                ground[y][x] = random.choice([7, 6, 18, 19])  # 花朵/石头/灌木/枯树
+        
+        # 添加深草地
         for _ in range(20):
             x = random.randint(3, width - 4)
             y = random.randint(3, height - 4)
             if ground[y][x] == 9:
-                ground[y][x] = random.choice([7, 6])  # 花朵或石头
+                ground[y][x] = 21
     
     def _generate_cave_content(self, ground: List[List[int]], 
                                 template: Dict) -> None:
