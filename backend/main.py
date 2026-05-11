@@ -760,6 +760,26 @@ async def forge_craft(req: ForgeRequest):
     return {"success": False, "message": "锻造系统开发中，敬请期待"}
 
 
+# ===== 天赋系统 =====
+
+class TalentLearnRequest(BaseModel):
+    talent_id: str
+
+@app.get("/api/talents")
+async def get_talents():
+    return player_profile.get_talent_info()
+
+@app.post("/api/talents/learn")
+async def learn_talent(req: TalentLearnRequest):
+    result = player_profile.learn_talent(req.talent_id)
+    return result
+
+@app.post("/api/talents/reset")
+async def reset_talents():
+    result = player_profile.reset_talents()
+    return result
+
+
 # ===== 词条系统预留接口 =====
 
 @app.get("/api/affixes/types")
@@ -913,6 +933,7 @@ async def combat_start(req: CombatStartRequest):
         "defense": player_profile.defense,
         "speed": player_profile.speed,
         "skills": getattr(player_profile, "skills", []),
+        "talent_passives": player_profile.get_talent_passives() if hasattr(player_profile, "get_talent_passives") else {},
     }
 
     from skill_system import format_skill_for_frontend

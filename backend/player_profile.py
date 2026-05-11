@@ -57,6 +57,7 @@ class PlayerProfile:
         self.map_states = {}
         self.skills = list(defaults.get("skills", {}).get(self.class_id, []))
         self.learned_skills = []
+        self.talents = []
         self.quests = {"active": {}, "completed": [], "daily_reset": ""}
 
     def _save(self):
@@ -82,6 +83,7 @@ class PlayerProfile:
             "equipment": self.equipment,
             "skills": self.skills,
             "learned_skills": self.learned_skills,
+            "talents": self.talents,
             "player_x": self.player_x,
             "player_y": self.player_y,
             "current_map": self.current_map,
@@ -118,6 +120,7 @@ class PlayerProfile:
             self.equipment = data.get("equipment", dict(DEFAULT_EQUIPMENT))
             self.skills = data.get("skills", [])
             self.learned_skills = data.get("learned_skills", [])
+            self.talents = data.get("talents", [])
             for s in EQUIP_SLOTS:
                 if s not in self.equipment:
                     self.equipment[s] = None
@@ -158,12 +161,21 @@ class PlayerProfile:
         self.defense = base_defense + bonus["defense"]
         self.speed = base_speed + bonus["speed"]
         new_max_hp = base_max_hp + bonus["max_hp"]
+        new_max_mp = base_max_mp + bonus["max_mp"]
+
+        from talent_system import calc_talent_stat_boosts
+        talent_boosts = calc_talent_stat_boosts(self.class_id, self.talents)
+        self.attack = int(self.attack * (1 + talent_boosts["attack"]))
+        self.defense = int(self.defense * (1 + talent_boosts["defense"]))
+        self.speed = int(self.speed * (1 + talent_boosts["speed"]))
+        new_max_hp = int(new_max_hp * (1 + talent_boosts["max_hp"]))
+        new_max_mp = int(new_max_mp * (1 + talent_boosts["max_mp"]))
+
         if new_max_hp != self.max_hp:
             old_max = self.max_hp
             self.max_hp = new_max_hp
             if self.max_hp < old_max:
                 self.hp = min(self.hp, self.max_hp)
-        new_max_mp = base_max_mp + bonus["max_mp"]
         if new_max_mp != getattr(self, "max_mp", 30):
             old_max_mp = getattr(self, "max_mp", 30)
             self.max_mp = new_max_mp
@@ -465,6 +477,7 @@ class PlayerProfile:
             "gold": self.gold,
             "equipment": self._get_equipment_detail(),
             "skills": [format_skill_for_frontend(s) for s in self.skills],
+            "talents": self.talents,
             "player_x": self.player_x,
             "player_y": self.player_y,
             "current_map": self.current_map,
@@ -481,6 +494,69 @@ class PlayerProfile:
 
     def get_classes(self) -> dict:
         return self.classes
+
+    # ===== 天赋系统 =====
+
+    def get_talent_info(self) -> dict:
+        from talent_system import (
+            get_class_talents, get_talent_trees, calc_talent_points,
+            can_learn_talent, format_talent_for_frontend,
+        )
+        all_talents = get_class_talents(self.class_id)
+        trees = get_talent_trees(self.class_id)
+        total_points = calc_talent_points(self.level)
+        used_points = len(self.talents)
+        result_trees = {}
+        for tree_name, talents in trees.items():
+            result_trees[tree_name] = []
+            for cfg in talents:
+                tid = cfg["talent_id"]
+                learned = tid in self.talents
+                ok, reason = can_learn_talent(tid, self.class_id, self.level, self.talents)
+                result_trees[tree_name].append(
+                    format_talent_for_frontend(tid, cfg, learned, ok and not learned, reason)
+                )
+        return {
+            "trees": result_trees,
+            "total_points": total_points,
+            "used_points": used_points,
+            "available_points": total_points - used_points,
+            "unlock_level": 5,
+        }
+
+    def learn_talent(self, talent_id: str) -> dict:
+        from talent_system import can_learn_talent, get_talent_config
+        ok, reason = can_learn_talent(talent_id, self.class_id, self.level, self.talents)
+        if not ok:
+            return {"success": False, "message": reason}
+        cfg = get_talent_config(talent_id)
+        self.talents.append(talent_id)
+        self._recalc_stats()
+        return {
+            "success": True,
+            "message": f"学会了天赋：{cfg.get('name', talent_id)}",
+            "talent_id": talent_id,
+            "talent_info": self.get_talent_info(),
+        }
+
+    def reset_talents(self) -> dict:
+        from talent_system import get_reset_cost
+        cost = get_reset_cost(self.level)
+        if self.gold < cost:
+            return {"success": False, "message": f"金币不足，重置天赋需要 {cost} 金币"}
+        self.gold -= cost
+        self.talents = []
+        self._recalc_stats()
+        return {
+            "success": True,
+            "message": f"天赋已重置，花费了 {cost} 金币",
+            "cost": cost,
+            "talent_info": self.get_talent_info(),
+        }
+
+    def get_talent_passives(self) -> dict:
+        from talent_system import get_talent_passives
+        return get_talent_passives(self.class_id, self.talents)
 
     # ===== 统一背包与金币操作 =====
 

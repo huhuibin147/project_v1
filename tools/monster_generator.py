@@ -643,6 +643,141 @@ class MonsterGenerator:
         print(f"已应用 {len(self.generated)} 个新怪物")
         self.generated.clear()
 
+    def create_boss_with_phases(self, monster_id, name, level, phases_config):
+        if monster_id in self.monsters or monster_id in self.generated:
+            print(f"错误：怪物 ID '{monster_id}' 已存在")
+            return None
+        template = MONSTER_TEMPLATES["boss"]
+        base_stats = phases_config.get("base_stats", {"hp": 150, "attack": 25, "defense": 15, "speed": 8})
+        stats = self._calc_stats(base_stats, level, template)
+        phases = []
+        for i, phase_cfg in enumerate(phases_config.get("phases", [
+            {"name": "正常", "hp_threshold": 1.0, "ai": {"attack": 0.5, "defend": 0.3, "special": 0.2}},
+            {"name": "愤怒", "hp_threshold": 0.5, "ai": {"attack": 0.7, "defend": 0.1, "special": 0.2}, "stat_boost": {"attack": 1.3}},
+            {"name": "狂暴", "hp_threshold": 0.25, "ai": {"attack": 0.8, "defend": 0.0, "special": 0.2}, "stat_boost": {"attack": 1.5}},
+        ])):
+            phase = {
+                "name": phase_cfg.get("name", f"阶段{i+1}"),
+                "hp_threshold": phase_cfg.get("hp_threshold", 1.0 - i * 0.3),
+                "ai": phase_cfg.get("ai", {"attack": 0.5, "defend": 0.3, "special": 0.2}),
+            }
+            if "stat_boost" in phase_cfg:
+                phase["stat_boost"] = phase_cfg["stat_boost"]
+            if "new_special" in phase_cfg:
+                phase["new_special"] = phase_cfg["new_special"]
+            phases.append(phase)
+        exp_reward = round(level * 15 * template["exp_multiplier"])
+        gold_min, gold_max = template["gold_range"]
+        gold_reward = [round(gold_min * (1 + (level - 1) * 0.1)),
+                      round(gold_max * (1 + (level - 1) * 0.1))]
+        drops = self._generate_drops(phases_config.get("tags", ["boss", "legendary"]), template, level)
+        monster = {
+            "id": monster_id,
+            "name": name,
+            "description": phases_config.get("description", f"强大的BOSS：{name}"),
+            "type": "boss",
+            "sprite_color": phases_config.get("sprite_color", "#cc3333"),
+            "sprite_accent": phases_config.get("sprite_accent", "#aa1111"),
+            "stats": stats,
+            "exp_reward": exp_reward,
+            "gold_reward": gold_reward,
+            "drops": drops,
+            "ai": {
+                "behavior": template["ai_behavior"],
+                "attack_weight": template["attack_weight"],
+                "defend_weight": template["defend_weight"],
+                "special_weight": template["special_weight"],
+                "special": phases_config.get("special", None),
+            },
+            "phases": phases,
+            "level": level,
+            "tags": phases_config.get("tags", ["boss", "legendary"]),
+        }
+        self.generated[monster_id] = monster
+        print(f"已创建 BOSS：{name} ({monster_id}) - Lv.{level}，{len(phases)} 阶段")
+        for p in phases:
+            print(f"  阶段：{p['name']} (HP<{p['hp_threshold']*100:.0f}%) AI:{p['ai']}")
+        return monster
+
+    def generate_monster_skills(self, monster_id, skill_count=2):
+        monster = self.generated.get(monster_id) or self.monsters.get(monster_id)
+        if not monster:
+            print(f"错误：怪物 '{monster_id}' 不存在")
+            return []
+        SKILL_TEMPLATES = [
+            {"name": "猛击", "type": "damage", "power": 1.3, "effect": None, "desc": "全力一击"},
+            {"name": "毒咬", "type": "damage", "power": 1.0, "effect": {"type": "poison", "duration": 3, "value": 0}, "desc": "注入毒素"},
+            {"name": "火焰吐息", "type": "damage", "power": 1.5, "effect": {"type": "burn", "duration": 3, "value": 5}, "desc": "喷出火焰"},
+            {"name": "冰霜之息", "type": "damage", "power": 1.2, "effect": {"type": "freeze", "duration": 1, "value": 0}, "desc": "冻结敌人"},
+            {"name": "暗影打击", "type": "damage", "power": 1.4, "effect": {"type": "fear", "duration": 2, "value": 0}, "desc": "暗影侵袭"},
+            {"name": "生命汲取", "type": "life_drain", "power": 0.8, "effect": {"type": "heal", "duration": 1, "value": 15}, "desc": "吸取生命"},
+            {"name": "防御强化", "type": "buff", "power": 0, "effect": {"type": "defense_up", "duration": 3, "value": 30}, "desc": "提升防御"},
+            {"name": "狂暴", "type": "buff", "power": 0, "effect": {"type": "attack_up", "duration": 3, "value": 30}, "desc": "提升攻击"},
+            {"name": "治愈", "type": "heal", "power": 0, "effect": {"type": "heal", "duration": 1, "value": 20}, "desc": "恢复生命"},
+            {"name": "召唤", "type": "summon", "power": 0, "effect": None, "desc": "召唤小怪"},
+        ]
+        eligible = SKILL_TEMPLATES[:]
+        if monster["type"] == "normal":
+            eligible = [s for s in eligible if s["type"] in ("damage", "buff")]
+            skill_count = min(skill_count, 1)
+        elif monster["type"] == "elite":
+            eligible = [s for s in eligible if s["type"] in ("damage", "buff", "life_drain")]
+            skill_count = min(skill_count, 2)
+        selected = random.sample(eligible, min(skill_count, len(eligible)))
+        skills = []
+        for i, tmpl in enumerate(selected):
+            skill = {
+                "skill_id": f"{monster_id}_skill_{i+1}",
+                "name": tmpl["name"],
+                "type": tmpl["type"],
+                "power": tmpl["power"],
+                "effect": tmpl["effect"],
+                "description": tmpl["desc"],
+                "cooldown": random.randint(2, 4),
+            }
+            skills.append(skill)
+        monster["skills"] = skills
+        print(f"已为 {monster['name']} 生成 {len(skills)} 个技能")
+        return skills
+
+    def balance_check(self):
+        issues = []
+        for monster_id, monster in self.monsters.items():
+            level = monster.get("level", 1)
+            stats = monster.get("stats", {})
+            mtype = monster.get("type", "normal")
+            expected_hp = level * 15 * (2.0 if mtype == "elite" else 4.0 if mtype == "boss" else 1.0)
+            expected_atk = level * 5 * (1.5 if mtype == "elite" else 2.0 if mtype == "boss" else 1.0)
+            expected_def = level * 3 * (1.3 if mtype == "elite" else 1.8 if mtype == "boss" else 1.0)
+            hp = stats.get("hp", 0)
+            atk = stats.get("attack", 0)
+            dfn = stats.get("defense", 0)
+            if hp < expected_hp * 0.5:
+                issues.append(f"{monster_id} (Lv.{level} {mtype}): HP={hp} 偏低（预期≈{expected_hp:.0f}）")
+            elif hp > expected_hp * 2.0:
+                issues.append(f"{monster_id} (Lv.{level} {mtype}): HP={hp} 偏高（预期≈{expected_hp:.0f}）")
+            if atk < expected_atk * 0.5:
+                issues.append(f"{monster_id} (Lv.{level} {mtype}): ATK={atk} 偏低（预期≈{expected_atk:.0f}）")
+            elif atk > expected_atk * 2.0:
+                issues.append(f"{monster_id} (Lv.{level} {mtype}): ATK={atk} 偏高（预期≈{expected_atk:.0f}）")
+            if dfn < expected_def * 0.3:
+                issues.append(f"{monster_id} (Lv.{level} {mtype}): DEF={dfn} 偏低（预期≈{expected_def:.0f}）")
+            exp = monster.get("exp_reward", 0)
+            expected_exp = level * 15 * (2.5 if mtype == "elite" else 5.0 if mtype == "boss" else 1.0)
+            if exp < expected_exp * 0.5:
+                issues.append(f"{monster_id}: EXP={exp} 偏低（预期≈{expected_exp:.0f}）")
+            ai = monster.get("ai", {})
+            weights = [ai.get("attack_weight", 0), ai.get("defend_weight", 0), ai.get("special_weight", 0)]
+            if sum(weights) != 100:
+                issues.append(f"{monster_id}: AI权重总和={sum(weights)}（应为100）")
+        if issues:
+            print(f"平衡性检查发现 {len(issues)} 个问题：")
+            for issue in issues:
+                print(f"  ⚠ {issue}")
+        else:
+            print("平衡性检查通过！所有怪物属性在合理范围内")
+        return len(issues)
+
     def show_templates(self):
         """显示所有可用模板"""
         print("\n=== 可用怪物模板 ===")
@@ -754,6 +889,26 @@ def main():
 
     elif cmd == "apply":
         gen.apply()
+
+    elif cmd == "boss":
+        if len(sys.argv) < 5:
+            print("用法：python monster_generator.py boss <id> <名称> <等级> [描述]")
+            return
+        monster_id = sys.argv[2]
+        name = sys.argv[3]
+        level = int(sys.argv[4])
+        gen.create_boss_with_phases(monster_id, name, level, {})
+
+    elif cmd == "skills":
+        if len(sys.argv) < 3:
+            print("用法：python monster_generator.py skills <怪物id> [技能数量]")
+            return
+        monster_id = sys.argv[2]
+        skill_count = int(sys.argv[3]) if len(sys.argv) > 3 else 2
+        gen.generate_monster_skills(monster_id, skill_count)
+
+    elif cmd == "balance":
+        gen.balance_check()
 
     else:
         print(f"未知命令：{cmd}")

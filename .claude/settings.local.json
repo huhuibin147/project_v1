@@ -4,7 +4,8 @@
       "Bash(python3 -c \"import json; json.load\\(open\\('/mnt/c/mydir/code/ai/project_v1/config/monsters.json'\\)\\); print\\('monsters.json: OK'\\)\")",
       "Bash(python3 -c \"import json; json.load\\(open\\('/mnt/c/mydir/code/ai/project_v1/config/maps/forest.json'\\)\\); print\\('forest.json: OK'\\)\")",
       "Bash(python3 -c \"import json; json.load\\(open\\('/mnt/c/mydir/code/ai/project_v1/config/maps/village.json'\\)\\); print\\('village.json: OK'\\)\")",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(git -C /Users/huhuibin/code/aiproj/project_v1 log --oneline -20)"
     ]
   }
 }

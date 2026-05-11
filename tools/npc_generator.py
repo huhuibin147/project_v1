@@ -626,6 +626,125 @@ class NPCGenerator:
         print(f"已应用 {len(self.generated)} 个新 NPC")
         self.generated.clear()
 
+    def generate_schedule(self, npc_id):
+        schedule_templates = {
+            "merchant": [
+                {"time": "06:00", "action": "开店", "location": "商店"},
+                {"time": "12:00", "action": "午休", "location": "商店后屋"},
+                {"time": "13:00", "action": "营业", "location": "商店"},
+                {"time": "20:00", "action": "关门", "location": "商店"},
+                {"time": "21:00", "action": "休息", "location": "家中"},
+            ],
+            "blacksmith": [
+                {"time": "05:00", "action": "生火开炉", "location": "铁匠铺"},
+                {"time": "08:00", "action": "锻造", "location": "铁匠铺"},
+                {"time": "12:00", "action": "午休", "location": "铁匠铺后屋"},
+                {"time": "13:00", "action": "营业", "location": "铁匠铺"},
+                {"time": "19:00", "action": "收工", "location": "铁匠铺"},
+                {"time": "20:00", "action": "去酒馆", "location": "酒馆"},
+            ],
+            "healer": [
+                {"time": "06:00", "action": "晨祷", "location": "神殿"},
+                {"time": "08:00", "action": "治疗服务", "location": "神殿"},
+                {"time": "12:00", "action": "午休", "location": "神殿后院"},
+                {"time": "13:00", "action": "治疗服务", "location": "神殿"},
+                {"time": "18:00", "action": "晚祷", "location": "神殿"},
+                {"time": "20:00", "action": "休息", "location": "神殿后院"},
+            ],
+            "skill_master": [
+                {"time": "06:00", "action": "晨练", "location": "学院"},
+                {"time": "08:00", "action": "授课", "location": "学院"},
+                {"time": "12:00", "action": "午休", "location": "学院"},
+                {"time": "13:00", "action": "训练", "location": "学院"},
+                {"time": "18:00", "action": "研究", "location": "学院"},
+                {"time": "21:00", "action": "休息", "location": "学院"},
+            ],
+            "innkeeper": [
+                {"time": "08:00", "action": "开店", "location": "酒馆"},
+                {"time": "12:00", "action": "忙碌", "location": "酒馆"},
+                {"time": "18:00", "action": "高峰期", "location": "酒馆"},
+                {"time": "23:00", "action": "打烊", "location": "酒馆"},
+            ],
+            "guard": [
+                {"time": "06:00", "action": "换班巡逻", "location": "村口"},
+                {"time": "10:00", "action": "站岗", "location": "村口"},
+                {"time": "14:00", "action": "巡逻", "location": "村庄"},
+                {"time": "18:00", "action": "换班", "location": "村口"},
+                {"time": "22:00", "action": "夜间巡逻", "location": "村庄"},
+            ],
+            "quest_giver": [
+                {"time": "08:00", "action": "发布任务", "location": "广场"},
+                {"time": "12:00", "action": "午休", "location": "家中"},
+                {"time": "14:00", "action": "收集情报", "location": "广场"},
+                {"time": "18:00", "action": "整理任务", "location": "广场"},
+                {"time": "20:00", "action": "休息", "location": "家中"},
+            ],
+        }
+        npc = self.generated.get(npc_id) or self.npcs.get(npc_id)
+        if not npc:
+            print(f"错误：NPC '{npc_id}' 不存在")
+            return None
+        role = npc.get("role", "")
+        template_name = None
+        for tname, tmpl in NPC_TEMPLATES.items():
+            if tmpl["role"] == role:
+                template_name = tname
+                break
+        schedule = schedule_templates.get(template_name, schedule_templates.get("quest_giver"))
+        npc["schedule"] = schedule
+        print(f"已为 {npc['name']} 生成日程：{len(schedule)} 个时间段")
+        return schedule
+
+    def generate_all_schedules(self):
+        count = 0
+        for npc_id in list(self.npcs.keys()):
+            if self.generate_schedule(npc_id):
+                count += 1
+        self._save_npcs()
+        print(f"已为 {count} 个 NPC 生成日程")
+        return count
+
+    def export_npc(self, npc_id, output_dir=None):
+        npc = self.npcs.get(npc_id)
+        if not npc:
+            print(f"错误：NPC '{npc_id}' 不存在")
+            return False
+        out_dir = Path(output_dir) if output_dir else ROOT_DIR / "tools" / "exports"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        filepath = out_dir / f"{npc_id}.json"
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(npc, f, ensure_ascii=False, indent=2)
+        print(f"已导出 NPC '{npc_id}' 到 {filepath}")
+        return True
+
+    def import_npc(self, filepath):
+        filepath = Path(filepath)
+        if not filepath.exists():
+            print(f"错误：文件 '{filepath}' 不存在")
+            return False
+        with open(filepath, "r", encoding="utf-8") as f:
+            npc = json.load(f)
+        npc_id = npc.get("id")
+        if not npc_id:
+            print("错误：导入的 NPC 缺少 id 字段")
+            return False
+        self.npcs[npc_id] = npc
+        self._save_npcs()
+        print(f"已导入 NPC '{npc_id}' ({npc.get('name', '未知')})")
+        return True
+
+    def export_all(self, output_dir=None):
+        out_dir = Path(output_dir) if output_dir else ROOT_DIR / "tools" / "exports"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        count = 0
+        for npc_id, npc in self.npcs.items():
+            filepath = out_dir / f"{npc_id}.json"
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(npc, f, ensure_ascii=False, indent=2)
+            count += 1
+        print(f"已导出 {count} 个 NPC 到 {out_dir}")
+        return count
+
     def show_templates(self):
         """显示所有可用模板"""
         print("\n=== 可用 NPC 模板 ===")
@@ -751,6 +870,34 @@ def main():
 
     elif cmd == "apply":
         gen.apply()
+
+    elif cmd == "schedule":
+        if len(sys.argv) < 3:
+            print("用法：python npc_generator.py schedule <npc_id|all>")
+            return
+        target = sys.argv[2]
+        if target == "all":
+            gen.generate_all_schedules()
+        else:
+            gen.generate_schedule(target)
+            gen._save_npcs()
+
+    elif cmd == "export":
+        if len(sys.argv) < 3:
+            print("用法：python npc_generator.py export <npc_id|all> [output_dir]")
+            return
+        target = sys.argv[2]
+        output_dir = sys.argv[3] if len(sys.argv) > 3 else None
+        if target == "all":
+            gen.export_all(output_dir)
+        else:
+            gen.export_npc(target, output_dir)
+
+    elif cmd == "import":
+        if len(sys.argv) < 3:
+            print("用法：python npc_generator.py import <filepath>")
+            return
+        gen.import_npc(sys.argv[2])
 
     else:
         print(f"未知命令：{cmd}")

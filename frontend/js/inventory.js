@@ -670,7 +670,7 @@ async function doUseItem(itemId) {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "i" && !dialogueOpen && !gameMenuOpen && !combatOpen) {
+  if (e.key.toLowerCase() === "i" && !dialogueOpen && !gameMenuOpen && !combatOpen && !talentPanelOpen) {
     if (inventoryOpen) {
       closeInventory();
     } else {

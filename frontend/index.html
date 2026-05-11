@@ -95,6 +95,7 @@
       <div class="game-menu-actions">
         <button class="btn-interact" onclick="closeGameMenu(); openInventory()">背包 (I)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openPlayerInfo()">角色信息 (P)</button>
+        <button class="btn-interact" onclick="closeGameMenu(); openTalentPanel()">天赋 (T)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openQuestManager()">任务管理 (Q)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openHelp()">帮助 (H)</button>
         <button class="btn-interact" onclick="saveGame()">保存游戏</button>
@@ -302,6 +303,11 @@
         </div>
 
         <div class="pi-section">
+          <div class="pi-section-title">天赋</div>
+          <div id="pi-talents"><span class="no-effects">未解锁</span></div>
+        </div>
+
+        <div class="pi-section">
           <div class="pi-section-title">状态效果</div>
           <div id="pi-effects"><span class="no-effects">无</span></div>
         </div>
@@ -370,6 +376,17 @@
             <p>与NPC对话后可打开商店，购买和出售物品</p>
             <p>商店有库存限制和金币限制</p>
             <p>出售价格为购买价格的一半</p>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-section-title">天赋系统</div>
+          <div class="help-content">
+            <p><b>T</b> — 打开/关闭天赋面板</p>
+            <p>角色达到 <b>Lv.5</b> 后解锁天赋系统，每升一级获得1个天赋点</p>
+            <p>每个职业有2条天赋树，每条树有5个天赋节点</p>
+            <p>学习天赋需要满足前置天赋条件，天赋效果提供属性加成</p>
+            <p>可以花费金币重置所有天赋，重新分配天赋点</p>
           </div>
         </div>
 
@@ -497,6 +514,20 @@
 
     <!-- 任务追踪器 (HUD) -->
     <div id="quest-tracker" style="display:none"></div>
+
+    <!-- 天赋面板 -->
+    <div id="talent-panel" style="display:none">
+      <div class="panel-header">
+        <span class="panel-title">天赋</span>
+        <span class="panel-info">天赋点: <span id="talent-available">0</span> / <span id="talent-total">0</span></span>
+        <button class="panel-close" onclick="closeTalentPanel()">×</button>
+      </div>
+      <div id="talent-message" class="trade-message" style="display:none"></div>
+      <div id="talent-trees" class="talent-trees"></div>
+      <div class="talent-footer">
+        <button class="btn-interact btn-danger" onclick="resetTalents()">重置天赋</button>
+      </div>
+    </div>
   </div>
 
   <script src="/static/js/map.js"></script>
@@ -507,6 +538,7 @@
   <script src="/static/js/player_info.js"></script>
   <script src="/static/js/combat.js"></script>
   <script src="/static/js/quest.js"></script>
+  <script src="/static/js/talent.js"></script>
   <script src="/static/js/help.js"></script>
   <script src="/static/js/start_screen.js"></script>
   <script src="/static/js/game.js"></script>

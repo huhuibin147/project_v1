@@ -590,23 +590,257 @@ class MapGenerator:
     
     def _generate_cave_content(self, ground: List[List[int]], 
                                 template: Dict) -> None:
-        """生成洞穴内容"""
+        """生成洞穴内容 - 三层区域"""
         height = len(ground)
         width = len(ground[0])
         
-        # 添加石头
-        for _ in range(20):
-            x = random.randint(3, width - 4)
-            y = random.randint(3, height - 4)
-            ground[y][x] = 6
+        zone1_end = height // 3
+        zone2_end = height * 2 // 3
         
-        # 添加熔岩
-        for _ in range(10):
+        for r in range(2, zone1_end - 1):
+            for c in range(2, width - 2):
+                if ground[r][c] == 10:
+                    if random.random() < 0.08:
+                        ground[r][c] = 6
+        
+        for r in range(zone1_end, zone2_end - 1):
+            for c in range(2, width - 2):
+                if ground[r][c] == 10:
+                    if random.random() < 0.12:
+                        ground[r][c] = 6
+                    elif random.random() < 0.04:
+                        ground[r][c] = 11
+        
+        for r in range(zone2_end, height - 2):
+            for c in range(2, width - 2):
+                if ground[r][c] == 10:
+                    if random.random() < 0.15:
+                        ground[r][c] = 6
+                    elif random.random() < 0.08:
+                        ground[r][c] = 11
+        
+        self.add_road(ground, (width // 2, 2), (width // 2, height - 3), width=2)
+        self.add_road(ground, (2, zone1_end), (width - 3, zone1_end), width=1)
+        self.add_road(ground, (2, zone2_end), (width - 3, zone2_end), width=1)
+        
+        for _ in range(15):
             x = random.randint(3, width - 4)
             y = random.randint(3, height - 4)
             if ground[y][x] == 10:
-                ground[y][x] = 11
+                ground[y][x] = random.choice([7, 20])
+        
+        for _ in range(10):
+            x = random.randint(3, width - 4)
+            y = random.randint(zone2_end, height - 4)
+            if ground[y][x] == 10:
+                ground[y][x] = 24
     
+    def auto_place_npcs(self, map_id: str) -> bool:
+        """自动将 NPC 放置到地图的可行走位置"""
+        data = self.load_map(map_id)
+        if not data:
+            return False
+        
+        ground = data['layers']['ground']
+        height = len(ground)
+        width = len(ground[0])
+        
+        walkable_positions = []
+        for r in range(2, height - 2):
+            for c in range(2, width - 2):
+                if TILES.get(ground[r][c], {}).get('walkable', False):
+                    occupied = False
+                    for npc in data.get('npcs', []):
+                        if npc.get('x') == c and npc.get('y') == r:
+                            occupied = True
+                            break
+                    if not occupied:
+                        walkable_positions.append((c, r))
+        
+        if not walkable_positions:
+            print(f"地图 '{map_id}' 没有可用的可行走位置")
+            return False
+        
+        for npc in data.get('npcs', []):
+            if npc.get('x', 0) == 0 and npc.get('y', 0) == 0:
+                if walkable_positions:
+                    pos = walkable_positions.pop(random.randint(0, len(walkable_positions) - 1))
+                    npc['x'] = pos[0]
+                    npc['y'] = pos[1]
+        
+        self.save_map(data)
+        print(f"已为地图 '{map_id}' 的 NPC 自动分配位置")
+        return True
+    
+    def auto_place_monsters(self, map_id: str, monster_ids: List[str] = None,
+                            density: float = 0.02) -> bool:
+        """自动在地图上放置怪物"""
+        data = self.load_map(map_id)
+        if not data:
+            return False
+        
+        ground = data['layers']['ground']
+        height = len(ground)
+        width = len(ground[0])
+        
+        walkable_positions = []
+        for r in range(3, height - 3):
+            for c in range(3, width - 3):
+                if TILES.get(ground[r][c], {}).get('walkable', False):
+                    walkable_positions.append((c, r))
+        
+        if not walkable_positions:
+            print(f"地图 '{map_id}' 没有可用的可行走位置")
+            return False
+        
+        count = max(1, int(len(walkable_positions) * density))
+        if monster_ids is None:
+            monsters_file = CONFIG_DIR / "monsters.json"
+            if monsters_file.exists():
+                with open(monsters_file, "r", encoding="utf-8") as f:
+                    monsters_db = json.load(f)
+                monster_ids = list(monsters_db.keys())
+            else:
+                monster_ids = ["slime"]
+        
+        existing_monsters = data.get('monsters', [])
+        for _ in range(count):
+            if not walkable_positions:
+                break
+            pos = walkable_positions.pop(random.randint(0, len(walkable_positions) - 1))
+            mid = random.choice(monster_ids)
+            monster_entry = {"monster_id": mid, "x": pos[0], "y": pos[1]}
+            if random.random() < 0.3:
+                patrol_points = []
+                for _ in range(random.randint(2, 4)):
+                    if walkable_positions:
+                        pp = walkable_positions.pop(random.randint(0, len(walkable_positions) - 1))
+                        patrol_points.append({"x": pp[0], "y": pp[1]})
+                if patrol_points:
+                    monster_entry["patrol"] = patrol_points
+            existing_monsters.append(monster_entry)
+        
+        data['monsters'] = existing_monsters
+        self.save_map(data)
+        print(f"已在地图 '{map_id}' 放置 {count} 只怪物")
+        return True
+    
+    def add_objects(self, map_id: str, obj_type: str, count: int = 3) -> bool:
+        """在地图上添加交互物件"""
+        data = self.load_map(map_id)
+        if not data:
+            return False
+        
+        ground = data['layers']['ground']
+        height = len(ground)
+        width = len(ground[0])
+        
+        walkable_positions = []
+        for r in range(3, height - 3):
+            for c in range(3, width - 3):
+                if TILES.get(ground[r][c], {}).get('walkable', False):
+                    occupied = False
+                    for obj in data.get('objects', []):
+                        if obj.get('x') == c and obj.get('y') == r:
+                            occupied = True
+                            break
+                    if not occupied:
+                        walkable_positions.append((c, r))
+        
+        objects = data.get('objects', [])
+        obj_counter = len(objects)
+        
+        for _ in range(count):
+            if not walkable_positions:
+                break
+            pos = walkable_positions.pop(random.randint(0, len(walkable_positions) - 1))
+            obj_counter += 1
+            obj = {"id": f"{obj_type}_{map_id}_{obj_counter}", "type": obj_type, "x": pos[0], "y": pos[1]}
+            
+            if obj_type == "chest":
+                obj["properties"] = {
+                    "items": [{"item_id": random.choice(["health_potion", "mana_potion", "bandage"]), "quantity": random.randint(1, 3)}],
+                    "opened": False
+                }
+            elif obj_type == "gather":
+                obj["properties"] = {
+                    "item_id": random.choice(["herb", "mushroom", "iron_ore"]),
+                    "respawn_time": 60
+                }
+            elif obj_type == "portal":
+                obj["properties"] = {
+                    "target_map": "village",
+                    "target_x": 25,
+                    "target_y": 21
+                }
+            
+            objects.append(obj)
+        
+        data['objects'] = objects
+        self.save_map(data)
+        print(f"已在地图 '{map_id}' 添加 {count} 个 {obj_type} 物件")
+        return True
+    
+    def ensure_reachability(self, map_id: str) -> bool:
+        """确保地图所有重要位置可达"""
+        data = self.load_map(map_id)
+        if not data:
+            return False
+        
+        ground = data['layers']['ground']
+        height = len(ground)
+        width = len(ground[0])
+        spawn = data.get('player_spawn', {})
+        spawn_x, spawn_y = spawn.get('x', 0), spawn.get('y', 0)
+        
+        reachable = self._check_reachability(ground, spawn_x, spawn_y)
+        total_walkable = sum(1 for r in ground for t in r if TILES.get(t, {}).get('walkable', True))
+        
+        if reachable >= total_walkable * 0.9:
+            print(f"地图 '{map_id}' 可达性良好: {reachable}/{total_walkable}")
+            return True
+        
+        unreachable = total_walkable - reachable
+        print(f"地图 '{map_id}' 有 {unreachable} 个不可达瓦片，尝试修复...")
+        
+        visited = set()
+        queue = deque([(spawn_x, spawn_y)])
+        while queue:
+            x, y = queue.popleft()
+            if (x, y) in visited:
+                continue
+            if not (0 <= x < width and 0 <= y < height):
+                continue
+            if not TILES.get(ground[y][x], {}).get('walkable', True):
+                continue
+            visited.add((x, y))
+            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                queue.append((x + dx, y + dy))
+        
+        important_points = []
+        for npc in data.get('npcs', []):
+            important_points.append((npc.get('x', 0), npc.get('y', 0)))
+        for obj in data.get('objects', []):
+            important_points.append((obj.get('x', 0), obj.get('y', 0)))
+        
+        fixed = 0
+        for px, py in important_points:
+            if (px, py) not in visited:
+                for dx in range(-2, 3):
+                    for dy in range(-2, 3):
+                        nx, ny = px + dx, py + dy
+                        if 0 <= nx < width and 0 <= ny < height:
+                            if not TILES.get(ground[ny][nx], {}).get('walkable', True):
+                                ground[ny][nx] = 1
+                                fixed += 1
+        
+        if fixed > 0:
+            self.save_map(data)
+            print(f"已修复 {fixed} 个瓦片以确保重要位置可达")
+        else:
+            print("无需修复")
+        return True
+
     def _generate_town_content(self, ground: List[List[int]], 
                                 template: Dict) -> None:
         """生成城镇内容"""
@@ -1111,7 +1345,34 @@ def main():
         print(f"\n共 {len(maps)} 个地图:\n")
         for m in maps:
             print(f"  {m['id']}: {m['name']} ({m['width']}x{m['height']})")
-    
+
+    elif command == "place-npcs":
+        if len(sys.argv) < 3:
+            print("用法: python map_generator.py place-npcs <id>")
+            return
+        generator.auto_place_npcs(sys.argv[2])
+
+    elif command == "place-monsters":
+        if len(sys.argv) < 3:
+            print("用法: python map_generator.py place-monsters <id> [density]")
+            return
+        density = float(sys.argv[3]) if len(sys.argv) > 3 else 0.02
+        generator.auto_place_monsters(sys.argv[2], density=density)
+
+    elif command == "add-objects":
+        if len(sys.argv) < 4:
+            print("用法: python map_generator.py add-objects <id> <type> [count]")
+            print("类型: chest, gather, portal")
+            return
+        count = int(sys.argv[4]) if len(sys.argv) > 4 else 3
+        generator.add_objects(sys.argv[2], sys.argv[3], count)
+
+    elif command == "reachability":
+        if len(sys.argv) < 3:
+            print("用法: python map_generator.py reachability <id>")
+            return
+        generator.ensure_reachability(sys.argv[2])
+
     else:
         print(f"未知命令: {command}")
         print(__doc__)

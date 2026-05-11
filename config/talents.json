@@ -1,0 +1,302 @@
+{
+  "warrior_berserk_power": {
+    "talent_id": "warrior_berserk_power",
+    "name": "力量强化",
+    "class": "warrior",
+    "tree": "berserk",
+    "tier": 1,
+    "description": "攻击力 +8%",
+    "effects": [{"type": "stat_boost", "stat": "attack", "value": 0.08, "is_percent": true}],
+    "prerequisites": []
+  },
+  "warrior_berserk_bloodlust": {
+    "talent_id": "warrior_berserk_bloodlust",
+    "name": "嗜血本能",
+    "class": "warrior",
+    "tree": "berserk",
+    "tier": 2,
+    "description": "击杀后恢复 10% HP",
+    "effects": [{"type": "on_kill", "action": "heal_percent", "value": 0.10}],
+    "prerequisites": ["warrior_berserk_power"]
+  },
+  "warrior_berserk_fury": {
+    "talent_id": "warrior_berserk_fury",
+    "name": "狂暴之心",
+    "class": "warrior",
+    "tree": "berserk",
+    "tier": 3,
+    "description": "HP 低于 30% 时攻击 +25%",
+    "effects": [{"type": "conditional", "condition": "hp_below", "threshold": 0.30, "stat": "attack", "value": 0.25, "is_percent": true}],
+    "prerequisites": ["warrior_berserk_bloodlust"]
+  },
+  "warrior_berserk_crit": {
+    "talent_id": "warrior_berserk_crit",
+    "name": "战意昂扬",
+    "class": "warrior",
+    "tree": "berserk",
+    "tier": 4,
+    "description": "暴击率 +10%",
+    "effects": [{"type": "stat_boost", "stat": "crit_chance", "value": 0.10, "is_percent": false}],
+    "prerequisites": ["warrior_berserk_fury"]
+  },
+  "warrior_berserk_god": {
+    "talent_id": "warrior_berserk_god",
+    "name": "战神附体",
+    "class": "warrior",
+    "tree": "berserk",
+    "tier": 5,
+    "description": "击杀后攻击力 +15%，持续 3 回合，可叠加",
+    "effects": [{"type": "on_kill", "action": "buff", "stat": "attack", "value": 0.15, "duration": 3, "stackable": true}],
+    "prerequisites": ["warrior_berserk_crit"]
+  },
+  "warrior_guard_ironwall": {
+    "talent_id": "warrior_guard_ironwall",
+    "name": "铁壁",
+    "class": "warrior",
+    "tree": "guard",
+    "tier": 1,
+    "description": "防御力 +10%",
+    "effects": [{"type": "stat_boost", "stat": "defense", "value": 0.10, "is_percent": true}],
+    "prerequisites": []
+  },
+  "warrior_guard_vitality": {
+    "talent_id": "warrior_guard_vitality",
+    "name": "生命强化",
+    "class": "warrior",
+    "tree": "guard",
+    "tier": 2,
+    "description": "最大 HP +15%",
+    "effects": [{"type": "stat_boost", "stat": "max_hp", "value": 0.15, "is_percent": true}],
+    "prerequisites": ["warrior_guard_ironwall"]
+  },
+  "warrior_guard_taunt": {
+    "talent_id": "warrior_guard_taunt",
+    "name": "嘲讽",
+    "class": "warrior",
+    "tree": "guard",
+    "tier": 3,
+    "description": "受击概率 +20%（多人战斗时保护队友）",
+    "effects": [{"type": "passive", "action": "taunt", "value": 0.20}],
+    "prerequisites": ["warrior_guard_vitality"]
+  },
+  "warrior_guard_tough": {
+    "talent_id": "warrior_guard_tough",
+    "name": "坚韧",
+    "class": "warrior",
+    "tree": "guard",
+    "tier": 4,
+    "description": "受到致命伤害时保留 1 HP（每场战斗 1 次）",
+    "effects": [{"type": "passive", "action": "last_stand", "value": 1}],
+    "prerequisites": ["warrior_guard_taunt"]
+  },
+  "warrior_guard_unyielding": {
+    "talent_id": "warrior_guard_unyielding",
+    "name": "不屈意志",
+    "class": "warrior",
+    "tree": "guard",
+    "tier": 5,
+    "description": "防御姿态减伤 50% → 75%",
+    "effects": [{"type": "passive", "action": "defend_boost", "value": 0.75}],
+    "prerequisites": ["warrior_guard_tough"]
+  },
+  "rogue_assassin_agility": {
+    "talent_id": "rogue_assassin_agility",
+    "name": "敏捷强化",
+    "class": "rogue",
+    "tree": "assassin",
+    "tier": 1,
+    "description": "速度 +10%",
+    "effects": [{"type": "stat_boost", "stat": "speed", "value": 0.10, "is_percent": true}],
+    "prerequisites": []
+  },
+  "rogue_assassin_lethal": {
+    "talent_id": "rogue_assassin_lethal",
+    "name": "致命打击",
+    "class": "rogue",
+    "tree": "assassin",
+    "tier": 2,
+    "description": "暴击伤害 +30%",
+    "effects": [{"type": "stat_boost", "stat": "crit_damage", "value": 0.30, "is_percent": true}],
+    "prerequisites": ["rogue_assassin_agility"]
+  },
+  "rogue_assassin_poison_master": {
+    "talent_id": "rogue_assassin_poison_master",
+    "name": "毒师",
+    "class": "rogue",
+    "tree": "assassin",
+    "tier": 3,
+    "description": "毒刃中毒概率 50% → 80%",
+    "effects": [{"type": "skill_enhance", "skill_id": "poison_blade", "enhance": "effect_chance", "value": 0.80}],
+    "prerequisites": ["rogue_assassin_lethal"]
+  },
+  "rogue_assassin_combo": {
+    "talent_id": "rogue_assassin_combo",
+    "name": "连击",
+    "class": "rogue",
+    "tree": "assassin",
+    "tier": 4,
+    "description": "20% 概率追加一次普通攻击",
+    "effects": [{"type": "on_attack", "action": "extra_attack", "chance": 0.20}],
+    "prerequisites": ["rogue_assassin_poison_master"]
+  },
+  "rogue_assassin_shadow": {
+    "talent_id": "rogue_assassin_shadow",
+    "name": "暗影大师",
+    "class": "rogue",
+    "tree": "assassin",
+    "tier": 5,
+    "description": "背刺暴击时无视 50% 防御",
+    "effects": [{"type": "skill_enhance", "skill_id": "backstab", "enhance": "crit_ignore_defense", "value": 0.50}],
+    "prerequisites": ["rogue_assassin_combo"]
+  },
+  "rogue_trick_dodge": {
+    "talent_id": "rogue_trick_dodge",
+    "name": "闪避本能",
+    "class": "rogue",
+    "tree": "trick",
+    "tier": 1,
+    "description": "闪避率 +5%",
+    "effects": [{"type": "stat_boost", "stat": "dodge_chance", "value": 0.05, "is_percent": false}],
+    "prerequisites": []
+  },
+  "rogue_trick_swift": {
+    "talent_id": "rogue_trick_swift",
+    "name": "疾风步",
+    "class": "rogue",
+    "tree": "trick",
+    "tier": 2,
+    "description": "速度 +15%",
+    "effects": [{"type": "stat_boost", "stat": "speed", "value": 0.15, "is_percent": true}],
+    "prerequisites": ["rogue_trick_dodge"]
+  },
+  "rogue_trick_steal": {
+    "talent_id": "rogue_trick_steal",
+    "name": "偷窃",
+    "class": "rogue",
+    "tree": "trick",
+    "tier": 3,
+    "description": "攻击时 10% 概率额外获得怪物掉落物",
+    "effects": [{"type": "on_attack", "action": "steal_drop", "chance": 0.10}],
+    "prerequisites": ["rogue_trick_swift"]
+  },
+  "rogue_trick_smoke": {
+    "talent_id": "rogue_trick_smoke",
+    "name": "烟雾弹",
+    "class": "rogue",
+    "tree": "trick",
+    "tier": 4,
+    "description": "战斗开始时 25% 概率使怪物眩晕 1 回合",
+    "effects": [{"type": "on_combat_start", "action": "stun", "chance": 0.25, "duration": 1}],
+    "prerequisites": ["rogue_trick_steal"]
+  },
+  "rogue_trick_shadow_clone": {
+    "talent_id": "rogue_trick_shadow_clone",
+    "name": "影分身",
+    "class": "rogue",
+    "tree": "trick",
+    "tier": 5,
+    "description": "闪避后反击，造成 50% 攻击力伤害",
+    "effects": [{"type": "on_dodge", "action": "counter_attack", "value": 0.50}],
+    "prerequisites": ["rogue_trick_smoke"]
+  },
+  "mage_element_intelligence": {
+    "talent_id": "mage_element_intelligence",
+    "name": "智力强化",
+    "class": "mage",
+    "tree": "element",
+    "tier": 1,
+    "description": "魔法攻击力 +8%",
+    "effects": [{"type": "stat_boost", "stat": "attack", "value": 0.08, "is_percent": true}],
+    "prerequisites": []
+  },
+  "mage_element_fire_mastery": {
+    "talent_id": "mage_element_fire_mastery",
+    "name": "火焰精通",
+    "class": "mage",
+    "tree": "element",
+    "tier": 2,
+    "description": "火球术伤害 +20%，灼烧概率 +20%",
+    "effects": [{"type": "skill_enhance", "skill_id": "fireball", "enhance": "damage_bonus", "value": 0.20}, {"type": "skill_enhance", "skill_id": "fireball", "enhance": "effect_chance_bonus", "value": 0.20}],
+    "prerequisites": ["mage_element_intelligence"]
+  },
+  "mage_element_ice_mastery": {
+    "talent_id": "mage_element_ice_mastery",
+    "name": "冰霜精通",
+    "class": "mage",
+    "tree": "element",
+    "tier": 3,
+    "description": "冰冻术伤害 +20%，冻结概率 +20%",
+    "effects": [{"type": "skill_enhance", "skill_id": "frost_bolt", "enhance": "damage_bonus", "value": 0.20}, {"type": "skill_enhance", "skill_id": "frost_bolt", "enhance": "effect_chance_bonus", "value": 0.20}],
+    "prerequisites": ["mage_element_fire_mastery"]
+  },
+  "mage_element_fusion": {
+    "talent_id": "mage_element_fusion",
+    "name": "元素融合",
+    "class": "mage",
+    "tree": "element",
+    "tier": 4,
+    "description": "连续使用不同属性技能时，第二个技能伤害 +30%",
+    "effects": [{"type": "passive", "action": "element_combo", "value": 0.30}],
+    "prerequisites": ["mage_element_ice_mastery"]
+  },
+  "mage_element_storm": {
+    "talent_id": "mage_element_storm",
+    "name": "元素风暴",
+    "class": "mage",
+    "tree": "element",
+    "tier": 5,
+    "description": "每 3 回合自动释放一次全体元素伤害（50% 攻击力）",
+    "effects": [{"type": "passive", "action": "element_storm", "interval": 3, "value": 0.50}],
+    "prerequisites": ["mage_element_fusion"]
+  },
+  "mage_holy_spirit": {
+    "talent_id": "mage_holy_spirit",
+    "name": "精神强化",
+    "class": "mage",
+    "tree": "holy",
+    "tier": 1,
+    "description": "最大 MP +15%",
+    "effects": [{"type": "stat_boost", "stat": "max_mp", "value": 0.15, "is_percent": true}],
+    "prerequisites": []
+  },
+  "mage_holy_heal": {
+    "talent_id": "mage_holy_heal",
+    "name": "治愈强化",
+    "class": "mage",
+    "tree": "holy",
+    "tier": 2,
+    "description": "治愈术恢复量 +30%",
+    "effects": [{"type": "skill_enhance", "skill_id": "heal", "enhance": "heal_bonus", "value": 0.30}],
+    "prerequisites": ["mage_holy_spirit"]
+  },
+  "mage_holy_mana_flow": {
+    "talent_id": "mage_holy_mana_flow",
+    "name": "魔力涌流",
+    "class": "mage",
+    "tree": "holy",
+    "tier": 3,
+    "description": "每回合自动恢复 3% 最大 MP",
+    "effects": [{"type": "passive", "action": "mp_regen", "value": 0.03}],
+    "prerequisites": ["mage_holy_heal"]
+  },
+  "mage_holy_shield": {
+    "talent_id": "mage_holy_shield",
+    "name": "圣光庇护",
+    "class": "mage",
+    "tree": "holy",
+    "tier": 4,
+    "description": "魔力护盾减伤 30% → 45%",
+    "effects": [{"type": "skill_enhance", "skill_id": "magic_shield", "enhance": "shield_boost", "value": 0.45}],
+    "prerequisites": ["mage_holy_mana_flow"]
+  },
+  "mage_holy_light": {
+    "talent_id": "mage_holy_light",
+    "name": "神圣之光",
+    "class": "mage",
+    "tree": "holy",
+    "tier": 5,
+    "description": "治愈术同时解除 1 个负面状态",
+    "effects": [{"type": "skill_enhance", "skill_id": "heal", "enhance": "cleanse", "value": 1}],
+    "prerequisites": ["mage_holy_shield"]
+  }
+}

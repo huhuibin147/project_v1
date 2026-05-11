@@ -1,7 +1,7 @@
 let helpOpen = false;
 
 function openHelp() {
-  if (dialogueOpen || shopOpen || inventoryOpen || playerInfoOpen || combatOpen) return;
+  if (dialogueOpen || shopOpen || inventoryOpen || playerInfoOpen || combatOpen || talentPanelOpen) return;
   helpOpen = true;
   document.getElementById("help-panel").classList.add("active");
 }
@@ -12,7 +12,7 @@ function closeHelp() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "h" && !dialogueOpen && !gameMenuOpen && !shopOpen && !inventoryOpen && !playerInfoOpen && !combatOpen) {
+  if (e.key.toLowerCase() === "h" && !dialogueOpen && !gameMenuOpen && !shopOpen && !inventoryOpen && !playerInfoOpen && !combatOpen && !talentPanelOpen) {
     if (helpOpen) {
       closeHelp();
     } else {

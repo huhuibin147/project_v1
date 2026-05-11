@@ -553,7 +553,7 @@ function buildQuestManagerItemHtml(q) {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "q" && gameStarted && !dialogueOpen && !gameMenuOpen && !combatOpen) {
+  if (e.key.toLowerCase() === "q" && gameStarted && !dialogueOpen && !gameMenuOpen && !combatOpen && !talentPanelOpen) {
     if (questManagerOpen) {
       closeQuestManager();
     } else {

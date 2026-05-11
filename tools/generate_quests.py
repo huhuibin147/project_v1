@@ -1026,5 +1026,159 @@ def generate_quests(output_file: Path = None, seed: int = None, chains: dict = N
     return all_quests
 
 
+def generate_single_quest(quest_id, quest_type, name, description, level=1,
+                          npc_id=None, target_monster=None, target_item=None,
+                          target_npc=None, target_map=None, count=1,
+                          rewards=None):
+    quest = {
+        "id": quest_id,
+        "name": name,
+        "description": description,
+        "type": quest_type,
+        "level": level,
+        "npc_id": npc_id or "quest_giver",
+        "status": "available",
+        "objectives": [],
+        "rewards": rewards or {"exp": level * 10, "gold": level * 5, "items": []},
+    }
+    if quest_type == "kill":
+        quest["objectives"].append({
+            "type": "kill",
+            "target": target_monster or "slime",
+            "count": count,
+            "current": 0,
+        })
+    elif quest_type == "collect":
+        quest["objectives"].append({
+            "type": "collect",
+            "target": target_item or "herb",
+            "count": count,
+            "current": 0,
+        })
+    elif quest_type == "talk":
+        quest["objectives"].append({
+            "type": "talk",
+            "target": target_npc or "merchant",
+        })
+    elif quest_type == "deliver":
+        quest["objectives"].append({
+            "type": "deliver",
+            "target": target_npc or "merchant",
+            "item": target_item or "letter",
+            "count": count,
+            "current": 0,
+        })
+    elif quest_type == "explore":
+        quest["objectives"].append({
+            "type": "explore",
+            "target": target_map or "cave",
+        })
+    personality = NPC_PERSONALITIES.get(quest["npc_id"], NPC_PERSONALITIES.get("blacksmith"))
+    dialogue_set = personality["dialogue_sets"].get(quest_type, personality["dialogue_sets"]["kill"])
+    quest["dialogue"] = {
+        "offer": random.choice(dialogue_set["offer"]),
+        "progress": random.choice(dialogue_set["progress"]),
+        "complete": random.choice(dialogue_set["complete"]),
+        "reminder": random.choice(dialogue_set["reminder"]),
+    }
+    quest["dialogue"]["accept"] = random.choice(personality["accept"])
+    quest["dialogue"]["decline"] = random.choice(personality["decline"])
+    return quest
+
+
+def validate_quests(quests_file=None):
+    if quests_file is None:
+        quests_file = OUTPUT_FILE
+    if not quests_file.exists():
+        print(f"错误：任务文件 '{quests_file}' 不存在")
+        return 1
+    with open(quests_file, "r", encoding="utf-8") as f:
+        quests = json.load(f)
+    issues = []
+    for qid, quest in quests.items():
+        if quest.get("id") != qid:
+            issues.append(f"{qid}: id 不匹配（字段中为 {quest.get('id')}）")
+        for field in ["name", "description", "type", "level", "npc_id", "objectives", "rewards"]:
+            if field not in quest:
+                issues.append(f"{qid}: 缺少必填字段 '{field}'")
+        for i, obj in enumerate(quest.get("objectives", [])):
+            if "type" not in obj:
+                issues.append(f"{qid}: objectives[{i}] 缺少 type")
+            if obj.get("type") in ("kill", "collect", "deliver") and "count" not in obj:
+                issues.append(f"{qid}: objectives[{i}] 类型 {obj.get('type')} 需要 count")
+            if "target" not in obj:
+                issues.append(f"{qid}: objectives[{i}] 缺少 target")
+        rewards = quest.get("rewards", {})
+        if "exp" not in rewards:
+            issues.append(f"{qid}: rewards 缺少 exp")
+        if "gold" not in rewards:
+            issues.append(f"{qid}: rewards 缺少 gold")
+        if quest.get("type") == "kill":
+            target = None
+            for obj in quest.get("objectives", []):
+                if obj.get("type") == "kill":
+                    target = obj.get("target")
+            if target and target not in MONSTERS_DB:
+                issues.append(f"{qid}: 击杀目标 '{target}' 不在怪物数据库中")
+        if quest.get("type") == "collect":
+            target = None
+            for obj in quest.get("objectives", []):
+                if obj.get("type") == "collect":
+                    target = obj.get("target")
+            if target and target not in ITEMS_DB:
+                issues.append(f"{qid}: 收集目标 '{target}' 不在物品数据库中")
+    if issues:
+        print(f"验证发现 {len(issues)} 个问题：")
+        for issue in issues:
+            print(f"  ⚠ {issue}")
+    else:
+        print(f"验证通过！共 {len(quests)} 个任务")
+    return len(issues)
+
+
 if __name__ == "__main__":
-    generate_quests(seed=42)
+    import sys
+    if len(sys.argv) < 2:
+        print("用法: python generate_quests.py <命令> [参数]")
+        print("\n命令:")
+        print("  generate [seed]       生成所有任务（默认seed=42）")
+        print("  single <id> <type> <name> <level>  生成单个任务")
+        print("  validate              验证任务配置")
+        print("  list                  列出所有任务")
+        sys.exit(0)
+    cmd = sys.argv[1]
+    if cmd == "generate":
+        seed = int(sys.argv[2]) if len(sys.argv) > 2 else 42
+        generate_quests(seed=seed)
+    elif cmd == "single":
+        if len(sys.argv) < 6:
+            print("用法: python generate_quests.py single <id> <type> <name> <level>")
+            print("类型: kill, collect, talk, deliver, explore")
+            sys.exit(1)
+        quest = generate_single_quest(
+            quest_id=sys.argv[2],
+            quest_type=sys.argv[3],
+            name=sys.argv[4],
+            level=int(sys.argv[5]),
+        )
+        quests = {}
+        if OUTPUT_FILE.exists():
+            with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+                quests = json.load(f)
+        quests[quest["id"]] = quest
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            json.dump(quests, f, ensure_ascii=False, indent=2)
+        print(f"已生成任务: {quest['id']} - {quest['name']}")
+    elif cmd == "validate":
+        validate_quests()
+    elif cmd == "list":
+        if not OUTPUT_FILE.exists():
+            print("任务文件不存在，请先生成")
+            sys.exit(1)
+        with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+            quests = json.load(f)
+        print(f"\n共 {len(quests)} 个任务:\n")
+        for qid, q in sorted(quests.items(), key=lambda x: x[1].get("level", 0)):
+            print(f"  [{q.get('type','?'):8s}] Lv.{q.get('level',1):2d} {qid}: {q.get('name','?')}")
+    else:
+        print(f"未知命令: {cmd}")

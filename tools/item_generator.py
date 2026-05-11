@@ -729,6 +729,206 @@ class ItemGenerator:
 
         return len(inventory)
 
+    def generate_forge_recipes(self):
+        recipes = {}
+        for template in ALL_EQUIP_TEMPLATES:
+            tier_key = template["tier"]
+            rarity = template.get("rarity", "common")
+            if rarity == "common":
+                continue
+            recipe_id = f"forge_{template['id']}"
+            tier = TIERS[tier_key]
+            materials = self._generate_forge_materials(template, tier_key)
+            gold_cost = round(template.get("buy_price", 50) * 0.6 / RARITY_DEF[rarity]["price_mult"])
+            gold_cost = max(10, gold_cost)
+            recipes[recipe_id] = {
+                "recipe_id": recipe_id,
+                "name": f"锻造{template['name']}",
+                "output": {"item_id": template["id"], "quantity": 1},
+                "materials": materials,
+                "gold_cost": gold_cost,
+                "level_requirement": tier["level_max"] - 2 if tier_key != "tier1" else 1,
+                "success_rate": 1.0 if rarity in ("uncommon", "rare") else (0.8 if rarity == "epic" else 0.6),
+                "category": template["type"],
+                "tier": tier_key,
+            }
+        print(f"生成锻造配方：{len(recipes)} 个")
+        return recipes
+
+    def _generate_forge_materials(self, template, tier_key):
+        materials = []
+        slot = template["equip_slot"]
+        rarity = template.get("rarity", "common")
+        tier = TIERS[tier_key]
+        base_count = {"weapon": 3, "shield": 2, "head": 2, "body": 3, "accessory": 1}.get(slot, 2)
+        rarity_mult = {"uncommon": 1, "rare": 1.5, "epic": 2, "legendary": 3}.get(rarity, 1)
+        count = max(1, round(base_count * rarity_mult))
+        if slot in ("weapon", "shield", "body"):
+            materials.append({"item_id": "iron_ore", "quantity": count})
+            if rarity in ("epic", "legendary"):
+                materials.append({"item_id": "magic_crystal", "quantity": max(1, count // 2)})
+        elif slot == "head":
+            materials.append({"item_id": "iron_ore", "quantity": max(1, count - 1)})
+            materials.append({"item_id": "cloth", "quantity": 1})
+        elif slot == "accessory":
+            materials.append({"item_id": "magic_crystal", "quantity": count})
+        if rarity in ("rare", "epic", "legendary"):
+            materials.append({"item_id": "beast_bone", "quantity": max(1, count // 2)})
+        return materials
+
+    def apply_forge_recipes(self, recipes):
+        forge_file = CONFIG_DIR / "forge_recipes.json"
+        existing = {}
+        if forge_file.exists():
+            with open(forge_file, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+        new_count = 0
+        for rid, recipe in recipes.items():
+            if rid not in existing:
+                existing[rid] = recipe
+                new_count += 1
+        with open(forge_file, "w", encoding="utf-8") as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+        print(f"锻造配方已保存到 {forge_file}（新增 {new_count} 个，共 {len(existing)} 个）")
+        return new_count
+
+    def generate_affixes(self):
+        AFFIX_POOL = {
+            "weapon": [
+                {"id": "sharp", "name": "锋利", "stat": "attack", "value_range": (1, 5), "is_percent": False, "rarity_min": "uncommon"},
+                {"id": "deadly", "name": "致命", "stat": "attack", "value_range": (3, 10), "is_percent": True, "rarity_min": "rare"},
+                {"id": "swift_edge", "name": "迅捷之刃", "stat": "speed", "value_range": (1, 4), "is_percent": False, "rarity_min": "uncommon"},
+                {"id": "vampiric", "name": "吸血", "stat": "lifesteal", "value_range": (3, 8), "is_percent": True, "rarity_min": "epic"},
+                {"id": "flame", "name": "灼烧", "stat": "burn_chance", "value_range": (5, 15), "is_percent": True, "rarity_min": "rare"},
+            ],
+            "shield": [
+                {"id": "sturdy", "name": "坚固", "stat": "defense", "value_range": (1, 5), "is_percent": False, "rarity_min": "uncommon"},
+                {"id": "warding", "name": "守护", "stat": "defense", "value_range": (3, 10), "is_percent": True, "rarity_min": "rare"},
+                {"id": "vitality", "name": "活力", "stat": "max_hp", "value_range": (5, 20), "is_percent": False, "rarity_min": "uncommon"},
+            ],
+            "head": [
+                {"id": "keen", "name": "敏锐", "stat": "speed", "value_range": (1, 4), "is_percent": False, "rarity_min": "uncommon"},
+                {"id": "wise", "name": "智慧", "stat": "max_mp", "value_range": (5, 15), "is_percent": False, "rarity_min": "rare"},
+                {"id": "vigilant", "name": "警觉", "stat": "defense", "value_range": (1, 3), "is_percent": False, "rarity_min": "uncommon"},
+            ],
+            "body": [
+                {"id": "tough", "name": "坚韧", "stat": "max_hp", "value_range": (5, 25), "is_percent": False, "rarity_min": "uncommon"},
+                {"id": "iron_skin", "name": "铁皮", "stat": "defense", "value_range": (3, 8), "is_percent": True, "rarity_min": "rare"},
+                {"id": "regen", "name": "再生", "stat": "hp_regen", "value_range": (1, 3), "is_percent": False, "rarity_min": "epic"},
+            ],
+            "accessory": [
+                {"id": "lucky", "name": "幸运", "stat": "crit_rate", "value_range": (2, 8), "is_percent": True, "rarity_min": "uncommon"},
+                {"id": "haste", "name": "急速", "stat": "speed", "value_range": (2, 6), "is_percent": True, "rarity_min": "rare"},
+                {"id": "fortune", "name": "财富", "stat": "gold_bonus", "value_range": (5, 15), "is_percent": True, "rarity_min": "epic"},
+            ],
+        }
+        affixes = {}
+        for slot, pool in AFFIX_POOL.items():
+            for affix in pool:
+                affix_id = f"{slot}_{affix['id']}"
+                affixes[affix_id] = {
+                    "id": affix_id,
+                    "name": affix["name"],
+                    "equip_slot": slot,
+                    "stat": affix["stat"],
+                    "value_range": affix["value_range"],
+                    "is_percent": affix["is_percent"],
+                    "rarity_min": affix["rarity_min"],
+                }
+        print(f"生成词条定义：{len(affixes)} 个")
+        return affixes
+
+    def apply_affixes(self, affixes):
+        affix_file = CONFIG_DIR / "affixes.json"
+        with open(affix_file, "w", encoding="utf-8") as f:
+            json.dump(affixes, f, ensure_ascii=False, indent=2)
+        print(f"词条定义已保存到 {affix_file}（共 {len(affixes)} 个）")
+        return len(affixes)
+
+    def roll_affixes_for_item(self, item_id):
+        if item_id not in self.items:
+            print(f"错误：物品 '{item_id}' 不存在")
+            return []
+        item = self.items[item_id]
+        if not item.get("equip_slot"):
+            print(f"物品 '{item_id}' 不是装备，无法附加词条")
+            return []
+        affix_file = CONFIG_DIR / "affixes.json"
+        if not affix_file.exists():
+            print("错误：affixes.json 不存在，请先运行 generate affixes")
+            return []
+        with open(affix_file, "r", encoding="utf-8") as f:
+            all_affixes = json.load(f)
+        slot = item["equip_slot"]
+        rarity = item.get("rarity", "common")
+        rarity_idx = RARITY_ORDER.index(rarity) if rarity in RARITY_ORDER else 0
+        affix_count = rarity_idx
+        eligible = [a for a in all_affixes.values()
+                    if a["equip_slot"] == slot and RARITY_ORDER.index(a["rarity_min"]) <= rarity_idx]
+        if not eligible:
+            return []
+        selected = random.sample(eligible, min(affix_count, len(eligible)))
+        result = []
+        for affix in selected:
+            val = random.randint(*affix["value_range"])
+            result.append({
+                "id": affix["id"],
+                "name": affix["name"],
+                "stat": affix["stat"],
+                "value": val,
+                "is_percent": affix["is_percent"],
+            })
+        item["affixes"] = result
+        self._save_items()
+        print(f"为 {item['name']} 附加了 {len(result)} 个词条")
+        return result
+
+    def diff(self):
+        generated = self.generate_all()
+        new_items = {}
+        updated_items = {}
+        for item_id, item in generated.items():
+            if item_id not in self.items:
+                new_items[item_id] = item
+            else:
+                existing = self.items[item_id]
+                if existing.get("stats") != item.get("stats") or existing.get("buy_price") != item.get("buy_price"):
+                    updated_items[item_id] = {"old": existing, "new": item}
+        print(f"差异分析：{len(new_items)} 新物品，{len(updated_items)} 需更新物品")
+        if new_items:
+            print("\n新增物品：")
+            for item_id, item in list(new_items.items())[:20]:
+                print(f"  + {item_id}: {item['name']}")
+        if updated_items:
+            print("\n需更新物品：")
+            for item_id, diff in list(updated_items.items())[:20]:
+                print(f"  ~ {item_id}: {diff['old'].get('name')}")
+                if diff['old'].get('stats') != diff['new'].get('stats'):
+                    print(f"      stats: {diff['old'].get('stats')} -> {diff['new'].get('stats')}")
+                if diff['old'].get('buy_price') != diff['new'].get('buy_price'):
+                    print(f"      price: {diff['old'].get('buy_price')} -> {diff['new'].get('buy_price')}")
+        return new_items, updated_items
+
+    def merge(self, force=False):
+        generated = self.generate_all()
+        new_count = 0
+        updated_count = 0
+        for item_id, item in generated.items():
+            if item_id not in self.items:
+                self.items[item_id] = item
+                new_count += 1
+            elif force:
+                old_stats = self.items[item_id].get("stats", {})
+                new_stats = item.get("stats", {})
+                if old_stats != new_stats:
+                    self.items[item_id]["stats"] = new_stats
+                    self.items[item_id]["buy_price"] = item.get("buy_price", self.items[item_id].get("buy_price", 0))
+                    self.items[item_id]["sell_price"] = item.get("sell_price", self.items[item_id].get("sell_price", 0))
+                    updated_count += 1
+        self._save_items()
+        print(f"合并完成：新增 {new_count} 件，更新 {updated_count} 件属性")
+        return new_count, updated_count
+
     def validate(self):
         issues = []
         for item_id, item in self.items.items():
@@ -757,6 +957,12 @@ class ItemGenerator:
 
             if item.get("stackable") and item.get("equip_slot"):
                 issues.append(f"{item_id}：stackable和equip_slot不应同时存在")
+
+            if item.get("affixes"):
+                for affix in item["affixes"]:
+                    if "stat" not in affix or "value" not in affix:
+                        issues.append(f"{item_id}：affixes 格式错误")
+                        break
 
         if issues:
             print(f"发现 {len(issues)} 个问题：")
@@ -884,6 +1090,34 @@ def main():
             gen.apply(generated)
         else:
             print("没有新物品需要应用")
+
+    elif cmd == "forge":
+        recipes = gen.generate_forge_recipes()
+        gen.apply_forge_recipes(recipes)
+
+    elif cmd == "affixes":
+        sub = sys.argv[2] if len(sys.argv) > 2 else "generate"
+        if sub == "generate":
+            affixes = gen.generate_affixes()
+            gen.apply_affixes(affixes)
+        elif sub == "roll":
+            if len(sys.argv) < 4:
+                print("用法：python item_generator.py affixes roll <item_id>")
+                return
+            gen.roll_affixes_for_item(sys.argv[3])
+        elif sub == "roll-all":
+            for item_id, item in list(gen.items.items()):
+                if item.get("equip_slot") and item.get("rarity") != "common":
+                    gen.roll_affixes_for_item(item_id)
+        else:
+            print(f"未知子命令：{sub}")
+
+    elif cmd == "diff":
+        gen.diff()
+
+    elif cmd == "merge":
+        force = "--force" in sys.argv
+        gen.merge(force=force)
 
     else:
         print(f"未知命令：{cmd}")

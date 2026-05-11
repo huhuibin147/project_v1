@@ -261,6 +261,7 @@ function returnToMainMenu() {
     if (inventoryOpen) closeInventory();
     if (shopOpen) closeShop();
     if (playerInfoOpen) closePlayerInfo();
+    if (talentPanelOpen) closeTalentPanel();
     if (npcInteractOpen) closeNpcInteract();
     if (combatOpen) endCombat();
 

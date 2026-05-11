@@ -178,6 +178,15 @@ function renderPlayerInfo() {
       .map(e => `<span class="effect-tag">${e}</span>`)
       .join("");
   }
+
+  const talentsEl = document.getElementById("pi-talents");
+  if (playerInfo.talents && playerInfo.talents.length > 0) {
+    talentsEl.innerHTML = playerInfo.talents
+      .map(t => `<span class="effect-tag buff">${t}</span>`)
+      .join("");
+  } else {
+    talentsEl.innerHTML = '<span class="no-effects">未解锁</span>';
+  }
 }
 
 function renderStatBonus(elId, value) {
@@ -337,7 +346,7 @@ function updatePlayerHUD() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "p" && !dialogueOpen && !gameMenuOpen && !combatOpen) {
+  if (e.key.toLowerCase() === "p" && !dialogueOpen && !gameMenuOpen && !combatOpen && !talentPanelOpen) {
     if (playerInfoOpen) {
       closePlayerInfo();
     } else {
