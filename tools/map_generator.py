@@ -22,6 +22,7 @@
   python map_generator.py validate village               # 验证地图
   python map_generator.py preview village                # 预览地图布局
   python map_generator.py list                           # 列出所有地图
+  python map_generator.py fix-enclosed village           # 修复封闭区域
 """
 
 import json
@@ -372,6 +373,24 @@ class MapGenerator:
         for r in range(struct_height):
             for c in range(struct_width):
                 ground[y + r][x + c] = struct_tiles[r][c]
+        
+        # 确保门口有通路（在门外放置道路瓦片）
+        if "door" in struct:
+            door_x, door_y = struct["door"]
+            # 门外的位置（相对于结构）
+            outside_x = x + door_x
+            outside_y = y + door_y + 1
+            
+            # 确保门外是可行走的
+            if 0 <= outside_x < width and 0 <= outside_y < height:
+                # 如果门外是不可行走的墙或边界，改为道路
+                if not TILES.get(ground[outside_y][outside_x], {}).get("walkable", True):
+                    ground[outside_y][outside_x] = 1
+                
+                # 在门外再延伸一格道路，确保可以进入
+                further_y = outside_y + 1
+                if 0 <= further_y < height and not TILES.get(ground[further_y][outside_x], {}).get("walkable", True):
+                    ground[further_y][outside_x] = 1
         
         return True
     
@@ -1228,6 +1247,107 @@ class MapGenerator:
         
         return len(visited)
     
+    def find_and_fix_enclosed_areas(self, map_id: str, min_area_size: int = 4) -> bool:
+        """
+        查找并修复封闭区域
+        使用BFS从玩家出生点开始，找出所有不可达的可行走区域，
+        然后在封闭区域边界创建入口
+        """
+        data = self.load_map(map_id)
+        if not data:
+            print(f"错误: 地图 '{map_id}' 不存在")
+            return False
+        
+        ground = data['layers']['ground']
+        height = len(ground)
+        width = len(ground[0])
+        
+        spawn = data.get('player_spawn', {})
+        start_x, start_y = spawn.get('x', width // 2), spawn.get('y', height // 2)
+        
+        # BFS标记所有从出生点可达的格子
+        reachable = set()
+        queue = deque([(start_x, start_y)])
+        reachable.add((start_x, start_y))
+        
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        while queue:
+            cx, cy = queue.popleft()
+            for dx, dy in directions:
+                nx, ny = cx + dx, cy + dy
+                if 0 <= nx < width and 0 <= ny < height:
+                    if (nx, ny) not in reachable and TILES.get(ground[ny][nx], {}).get('walkable', True):
+                        reachable.add((nx, ny))
+                        queue.append((nx, ny))
+        
+        # 找出所有不可达的可行走格子（封闭区域）
+        enclosed_areas = []
+        visited = set()
+        
+        for y in range(height):
+            for x in range(width):
+                if (x, y) not in visited and (x, y) not in reachable:
+                    if TILES.get(ground[y][x], {}).get('walkable', True):
+                        # 发现一个新的封闭区域
+                        area = []
+                        area_queue = deque([(x, y)])
+                        visited.add((x, y))
+                        
+                        while area_queue:
+                            ax, ay = area_queue.popleft()
+                            area.append((ax, ay))
+                            
+                            for dx, dy in directions:
+                                nx, ny = ax + dx, ay + dy
+                                if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in visited and (nx, ny) not in reachable:
+                                    if TILES.get(ground[ny][nx], {}).get('walkable', True):
+                                        visited.add((nx, ny))
+                                        area_queue.append((nx, ny))
+                        
+                        if len(area) >= min_area_size:
+                            enclosed_areas.append(area)
+        
+        if not enclosed_areas:
+            print(f"地图 '{map_id}' 没有发现封闭区域")
+            return True
+        
+        print(f"地图 '{map_id}' 发现 {len(enclosed_areas)} 个封闭区域")
+        
+        # 修复每个封闭区域
+        fixed_count = 0
+        for area in enclosed_areas:
+            # 找到封闭区域边缘的格子
+            edge_tiles = []
+            area_set = set(area)
+            
+            for x, y in area:
+                for dx, dy in directions:
+                    nx, ny = x + dx, y + dy
+                    if (nx, ny) not in area_set:
+                        edge_tiles.append((x, y))
+                        break
+            
+            # 在边缘找到不可行走的瓦片，将其改为道路
+            for ex, ey in edge_tiles:
+                for dx, dy in directions:
+                    nx, ny = ex + dx, ey + dy
+                    if 0 <= nx < width and 0 <= ny < height:
+                        if not TILES.get(ground[ny][nx], {}).get('walkable', True):
+                            # 将不可行走瓦片改为道路
+                            ground[ny][nx] = 1
+                            fixed_count += 1
+                            break
+                if fixed_count > 0:
+                    break
+        
+        if fixed_count > 0:
+            self.save_map(data)
+            print(f"已修复 {fixed_count} 个瓦片以打开封闭区域")
+        else:
+            print("无法修复封闭区域")
+        
+        return True
+    
     def preview_map(self, map_id: str) -> None:
         """预览地图"""
         data = self.load_map(map_id)
@@ -1374,6 +1494,12 @@ def main():
             print("用法: python map_generator.py reachability <id>")
             return
         generator.ensure_reachability(sys.argv[2])
+
+    elif command == "fix-enclosed":
+        if len(sys.argv) < 3:
+            print("用法: python map_generator.py fix-enclosed <id>")
+            return
+        generator.find_and_fix_enclosed_areas(sys.argv[2])
 
     else:
         print(f"未知命令: {command}")
