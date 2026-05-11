@@ -83,16 +83,15 @@ function render() {
   ctx.restore();
 
   renderMinimap();
-
-  if (currentMap) {
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.fillRect(8, 8, ctx.measureText(currentMap.name).width + 16, 22);
-    ctx.fillStyle = "#f0c060";
-    ctx.font = "bold 13px monospace";
-    ctx.textAlign = "left";
-    ctx.fillText(currentMap.name, 16, 24);
-  }
+  updateHudMapName();
   // drawHUD(ctx); // 帮助提示已迁移到独立的帮助面板
+}
+
+function updateHudMapName() {
+  const el = document.getElementById("hud-map-name");
+  if (el && currentMap) {
+    el.textContent = currentMap.name;
+  }
 }
 
 function drawHUD(ctx) {

@@ -205,7 +205,7 @@ body {
 /* HUD 顶部状态条 */
 #hud-bar {
   position: absolute;
-  top: 40px;
+  top: 0;
   left: 0;
   right: 0;
   display: flex;
@@ -224,6 +224,11 @@ body {
   border-radius: 4px;
   color: #fff;
   font-size: 12px;
+}
+
+#hud-map-name {
+  color: #a0c8e0;
+  font-weight: bold;
 }
 
 #hud-level {
