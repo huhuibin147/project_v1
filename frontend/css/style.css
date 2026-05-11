@@ -2934,3 +2934,126 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* ===== 实时小地图 (HUD) ===== */
+#minimap-container {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 160px;
+  height: 120px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 2px solid rgba(240, 192, 96, 0.4);
+  border-radius: 6px;
+  z-index: 40;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+#minimap-canvas {
+  width: 160px;
+  height: 120px;
+  image-rendering: pixelated;
+  border-radius: 4px 4px 0 0;
+}
+
+#minimap-label {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: rgba(240, 192, 96, 0.7);
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* ===== 大地图面板 (M 键) ===== */
+#worldmap-panel {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  max-height: 85vh;
+  background: rgba(15, 15, 35, 0.96);
+  border: 2px solid #f0c060;
+  border-radius: 8px;
+  color: #eee;
+  font-size: 13px;
+  z-index: 150;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+}
+
+#worldmap-panel.active {
+  display: flex;
+}
+
+#worldmap-panel .panel-header {
+  border-bottom: 1px solid rgba(240, 192, 96, 0.3);
+  background: rgba(240, 192, 96, 0.1);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#worldmap-panel .panel-title {
+  color: #f0c060;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+#worldmap-coords {
+  font-size: 11px;
+  color: #aaa;
+  margin-left: auto;
+}
+
+#worldmap-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  gap: 10px;
+}
+
+#worldmap-canvas {
+  width: 580px;
+  height: 380px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(240, 192, 96, 0.2);
+  border-radius: 4px;
+  image-rendering: pixelated;
+}
+
+#worldmap-legend {
+  display: flex;
+  gap: 16px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ccc;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.player { background: #4488ff; }
+.legend-dot.npc { background: #44cc44; }
+.legend-dot.monster { background: #ff4444; }
+.legend-dot.portal { background: #aa44ff; }
+

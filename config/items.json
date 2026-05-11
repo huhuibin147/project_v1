@@ -1535,5 +1535,95 @@
     "buy_price": 500,
     "sell_price": 125,
     "stackable": true
+  },
+  "cave_mushroom": {
+    "id": "cave_mushroom",
+    "name": "洞穴蘑菇",
+    "type": "material",
+    "description": "生长在幽暗洞穴中的发光蘑菇，可入药也可食用",
+    "buy_price": 15,
+    "sell_price": 7,
+    "stackable": true
+  },
+  "bat_wing": {
+    "id": "bat_wing",
+    "name": "蝙蝠翼",
+    "type": "material",
+    "description": "洞穴蝙蝠的翅膀，可用于炼药或制作飞行药水",
+    "buy_price": 20,
+    "sell_price": 10,
+    "stackable": true
+  },
+  "ancient_shard": {
+    "id": "ancient_shard",
+    "name": "古代碎片",
+    "type": "material",
+    "description": "洞穴深处发现的古代文明碎片，蕴含微弱魔力",
+    "buy_price": 50,
+    "sell_price": 25,
+    "stackable": true
+  },
+  "cursed_bone": {
+    "id": "cursed_bone",
+    "name": "诅咒之骨",
+    "type": "material",
+    "description": "被黑暗力量侵蚀的骨头，散发着不祥的气息",
+    "buy_price": 35,
+    "sell_price": 17,
+    "stackable": true
+  },
+  "sand_crystal": {
+    "id": "sand_crystal",
+    "name": "沙晶",
+    "type": "material",
+    "description": "沙漠中自然形成的透明晶体，在阳光下闪耀金光",
+    "buy_price": 40,
+    "sell_price": 20,
+    "stackable": true
+  },
+  "scorpion_stinger": {
+    "id": "scorpion_stinger",
+    "name": "蝎尾针",
+    "type": "material",
+    "description": "沙漠蝎的尾针，含有浓缩毒素，是制作毒药的上好材料",
+    "buy_price": 30,
+    "sell_price": 15,
+    "stackable": true
+  },
+  "desert_herb": {
+    "id": "desert_herb",
+    "name": "沙漠草药",
+    "type": "material",
+    "description": "沙漠绿洲中生长的耐旱草药，药效比普通草药更强",
+    "buy_price": 25,
+    "sell_price": 12,
+    "stackable": true
+  },
+  "ancient_scroll": {
+    "id": "ancient_scroll",
+    "name": "古代卷轴",
+    "type": "material",
+    "description": "沙漠古墓中出土的神秘卷轴，上面的文字已无法辨认",
+    "buy_price": 80,
+    "sell_price": 40,
+    "stackable": true
+  },
+  "royal_seal": {
+    "id": "royal_seal",
+    "name": "王室印记",
+    "type": "material",
+    "description": "王城贵族的印记徽章，可在特定场合证明身份",
+    "buy_price": 100,
+    "sell_price": 50,
+    "stackable": true
+  },
+  "shadow_essence": {
+    "id": "shadow_essence",
+    "name": "暗影精华",
+    "type": "material",
+    "description": "从暗影法师身上提取的黑暗精华，蕴含强大的暗属性力量",
+    "buy_price": 60,
+    "sell_price": 30,
+    "stackable": true
   }
 }

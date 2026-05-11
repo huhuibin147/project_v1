@@ -42,6 +42,7 @@ function update(dt) {
   updateCamera();
   checkPortalAutoTransfer();
   updateMonsters(dt);
+  recordExploredTile();
 }
 
 function render() {
@@ -80,6 +81,8 @@ function render() {
   }
 
   ctx.restore();
+
+  renderMinimap();
 
   if (currentMap) {
     ctx.fillStyle = "rgba(0,0,0,0.6)";
@@ -182,6 +185,7 @@ async function transferToMap(targetMap, targetX, targetY) {
 async function startGame() {
   initCanvas();
   await initMapSystem();
+  initWorldMap();
   gameStarted = true;
 
   // 先加载玩家信息（含位置），再加载地图和 NPC
@@ -276,6 +280,20 @@ function returnToMainMenu() {
 document.addEventListener("keydown", (e) => {
   if ((e.key === "o" || e.key === "O") && gameStarted && !combatOpen) {
     toggleGameMenu();
+  }
+});
+
+// M 键切换大地图
+document.addEventListener("keydown", (e) => {
+  if ((e.key === "m" || e.key === "M") && gameStarted) {
+    toggleWorldMap();
+  }
+});
+
+// ESC 键关闭大地图
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && worldMapOpen) {
+    closeWorldMap();
   }
 });
 

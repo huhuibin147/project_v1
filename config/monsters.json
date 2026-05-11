@@ -155,5 +155,436 @@
     },
     "level": 5,
     "tags": ["beast", "forest", "elite"]
+  },
+  "cave_bat": {
+    "id": "cave_bat",
+    "name": "洞穴蝙蝠",
+    "description": "成群出没的吸血蝙蝠，速度极快",
+    "type": "normal",
+    "sprite_color": "#554466",
+    "sprite_accent": "#332244",
+    "stats": {
+      "hp": 40,
+      "attack": 12,
+      "defense": 3,
+      "speed": 16
+    },
+    "exp_reward": 30,
+    "gold_reward": [8, 18],
+    "drops": [
+      {"item_id": "bat_wing", "chance": 0.35},
+      {"item_id": "cave_mushroom", "chance": 0.2}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 75,
+      "defend_weight": 10,
+      "special_weight": 15,
+      "special": {
+        "type": "apply_effect",
+        "effect": "bleed",
+        "chance": 0.25,
+        "duration": 2,
+        "value": 3,
+        "message": "蝙蝠撕咬造成流血！"
+      }
+    },
+    "level": 5,
+    "tags": ["beast", "cave", "common"]
+  },
+  "cave_spider": {
+    "id": "cave_spider",
+    "name": "洞穴蜘蛛",
+    "description": "比森林毒蛛更大更毒的洞穴品种，网住猎物后慢慢享用",
+    "type": "normal",
+    "sprite_color": "#4a2a6a",
+    "sprite_accent": "#2a1a4a",
+    "stats": {
+      "hp": 55,
+      "attack": 16,
+      "defense": 5,
+      "speed": 13
+    },
+    "exp_reward": 45,
+    "gold_reward": [12, 28],
+    "drops": [
+      {"item_id": "antidote", "chance": 0.35},
+      {"item_id": "cave_mushroom", "chance": 0.25},
+      {"item_id": "ancient_shard", "chance": 0.08}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 65,
+      "defend_weight": 10,
+      "special_weight": 25,
+      "special": {
+        "type": "apply_effect",
+        "effect": "poison",
+        "chance": 0.4,
+        "duration": 3,
+        "value": 0,
+        "message": "洞穴蜘蛛注入剧毒！"
+      }
+    },
+    "level": 6,
+    "tags": ["beast", "cave", "poison"]
+  },
+  "skeleton": {
+    "id": "skeleton",
+    "name": "骷髅兵",
+    "description": "被黑暗力量复活的亡灵战士，挥舞生锈的武器不知疲倦地攻击",
+    "type": "normal",
+    "sprite_color": "#ccccaa",
+    "sprite_accent": "#999977",
+    "stats": {
+      "hp": 65,
+      "attack": 18,
+      "defense": 8,
+      "speed": 8
+    },
+    "exp_reward": 50,
+    "gold_reward": [15, 35],
+    "drops": [
+      {"item_id": "cursed_bone", "chance": 0.5},
+      {"item_id": "ancient_shard", "chance": 0.15},
+      {"item_id": "bandage", "chance": 0.15}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 80,
+      "defend_weight": 15,
+      "special_weight": 5,
+      "special": null
+    },
+    "level": 7,
+    "tags": ["undead", "cave", "common"]
+  },
+  "zombie": {
+    "id": "zombie",
+    "name": "腐尸",
+    "description": "行动迟缓但力大无穷的亡灵，散发着令人作呕的恶臭",
+    "type": "normal",
+    "sprite_color": "#557744",
+    "sprite_accent": "#335522",
+    "stats": {
+      "hp": 80,
+      "attack": 20,
+      "defense": 6,
+      "speed": 4
+    },
+    "exp_reward": 55,
+    "gold_reward": [18, 40],
+    "drops": [
+      {"item_id": "cursed_bone", "chance": 0.4},
+      {"item_id": "cloth", "chance": 0.25},
+      {"item_id": "ancient_shard", "chance": 0.1}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 85,
+      "defend_weight": 10,
+      "special_weight": 5,
+      "special": {
+        "type": "apply_effect",
+        "effect": "poison",
+        "chance": 0.2,
+        "duration": 2,
+        "value": 0,
+        "message": "腐尸的毒气侵蚀了你！"
+      }
+    },
+    "level": 8,
+    "tags": ["undead", "cave", "common"]
+  },
+  "dark_knight": {
+    "id": "dark_knight",
+    "name": "黑暗骑士",
+    "description": "被诅咒的古代骑士，全身笼罩在黑暗铠甲中，攻守兼备",
+    "type": "elite",
+    "sprite_color": "#333344",
+    "sprite_accent": "#111122",
+    "stats": {
+      "hp": 150,
+      "attack": 28,
+      "defense": 18,
+      "speed": 8
+    },
+    "exp_reward": 120,
+    "gold_reward": [40, 80],
+    "drops": [
+      {"item_id": "cursed_bone", "chance": 0.4},
+      {"item_id": "ancient_shard", "chance": 0.25},
+      {"item_id": "strength_elixir", "chance": 0.1},
+      {"item_id": "steel_armor", "chance": 0.03}
+    ],
+    "ai": {
+      "behavior": "defensive",
+      "attack_weight": 55,
+      "defend_weight": 35,
+      "special_weight": 10,
+      "special": {
+        "type": "apply_effect",
+        "effect": "fear",
+        "chance": 0.2,
+        "duration": 1,
+        "value": 0,
+        "message": "黑暗骑士释放恐惧！"
+      }
+    },
+    "level": 10,
+    "tags": ["undead", "cave", "elite"]
+  },
+  "skeleton_king": {
+    "id": "skeleton_king",
+    "name": "骷髅王",
+    "description": "洞穴最深处的亡灵霸主，手持王权之杖统御万千骸骨",
+    "type": "boss",
+    "sprite_color": "#ddcc44",
+    "sprite_accent": "#aa9922",
+    "stats": {
+      "hp": 500,
+      "attack": 35,
+      "defense": 20,
+      "speed": 10
+    },
+    "exp_reward": 500,
+    "gold_reward": [150, 300],
+    "drops": [
+      {"item_id": "cursed_bone", "chance": 0.8},
+      {"item_id": "ancient_shard", "chance": 0.6},
+      {"item_id": "mithril_shield", "chance": 0.08},
+      {"item_id": "dark_gold_round_shield", "chance": 0.05}
+    ],
+    "ai": {
+      "behavior": "defensive",
+      "attack_weight": 50,
+      "defend_weight": 25,
+      "special_weight": 25,
+      "special": {
+        "type": "apply_effect",
+        "effect": "fear",
+        "chance": 0.3,
+        "duration": 2,
+        "value": 0,
+        "message": "骷髅王释放死亡恐惧！"
+      }
+    },
+    "phases": [
+      {"name": "正常", "hp_threshold": 1.0, "ai": {"attack": 0.5, "defend": 0.3, "special": 0.2}},
+      {"name": "愤怒", "hp_threshold": 0.5, "ai": {"attack": 0.6, "defend": 0.15, "special": 0.25}, "stat_boost": {"attack": 1.3}},
+      {"name": "狂暴", "hp_threshold": 0.25, "ai": {"attack": 0.7, "defend": 0.0, "special": 0.3}, "stat_boost": {"attack": 1.6}}
+    ],
+    "level": 12,
+    "tags": ["undead", "cave", "boss", "legendary"]
+  },
+  "scorpion": {
+    "id": "scorpion",
+    "name": "沙漠蝎",
+    "description": "沙漠中常见的毒蝎，尾针含有剧毒",
+    "type": "normal",
+    "sprite_color": "#aa8844",
+    "sprite_accent": "#886622",
+    "stats": {
+      "hp": 50,
+      "attack": 15,
+      "defense": 8,
+      "speed": 10
+    },
+    "exp_reward": 40,
+    "gold_reward": [12, 25],
+    "drops": [
+      {"item_id": "scorpion_stinger", "chance": 0.4},
+      {"item_id": "sand_crystal", "chance": 0.2},
+      {"item_id": "desert_herb", "chance": 0.2}
+    ],
+    "ai": {
+      "behavior": "cautious",
+      "attack_weight": 60,
+      "defend_weight": 20,
+      "special_weight": 20,
+      "special": {
+        "type": "apply_effect",
+        "effect": "poison",
+        "chance": 0.35,
+        "duration": 3,
+        "value": 0,
+        "message": "沙漠蝎刺入剧毒！"
+      }
+    },
+    "level": 6,
+    "tags": ["beast", "desert", "poison"]
+  },
+  "sand_worm": {
+    "id": "sand_worm",
+    "name": "沙虫",
+    "description": "潜伏在沙地下的巨大蠕虫，突然钻出吞噬猎物",
+    "type": "normal",
+    "sprite_color": "#bbaa77",
+    "sprite_accent": "#998855",
+    "stats": {
+      "hp": 70,
+      "attack": 22,
+      "defense": 6,
+      "speed": 7
+    },
+    "exp_reward": 55,
+    "gold_reward": [20, 45],
+    "drops": [
+      {"item_id": "sand_crystal", "chance": 0.35},
+      {"item_id": "beast_bone", "chance": 0.25},
+      {"item_id": "desert_herb", "chance": 0.15}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 80,
+      "defend_weight": 10,
+      "special_weight": 10,
+      "special": null
+    },
+    "level": 8,
+    "tags": ["beast", "desert", "common"]
+  },
+  "mummy": {
+    "id": "mummy",
+    "name": "木乃伊",
+    "description": "沙漠古墓中苏醒的亡灵，裹着腐朽的绷带缓慢行走",
+    "type": "normal",
+    "sprite_color": "#ccbb88",
+    "sprite_accent": "#aa9966",
+    "stats": {
+      "hp": 75,
+      "attack": 18,
+      "defense": 10,
+      "speed": 5
+    },
+    "exp_reward": 50,
+    "gold_reward": [18, 40],
+    "drops": [
+      {"item_id": "bandage", "chance": 0.4},
+      {"item_id": "ancient_scroll", "chance": 0.15},
+      {"item_id": "sand_crystal", "chance": 0.12}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 70,
+      "defend_weight": 15,
+      "special_weight": 15,
+      "special": {
+        "type": "apply_effect",
+        "effect": "poison",
+        "chance": 0.25,
+        "duration": 2,
+        "value": 0,
+        "message": "木乃伊的诅咒侵蚀了你！"
+      }
+    },
+    "level": 9,
+    "tags": ["undead", "desert", "common"]
+  },
+  "desert_basilisk": {
+    "id": "desert_basilisk",
+    "name": "沙漠蛇蜥",
+    "description": "传说中能石化猎物的远古蜥蜴，目光令人毛骨悚然",
+    "type": "elite",
+    "sprite_color": "#887744",
+    "sprite_accent": "#665522",
+    "stats": {
+      "hp": 130,
+      "attack": 26,
+      "defense": 14,
+      "speed": 12
+    },
+    "exp_reward": 110,
+    "gold_reward": [35, 70],
+    "drops": [
+      {"item_id": "sand_crystal", "chance": 0.5},
+      {"item_id": "ancient_scroll", "chance": 0.2},
+      {"item_id": "scorpion_stinger", "chance": 0.3},
+      {"item_id": "silver_helmet", "chance": 0.04}
+    ],
+    "ai": {
+      "behavior": "cautious",
+      "attack_weight": 55,
+      "defend_weight": 20,
+      "special_weight": 25,
+      "special": {
+        "type": "apply_effect",
+        "effect": "freeze",
+        "chance": 0.2,
+        "duration": 1,
+        "value": 0,
+        "message": "蛇蜥的凝视冻结了你！"
+      }
+    },
+    "level": 10,
+    "tags": ["beast", "desert", "elite"]
+  },
+  "city_guard": {
+    "id": "city_guard",
+    "name": "叛变卫兵",
+    "description": "王城内叛变的卫兵，装备精良但战斗意志薄弱",
+    "type": "normal",
+    "sprite_color": "#667788",
+    "sprite_accent": "#445566",
+    "stats": {
+      "hp": 60,
+      "attack": 16,
+      "defense": 12,
+      "speed": 8
+    },
+    "exp_reward": 40,
+    "gold_reward": [15, 30],
+    "drops": [
+      {"item_id": "royal_seal", "chance": 0.15},
+      {"item_id": "iron_ore", "chance": 0.2},
+      {"item_id": "health_potion", "chance": 0.15}
+    ],
+    "ai": {
+      "behavior": "cautious",
+      "attack_weight": 60,
+      "defend_weight": 30,
+      "special_weight": 10,
+      "special": null
+    },
+    "level": 7,
+    "tags": ["humanoid", "city", "common"]
+  },
+  "shadow_mage": {
+    "id": "shadow_mage",
+    "name": "暗影法师",
+    "description": "潜伏在王城暗处的邪恶法师，操纵暗影魔法攻击路人",
+    "type": "elite",
+    "sprite_color": "#443366",
+    "sprite_accent": "#221144",
+    "stats": {
+      "hp": 110,
+      "attack": 30,
+      "defense": 8,
+      "speed": 14
+    },
+    "exp_reward": 100,
+    "gold_reward": [35, 70],
+    "drops": [
+      {"item_id": "shadow_essence", "chance": 0.4},
+      {"item_id": "mana_potion", "chance": 0.3},
+      {"item_id": "alloy_staff", "chance": 0.04},
+      {"item_id": "silver_robe", "chance": 0.05}
+    ],
+    "ai": {
+      "behavior": "aggressive",
+      "attack_weight": 50,
+      "defend_weight": 10,
+      "special_weight": 40,
+      "special": {
+        "type": "apply_effect",
+        "effect": "burn",
+        "chance": 0.35,
+        "duration": 2,
+        "value": 5,
+        "message": "暗影法师释放暗焰！"
+      }
+    },
+    "level": 11,
+    "tags": ["humanoid", "city", "elite", "magic"]
   }
 }

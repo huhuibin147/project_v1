@@ -611,5 +611,234 @@
         "cost_multiplier": 1.5
       }
     }
+  },
+  "cave_explorer": {
+    "id": "cave_explorer",
+    "name": "探险家阿德",
+    "role": "探险家",
+    "location": "幽暗洞穴入口",
+    "map_id": "dark_cave",
+    "personality": {
+      "traits": "勇敢无畏，好奇心强，对未知充满热情",
+      "pronoun": "我",
+      "style": "兴奋激动，喜欢分享冒险经历",
+      "likes": "勇敢的冒险者、珍稀矿石和古物",
+      "dislikes": "胆小退缩、破坏遗迹的人"
+    },
+    "backstory": "阿德曾是王城探险家协会的成员，为了寻找传说中的骷髅王宝藏深入幽暗洞穴，却在深处迷失了方向。他在洞穴入口处扎营，一边研究洞穴结构，一边等待有缘人结伴深入。",
+    "greeting": "嘿！又一个冒险者！你也是来找骷髅王宝藏的吗？我在这洞穴里待了三个月了，对这里了如指掌！",
+    "default_mood": "兴奋",
+    "default_affinity": 55,
+    "personality_params": {
+      "friendliness": 0.8,
+      "courage": 0.9,
+      "greed": 0.5,
+      "humor": 0.6
+    },
+    "intents": {
+      "chat": "闲聊、询问洞穴情报、分享冒险经历",
+      "quest": "委托玩家探索洞穴深处、收集稀有矿石",
+      "trade": "买卖矿石、火把、探险装备",
+      "unknown": "无法判断意图"
+    },
+    "shop": {
+      "name": "阿德探险补给",
+      "gold": 200,
+      "inventory": [
+        {"item_id": "torch", "quantity": 20},
+        {"item_id": "rope", "quantity": 15},
+        {"item_id": "health_potion", "quantity": 12},
+        {"item_id": "mana_potion", "quantity": 8},
+        {"item_id": "antidote", "quantity": 15},
+        {"item_id": "bandage", "quantity": 15},
+        {"item_id": "iron_ore", "quantity": 10},
+        {"item_id": "magic_crystal", "quantity": 5},
+        {"item_id": "greater_health_potion", "quantity": 5},
+        {"item_id": "purify_potion", "quantity": 8}
+      ]
+    },
+    "default_gold": 150,
+    "services": {
+      "cave_guide": {
+        "name": "洞穴向导",
+        "description": "提供洞穴地图信息，标记危险区域和宝箱位置",
+        "cost": 50
+      }
+    }
+  },
+  "desert_merchant": {
+    "id": "desert_merchant",
+    "name": "沙漠商人哈桑",
+    "role": "游商",
+    "location": "沙漠绿洲",
+    "map_id": "desert_oasis",
+    "personality": {
+      "traits": "精明圆滑，见多识广，对沙漠了如指掌",
+      "pronoun": "在下",
+      "style": "文雅客气，说话带沙漠谚语",
+      "likes": "有诚意的买家、沙漠故事",
+      "dislikes": "讨价还价太过分、不尊重沙漠的人"
+    },
+    "backstory": "哈桑是穿梭于沙漠各处的游商，据说他掌握着沙漠中所有绿洲和古墓的位置。他在沙漠绿洲设有固定摊位，出售来自远方的珍奇货物。没有人知道他的真实来历，但他的货物总是物超所值。",
+    "greeting": "尊贵的客人，沙漠的烈日不如哈桑的热情！来看看这些来自远方的珍品吧！",
+    "default_mood": "热情",
+    "default_affinity": 50,
+    "personality_params": {
+      "friendliness": 0.7,
+      "courage": 0.5,
+      "greed": 0.6,
+      "humor": 0.5
+    },
+    "intents": {
+      "chat": "闲聊、询问沙漠情报、打听古墓位置",
+      "quest": "委托玩家寻找沙漠古物、护送货物",
+      "trade": "买卖珍稀物品、沙漠特产",
+      "unknown": "无法判断意图"
+    },
+    "shop": {
+      "name": "哈桑奇货铺",
+      "gold": 800,
+      "inventory": [
+        {"item_id": "health_potion", "quantity": 15},
+        {"item_id": "greater_health_potion", "quantity": 8},
+        {"item_id": "mana_potion", "quantity": 10},
+        {"item_id": "antidote", "quantity": 12},
+        {"item_id": "purify_potion", "quantity": 8},
+        {"item_id": "strength_elixir", "quantity": 3},
+        {"item_id": "magic_crystal", "quantity": 10},
+        {"item_id": "silver_dagger", "quantity": 2},
+        {"item_id": "silver_bow", "quantity": 2},
+        {"item_id": "silver_helmet", "quantity": 2},
+        {"item_id": "silver_robe", "quantity": 2},
+        {"item_id": "ring_of_power", "quantity": 1},
+        {"item_id": "necklace_of_life", "quantity": 1},
+        {"item_id": "charm_of_wind", "quantity": 2},
+        {"item_id": "scroll_thunder_strike", "quantity": 2},
+        {"item_id": "scroll_fireball", "quantity": 3},
+        {"item_id": "scroll_heal", "quantity": 3}
+      ]
+    },
+    "default_gold": 300
+  },
+  "innkeeper": {
+    "id": "innkeeper",
+    "name": "酒馆老板娘红姐",
+    "role": "酒馆老板",
+    "location": "王城醉月楼",
+    "map_id": "royal_city",
+    "personality": {
+      "traits": "豪爽泼辣，消息灵通，对客人照顾周到",
+      "pronoun": "老娘",
+      "style": "大嗓门，爽快直接，偶尔八卦",
+      "likes": "爽快的客人、好酒量的人",
+      "dislikes": "赖账的人、闹事的醉鬼"
+    },
+    "backstory": "红姐在王城经营醉月楼已有十年，是王城消息最灵通的人。从宫廷秘闻到地下交易，没有她不知道的。她年轻时是个冒险者，后来金盆洗手开了酒馆，但身手依然了得。",
+    "greeting": "哟！来啦！快进来坐！老娘这儿的酒是全王城最烈的，菜是最香的！",
+    "default_mood": "热情",
+    "default_affinity": 55,
+    "personality_params": {
+      "friendliness": 0.8,
+      "courage": 0.7,
+      "greed": 0.4,
+      "humor": 0.8
+    },
+    "intents": {
+      "chat": "闲聊、打听王城消息、听冒险故事",
+      "quest": "委托玩家处理酒馆麻烦、传递消息",
+      "trade": "买酒菜、卖食材",
+      "unknown": "无法判断意图"
+    },
+    "shop": {
+      "name": "醉月楼",
+      "gold": 400,
+      "inventory": [
+        {"item_id": "bread", "quantity": 30},
+        {"item_id": "dried_meat", "quantity": 25},
+        {"item_id": "wine", "quantity": 20},
+        {"item_id": "honey", "quantity": 15},
+        {"item_id": "jam", "quantity": 12},
+        {"item_id": "health_potion", "quantity": 10},
+        {"item_id": "mana_potion", "quantity": 8},
+        {"item_id": "bandage", "quantity": 15},
+        {"item_id": "antidote", "quantity": 10},
+        {"item_id": "greater_health_potion", "quantity": 5}
+      ]
+    },
+    "default_gold": 250,
+    "services": {
+      "rest": {
+        "name": "住宿休息",
+        "description": "在酒馆休息，恢复全部HP和MP",
+        "cost": 30
+      },
+      "rumor": {
+        "name": "打听消息",
+        "description": "花点钱打听王城和周边的最新消息",
+        "cost": 20
+      }
+    }
+  },
+  "royal_blacksmith": {
+    "id": "royal_blacksmith",
+    "name": "宫廷铁匠赵师傅",
+    "role": "高级铁匠",
+    "location": "王城铁匠坊",
+    "map_id": "royal_city",
+    "personality": {
+      "traits": "技艺精湛，沉默寡言，对锻造极度执着",
+      "pronoun": "我",
+      "style": "简洁专业，偶尔流露对工艺的热情",
+      "likes": "好材料、懂锻造的人",
+      "dislikes": "外行指手画脚、劣质金属"
+    },
+    "backstory": "赵师傅曾是王城御用铁匠，为国王打造过无数兵器铠甲。如今他在王城开设铁匠坊，只接有挑战性的活。据说他掌握着失传的秘银锻造术，但从不轻易示人。",
+    "greeting": "……你带好材料来了吗？我这里只锻造值得锻造的东西。",
+    "default_mood": "专注",
+    "default_affinity": 40,
+    "personality_params": {
+      "friendliness": 0.4,
+      "courage": 0.6,
+      "greed": 0.3,
+      "humor": 0.2
+    },
+    "intents": {
+      "chat": "闲聊、询问锻造知识、讨论材料",
+      "quest": "委托玩家寻找稀有矿石、测试新武器",
+      "trade": "买卖高级装备、锻造材料",
+      "unknown": "无法判断意图"
+    },
+    "shop": {
+      "name": "赵师傅铁匠坊",
+      "gold": 1000,
+      "inventory": [
+        {"item_id": "steel_sword", "quantity": 3},
+        {"item_id": "steel_axe", "quantity": 2},
+        {"item_id": "steel_shield", "quantity": 3},
+        {"item_id": "steel_armor", "quantity": 2},
+        {"item_id": "silver_dagger", "quantity": 2},
+        {"item_id": "silver_bow", "quantity": 2},
+        {"item_id": "silver_helmet", "quantity": 2},
+        {"item_id": "silver_robe", "quantity": 2},
+        {"item_id": "silver_round_shield", "quantity": 2},
+        {"item_id": "alloy_staff", "quantity": 1},
+        {"item_id": "bronze_hammer", "quantity": 2},
+        {"item_id": "bronze_crown", "quantity": 1},
+        {"item_id": "hard_leather_hat", "quantity": 2},
+        {"item_id": "hard_leather_garb", "quantity": 2},
+        {"item_id": "mithril_shield", "quantity": 1},
+        {"item_id": "dark_gold_round_shield", "quantity": 1},
+        {"item_id": "iron_ore", "quantity": 20},
+        {"item_id": "magic_crystal", "quantity": 10}
+      ]
+    },
+    "default_gold": 500,
+    "services": {
+      "forge": {
+        "name": "高级锻造",
+        "description": "使用稀有材料锻造高级装备",
+        "cost_multiplier": 0.8
+      }
+    }
   }
 }

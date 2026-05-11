@@ -541,4 +541,256 @@ function initTileRenderers() {
 async function initMapSystem() {
   initTileRenderers();
   await loadTileConfig();
+  initMinimap();
+}
+
+// ===== 实时小地图 =====
+
+const MINIMAP_W = 160;
+const MINIMAP_H = 120;
+let minimapCanvas, minimapCtx;
+let minimapTileCache = null;
+
+function initMinimap() {
+  minimapCanvas = document.getElementById("minimap-canvas");
+  minimapCtx = minimapCanvas.getContext("2d");
+  minimapCtx.imageSmoothingEnabled = false;
+}
+
+function renderMinimap() {
+  if (!currentMap || !tileConfig || !minimapCtx) return;
+
+  const ground = currentMap.layers?.ground;
+  if (!ground) return;
+
+  const mapW = currentMap.width;
+  const mapH = currentMap.height;
+
+  if (!minimapTileCache || minimapTileCache.mapId !== currentMap.id) {
+    minimapTileCache = { mapId: currentMap.id, data: null };
+    const imgData = minimapCtx.createImageData(MINIMAP_W, MINIMAP_H);
+    const scaleX = mapW / MINIMAP_W;
+    const scaleY = mapH / MINIMAP_H;
+
+    for (let my = 0; my < MINIMAP_H; my++) {
+      for (let mx = 0; mx < MINIMAP_W; mx++) {
+        const tileCol = Math.floor(mx * scaleX);
+        const tileRow = Math.floor(my * scaleY);
+        const tileId = ground[tileRow]?.[tileCol];
+        const tileInfo = tileConfig?.[String(tileId)];
+        const color = tileInfo?.color || "#000";
+        const idx = (my * MINIMAP_W + mx) * 4;
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+        imgData.data[idx] = r;
+        imgData.data[idx + 1] = g;
+        imgData.data[idx + 2] = b;
+        imgData.data[idx + 3] = 255;
+      }
+    }
+    minimapTileCache.data = imgData;
+  }
+
+  minimapCtx.putImageData(minimapTileCache.data, 0, 0);
+
+  const scaleX = MINIMAP_W / mapW;
+  const scaleY = MINIMAP_H / mapH;
+
+  const portals = mapObjects.filter(o => o.type === "portal");
+  for (const p of portals) {
+    minimapCtx.fillStyle = "#aa44ff";
+    minimapCtx.fillRect(Math.floor(p.x * scaleX), Math.floor(p.y * scaleY), 2, 2);
+  }
+
+  if (typeof npcs !== "undefined") {
+    for (const n of npcs) {
+      minimapCtx.fillStyle = "#44cc44";
+      minimapCtx.fillRect(Math.floor(n.x * scaleX), Math.floor(n.y * scaleY), 2, 2);
+    }
+  }
+
+  if (typeof mapMonsters !== "undefined") {
+    for (const m of mapMonsters) {
+      if (m.alive) {
+        minimapCtx.fillStyle = "#ff4444";
+        minimapCtx.fillRect(Math.floor(m.x * scaleX), Math.floor(m.y * scaleY), 2, 2);
+      }
+    }
+  }
+
+  const playerTileX = Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE);
+  const playerTileY = Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE);
+  const px = Math.floor(playerTileX * scaleX);
+  const py = Math.floor(playerTileY * scaleY);
+
+  const blink = Math.sin(Date.now() / 200) > 0;
+  if (blink) {
+    minimapCtx.fillStyle = "rgba(68, 136, 255, 0.3)";
+    minimapCtx.beginPath();
+    minimapCtx.arc(px + 1, py + 1, 4, 0, Math.PI * 2);
+    minimapCtx.fill();
+  }
+  minimapCtx.fillStyle = "#4488ff";
+  minimapCtx.fillRect(px, py, 3, 3);
+
+  const mapName = currentMap.name || "";
+  minimapCtx.fillStyle = "rgba(0,0,0,0.6)";
+  minimapCtx.fillRect(0, 0, MINIMAP_W, 14);
+  minimapCtx.fillStyle = "#f0c060";
+  minimapCtx.font = "bold 10px monospace";
+  minimapCtx.textAlign = "center";
+  minimapCtx.fillText(mapName, MINIMAP_W / 2, 11);
+}
+
+// ===== 大地图 (M 键) =====
+
+let worldMapOpen = false;
+let worldMapCanvas, worldMapCtx;
+let exploredTiles = new Set();
+
+function initWorldMap() {
+  worldMapCanvas = document.getElementById("worldmap-canvas");
+  worldMapCtx = worldMapCanvas.getContext("2d");
+  worldMapCtx.imageSmoothingEnabled = false;
+}
+
+function toggleWorldMap() {
+  if (worldMapOpen) {
+    closeWorldMap();
+  } else {
+    openWorldMap();
+  }
+}
+
+function openWorldMap() {
+  if (!currentMap || dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen) return;
+  worldMapOpen = true;
+  document.getElementById("worldmap-panel").classList.add("active");
+  renderWorldMap();
+}
+
+function closeWorldMap() {
+  worldMapOpen = false;
+  document.getElementById("worldmap-panel").classList.remove("active");
+}
+
+function renderWorldMap() {
+  if (!currentMap || !tileConfig || !worldMapCtx) return;
+
+  const ground = currentMap.layers?.ground;
+  if (!ground) return;
+
+  const mapW = currentMap.width;
+  const mapH = currentMap.height;
+  const canvasW = worldMapCanvas.width;
+  const canvasH = worldMapCanvas.height;
+
+  worldMapCtx.fillStyle = "#111";
+  worldMapCtx.fillRect(0, 0, canvasW, canvasH);
+
+  const scaleX = canvasW / mapW;
+  const scaleY = canvasH / mapH;
+
+  for (let my = 0; my < canvasH; my++) {
+    for (let mx = 0; mx < canvasW; mx++) {
+      const tileCol = Math.floor(mx / scaleX);
+      const tileRow = Math.floor(my / scaleY);
+      const tileId = ground[tileRow]?.[tileCol];
+      const tileInfo = tileConfig?.[String(tileId)];
+      let color = tileInfo?.color || "#000";
+
+      const tileKey = `${tileCol},${tileRow}`;
+      if (!exploredTiles.has(tileKey)) {
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+        color = `rgb(${Math.floor(r * 0.3)},${Math.floor(g * 0.3)},${Math.floor(b * 0.3)})`;
+      }
+
+      worldMapCtx.fillStyle = color;
+      worldMapCtx.fillRect(mx, my, 1, 1);
+    }
+  }
+
+  const portals = mapObjects.filter(o => o.type === "portal");
+  for (const p of portals) {
+    const px = Math.floor(p.x * scaleX);
+    const py = Math.floor(p.y * scaleY);
+    worldMapCtx.fillStyle = "#aa44ff";
+    worldMapCtx.beginPath();
+    worldMapCtx.arc(px, py, 4, 0, Math.PI * 2);
+    worldMapCtx.fill();
+    worldMapCtx.strokeStyle = "#cc88ff";
+    worldMapCtx.lineWidth = 1;
+    worldMapCtx.stroke();
+
+    if (p.properties?.target_map) {
+      worldMapCtx.fillStyle = "rgba(170, 68, 255, 0.5)";
+      worldMapCtx.font = "9px monospace";
+      worldMapCtx.textAlign = "center";
+      worldMapCtx.fillText(p.properties.target_map, px, py - 6);
+    }
+  }
+
+  if (typeof npcs !== "undefined") {
+    for (const n of npcs) {
+      worldMapCtx.fillStyle = "#44cc44";
+      worldMapCtx.beginPath();
+      worldMapCtx.arc(Math.floor(n.x * scaleX), Math.floor(n.y * scaleY), 3, 0, Math.PI * 2);
+      worldMapCtx.fill();
+    }
+  }
+
+  if (typeof mapMonsters !== "undefined") {
+    for (const m of mapMonsters) {
+      if (m.alive) {
+        worldMapCtx.fillStyle = "#ff4444";
+        worldMapCtx.beginPath();
+        worldMapCtx.arc(Math.floor(m.x * scaleX), Math.floor(m.y * scaleY), 2, 0, Math.PI * 2);
+        worldMapCtx.fill();
+      }
+    }
+  }
+
+  const playerTileX = Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE);
+  const playerTileY = Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE);
+  const px = Math.floor(playerTileX * scaleX);
+  const py = Math.floor(playerTileY * scaleY);
+
+  const pulse = 3 + Math.sin(Date.now() / 300) * 2;
+  worldMapCtx.fillStyle = "rgba(68, 136, 255, 0.3)";
+  worldMapCtx.beginPath();
+  worldMapCtx.arc(px, py, pulse + 3, 0, Math.PI * 2);
+  worldMapCtx.fill();
+
+  worldMapCtx.fillStyle = "#4488ff";
+  worldMapCtx.beginPath();
+  worldMapCtx.moveTo(px, py - pulse);
+  worldMapCtx.lineTo(px - pulse * 0.7, py + pulse * 0.5);
+  worldMapCtx.lineTo(px + pulse * 0.7, py + pulse * 0.5);
+  worldMapCtx.closePath();
+  worldMapCtx.fill();
+
+  worldMapCtx.strokeStyle = "#fff";
+  worldMapCtx.lineWidth = 1;
+  worldMapCtx.stroke();
+
+  document.getElementById("worldmap-title").textContent = currentMap.name + " - 世界地图";
+  document.getElementById("worldmap-coords").textContent = `坐标: (${playerTileX}, ${playerTileY})`;
+}
+
+function recordExploredTile() {
+  if (!currentMap) return;
+  const tileX = Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE);
+  const tileY = Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE);
+  const key = `${tileX},${tileY}`;
+  if (!exploredTiles.has(key)) {
+    exploredTiles.add(key);
+  }
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      exploredTiles.add(`${tileX + dx},${tileY + dy}`);
+    }
+  }
 }

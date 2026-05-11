@@ -515,6 +515,30 @@
     <!-- 任务追踪器 (HUD) -->
     <div id="quest-tracker" style="display:none"></div>
 
+    <!-- 实时小地图 (HUD) -->
+    <div id="minimap-container">
+      <canvas id="minimap-canvas" width="160" height="120"></canvas>
+      <div id="minimap-label">地图</div>
+    </div>
+
+    <!-- 大地图面板 (M 键) -->
+    <div id="worldmap-panel" style="display:none">
+      <div class="panel-header">
+        <span class="panel-title" id="worldmap-title">世界地图</span>
+        <span class="panel-info" id="worldmap-coords"></span>
+        <button class="panel-close" onclick="closeWorldMap()">×</button>
+      </div>
+      <div id="worldmap-body">
+        <canvas id="worldmap-canvas" width="580" height="380"></canvas>
+        <div id="worldmap-legend">
+          <span class="legend-item"><span class="legend-dot player"></span> 玩家</span>
+          <span class="legend-item"><span class="legend-dot npc"></span> NPC</span>
+          <span class="legend-item"><span class="legend-dot monster"></span> 怪物</span>
+          <span class="legend-item"><span class="legend-dot portal"></span> 传送门</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 天赋面板 -->
     <div id="talent-panel" style="display:none">
       <div class="panel-header">

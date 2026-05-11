@@ -322,6 +322,8 @@ TEMPLATES = {
 }
 
 MAPS_DIR = Path("config/maps")
+CONFIG_DIR = Path("config")
+ROOT_DIR = Path(__file__).parent.parent
 
 
 class MapGenerator:
