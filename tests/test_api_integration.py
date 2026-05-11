@@ -11,6 +11,7 @@ from unittest.mock import patch, MagicMock
 ROOT_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT_DIR / "backend"))
 CONFIG_DIR = ROOT_DIR / "config"
+TEST_DATA_DIR = ROOT_DIR / "data" / "save_test"
 
 
 class TestAPIIntegration(unittest.TestCase):
@@ -18,20 +19,32 @@ class TestAPIIntegration(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.temp_data_dir = tempfile.mkdtemp()
-        os.makedirs(cls.temp_data_dir, exist_ok=True)
+        if TEST_DATA_DIR.exists():
+            shutil.rmtree(TEST_DATA_DIR)
+        TEST_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls.temp_data_dir, ignore_errors=True)
+        if TEST_DATA_DIR.exists():
+            shutil.rmtree(TEST_DATA_DIR, ignore_errors=True)
 
     def _get_client(self):
-        with patch("player_profile.DATA_DIR", Path(self.temp_data_dir)):
-            with patch("main.DATA_DIR", Path(self.temp_data_dir)):
-                from fastapi.testclient import TestClient
-                from main import app
-                client = TestClient(app)
-                return client
+        modules_to_clear = ["main", "player_profile", "npc_agent", "quest_manager", "npc_dialogue", "item_system", "skill_system", "combat_engine"]
+        for mod in modules_to_clear:
+            sys.modules.pop(mod, None)
+
+        import player_profile
+        import npc_agent
+        player_profile.DATA_DIR = TEST_DATA_DIR
+        npc_agent.DATA_DIR = TEST_DATA_DIR
+
+        from fastapi.testclient import TestClient
+        from main import app
+        import main
+        main.DATA_DIR = TEST_DATA_DIR
+
+        client = TestClient(app)
+        return client
 
     # ---- API-01: GET /api/player ----
 
