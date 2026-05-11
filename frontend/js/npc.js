@@ -524,9 +524,14 @@ async function interactWithObject(obj) {
       // 更新物件状态
       if (data.type === "chest") {
         obj.state = { opened: true };
-        // 更新地图物件列表中的状态
         const mapObj = mapObjects.find(o => o.id === obj.id);
         if (mapObj) mapObj.state = { opened: true };
+      }
+      // 采集点处理
+      if (data.type === "gather") {
+        obj.state = { lastGathered: Date.now() };
+        const mapObj = mapObjects.find(o => o.id === obj.id);
+        if (mapObj) mapObj.state = { lastGathered: Date.now() };
       }
       // 显示交互结果
       if (data.message) {
@@ -536,9 +541,15 @@ async function interactWithObject(obj) {
       if (data.items) {
         fetchInventory();
       }
+    } else {
+      // 交互失败（如冷却中）
+      if (data.message) {
+        showInteractMessage(data.message);
+      }
     }
   } catch (e) {
     console.error("物件交互失败:", e);
+    showInteractMessage("交互失败，请稍后再试");
   }
 }
 

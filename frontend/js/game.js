@@ -84,7 +84,7 @@ function render() {
 
   renderMinimap();
   updateHudMapName();
-  // drawHUD(ctx); // 帮助提示已迁移到独立的帮助面板
+  drawGatherHint();
 }
 
 function updateHudMapName() {
@@ -92,6 +92,63 @@ function updateHudMapName() {
   if (el && currentMap) {
     el.textContent = currentMap.name;
   }
+}
+
+function drawGatherHint() {
+  if (!currentMap || !mapObjects) return;
+
+  const playerTileX = Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE);
+  const playerTileY = Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE);
+
+  for (const obj of mapObjects) {
+    if (obj.type !== "gather") continue;
+    
+    const dx = Math.abs(obj.x - playerTileX);
+    const dy = Math.abs(obj.y - playerTileY);
+    
+    if (dx <= 1 && dy <= 1) {
+      const itemId = obj.properties?.item_id || "物品";
+      const itemName = getItemName(itemId);
+      
+      const hintEl = document.getElementById("gather-hint");
+      if (!hintEl) {
+        const newEl = document.createElement("div");
+        newEl.id = "gather-hint";
+        newEl.style.cssText = `
+          position: absolute;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: #f0c060;
+          padding: 8px 16px;
+          border-radius: 4px;
+          font-size: 14px;
+          pointer-events: none;
+          z-index: 100;
+        `;
+        document.getElementById("game-container").appendChild(newEl);
+      }
+      
+      document.getElementById("gather-hint").textContent = `按 E 采集 ${itemName}`;
+      return;
+    }
+  }
+  
+  const hintEl = document.getElementById("gather-hint");
+  if (hintEl) {
+    hintEl.remove();
+  }
+}
+
+function getItemName(itemId) {
+  const itemNames = {
+    "herb": "草药",
+    "mushroom": "蘑菇",
+    "iron_ore": "铁矿石",
+    "beast_bone": "兽骨"
+  };
+  return itemNames[itemId] || itemId;
 }
 
 function drawHUD(ctx) {
@@ -285,6 +342,7 @@ document.addEventListener("keydown", (e) => {
 // M 键切换大地图
 document.addEventListener("keydown", (e) => {
   if ((e.key === "m" || e.key === "M") && gameStarted) {
+    console.log("M键按下，gameStarted:", gameStarted);
     toggleWorldMap();
   }
 });

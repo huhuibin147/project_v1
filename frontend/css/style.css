@@ -317,9 +317,10 @@ body {
 #game-menu-panel {
   display: none;
   position: absolute;
-  top: 40px;
-  right: 10px;
-  width: 180px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px;
   background: rgba(20, 20, 40, 0.95);
   border: 2px solid #f0c060;
   border-radius: 6px;

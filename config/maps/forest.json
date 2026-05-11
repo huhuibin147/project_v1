@@ -8,11 +8,11 @@
     "ground": [
       [
         4,
-        4,
-        4,
-        4,
-        4,
-        4,
+        0,
+        0,
+        0,
+        0,
+        0,
         4,
         4,
         4,
@@ -69,69 +69,7 @@
         4
       ],
       [
-        4,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        1,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        1,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        1,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-        4
-      ],
-      [
-        4,
+        0,
         9,
         9,
         9,
@@ -193,7 +131,7 @@
         4
       ],
       [
-        4,
+        0,
         9,
         9,
         9,
@@ -255,7 +193,69 @@
         4
       ],
       [
-        4,
+        0,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        1,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        1,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        1,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        9,
+        4
+      ],
+      [
+        0,
         9,
         9,
         9,
@@ -317,7 +317,7 @@
         4
       ],
       [
-        4,
+        0,
         9,
         9,
         9,
@@ -449,7 +449,7 @@
         5,
         18,
         18,
-        5,
+        0,
         2,
         2,
         5,
@@ -510,7 +510,7 @@
         5,
         9,
         7,
-        5,
+        0,
         9,
         9,
         5,
@@ -635,7 +635,7 @@
         5,
         9,
         18,
-        5,
+        0,
         9,
         15,
         5,
@@ -1903,7 +1903,7 @@
         9,
         9,
         18,
-        5,
+        0,
         18,
         5,
         18,
@@ -1964,9 +1964,9 @@
         9,
         9,
         9,
-        5,
+        0,
         9,
-        5,
+        0,
         9,
         5,
         16,
@@ -2027,9 +2027,9 @@
         9,
         9,
         18,
-        5,
+        0,
         21,
-        5,
+        0,
         9,
         16,
         9,
@@ -2094,7 +2094,7 @@
         7,
         5,
         16,
-        5,
+        0,
         9,
         9,
         7,
@@ -2216,7 +2216,7 @@
         18,
         5,
         18,
-        5,
+        0,
         16,
         5,
         18,
@@ -3173,8 +3173,8 @@
     {
       "id": "portal_to_village",
       "type": "portal",
-      "x": 30,
-      "y": 26,
+      "x": 37,
+      "y": 32,
       "properties": {
         "target_map": "village",
         "target_x": 25,
@@ -3182,10 +3182,43 @@
       }
     },
     {
+      "id": "portal_to_dark_cave",
+      "type": "portal",
+      "x": 6,
+      "y": 10,
+      "properties": {
+        "target_map": "dark_cave",
+        "target_x": 5,
+        "target_y": 25
+      }
+    },
+    {
+      "id": "portal_to_desert_oasis",
+      "type": "portal",
+      "x": 55,
+      "y": 5,
+      "properties": {
+        "target_map": "desert_oasis",
+        "target_x": 45,
+        "target_y": 25
+      }
+    },
+    {
+      "id": "portal_to_royal_city",
+      "type": "portal",
+      "x": 30,
+      "y": 5,
+      "properties": {
+        "target_map": "royal_city",
+        "target_x": 25,
+        "target_y": 40
+      }
+    },
+    {
       "id": "chest_forest_01",
       "type": "chest",
-      "x": 42,
-      "y": 38,
+      "x": 36,
+      "y": 31,
       "properties": {
         "items": [
           {
@@ -3199,8 +3232,8 @@
     {
       "id": "herb_01",
       "type": "gather",
-      "x": 12,
-      "y": 20,
+      "x": 9,
+      "y": 10,
       "properties": {
         "item_id": "herb",
         "respawn_time": 60
@@ -3209,19 +3242,69 @@
     {
       "id": "herb_02",
       "type": "gather",
-      "x": 48,
-      "y": 35,
+      "x": 42,
+      "y": 33,
       "properties": {
         "item_id": "herb",
         "respawn_time": 60
+      }
+    },
+    {
+      "id": "gather_mushroom_forest_1",
+      "type": "gather",
+      "x": 8,
+      "y": 7,
+      "properties": {
+        "item_id": "mushroom",
+        "respawn_time": 60
+      }
+    },
+    {
+      "id": "gather_mushroom_forest_2",
+      "type": "gather",
+      "x": 36,
+      "y": 32,
+      "properties": {
+        "item_id": "mushroom",
+        "respawn_time": 60
+      }
+    },
+    {
+      "id": "gather_mushroom_forest_3",
+      "type": "gather",
+      "x": 36,
+      "y": 30,
+      "properties": {
+        "item_id": "mushroom",
+        "respawn_time": 60
+      }
+    },
+    {
+      "id": "gather_beast_bone_forest_1",
+      "type": "gather",
+      "x": 36,
+      "y": 30,
+      "properties": {
+        "item_id": "beast_bone",
+        "respawn_time": 90
+      }
+    },
+    {
+      "id": "gather_beast_bone_forest_2",
+      "type": "gather",
+      "x": 37,
+      "y": 31,
+      "properties": {
+        "item_id": "beast_bone",
+        "respawn_time": 90
       }
     }
   ],
   "npcs": [
     {
       "npc_id": "herbalist",
-      "x": 20,
-      "y": 18
+      "x": 19,
+      "y": 17
     }
   ],
   "player_spawn": {

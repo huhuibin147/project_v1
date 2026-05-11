@@ -213,9 +213,9 @@ function drawObjects(ctx) {
     if (obj.type === "chest") {
       drawChest(ctx, x, y, obj.state?.opened);
     } else if (obj.type === "portal") {
-      drawPortal(ctx, x, y);
+      drawPortal(ctx, x, y, obj);
     } else if (obj.type === "gather") {
-      drawGatherPoint(ctx, x, y);
+      drawGatherPoint(ctx, x, y, obj);
     } else if (obj.type === "decoration") {
       drawDecoration(ctx, x, y, obj.properties?.sprite);
     }
@@ -245,28 +245,132 @@ function drawChest(ctx, x, y, opened) {
 }
 
 // 传送门绘制
-function drawPortal(ctx, x, y) {
+function drawPortal(ctx, x, y, obj) {
   const p = TILE_SIZE / 8;
   const time = Date.now() / 1000;
-  const alpha = 0.5 + Math.sin(time * 3) * 0.3;
+  const alpha = 0.6 + Math.sin(time * 3) * 0.4;
 
+  // 外圈光晕
+  ctx.fillStyle = `rgba(170, 68, 255, ${alpha * 0.3})`;
+  ctx.beginPath();
+  ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, TILE_SIZE / 2 + 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 传送门主体
   ctx.fillStyle = `rgba(100, 200, 255, ${alpha})`;
   ctx.fillRect(x + p, y + p, p * 6, p * 6);
-  ctx.fillStyle = `rgba(150, 230, 255, ${alpha * 0.7})`;
+  ctx.fillStyle = `rgba(150, 230, 255, ${alpha * 0.8})`;
   ctx.fillRect(x + p * 2, y + p * 2, p * 4, p * 4);
-  ctx.fillStyle = `rgba(200, 240, 255, ${alpha * 0.5})`;
+  ctx.fillStyle = `rgba(200, 240, 255, ${alpha * 0.6})`;
   ctx.fillRect(x + p * 3, y + p * 3, p * 2, p * 2);
+
+  // 中心亮点
+  ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+  ctx.beginPath();
+  ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 目标名称标签
+  if (obj?.properties?.target_map) {
+    const mapNames = {
+      "village": "青石村",
+      "forest": "幽暗森林",
+      "dark_cave": "黑暗洞穴",
+      "desert_oasis": "沙漠绿洲",
+      "royal_city": "王城"
+    };
+    const name = mapNames[obj.properties.target_map] || obj.properties.target_map;
+    
+    ctx.save();
+    ctx.font = "bold 11px 'Microsoft YaHei', sans-serif";
+    ctx.textAlign = "center";
+    
+    // 标签背景
+    const textWidth = ctx.measureText(name).width;
+    const labelX = x + TILE_SIZE / 2;
+    const labelY = y - 8;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+    ctx.fillRect(labelX - textWidth / 2 - 4, labelY - 10, textWidth + 8, 14);
+    ctx.strokeStyle = "rgba(170, 68, 255, 0.6)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(labelX - textWidth / 2 - 4, labelY - 10, textWidth + 8, 14);
+    
+    // 标签文字
+    ctx.fillStyle = "#cc88ff";
+    ctx.fillText(name, labelX, labelY);
+    ctx.restore();
+  }
 }
 
 // 采集点绘制
-function drawGatherPoint(ctx, x, y) {
+function drawGatherPoint(ctx, x, y, obj) {
   const p = TILE_SIZE / 8;
-  ctx.fillStyle = "#4a8c3f";
-  ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
-  ctx.fillStyle = "#6abf5a";
-  ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
-  ctx.fillStyle = "#8ee07a";
-  ctx.fillRect(x + p * 3, y + p * 2, p, p);
+  const itemId = obj?.properties?.item_id;
+  const lastGathered = obj?.state?.lastGathered;
+  const respawnTime = (obj?.properties?.respawn_time || 60) * 1000;
+  const now = Date.now();
+  
+  // 检查是否在冷却中
+  const isOnCooldown = lastGathered && (now - lastGathered) < respawnTime;
+  
+  if (isOnCooldown) {
+    // 冷却中的采集点 - 灰色
+    ctx.fillStyle = "#666";
+    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
+    ctx.fillStyle = "#888";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+    return;
+  }
+  
+  // 根据物品类型显示不同颜色
+  if (itemId === "herb") {
+    // 草药 - 绿色
+    ctx.fillStyle = "#4a8c3f";
+    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
+    ctx.fillStyle = "#6abf5a";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+    ctx.fillStyle = "#8ee07a";
+    ctx.fillRect(x + p * 3, y + p * 2, p, p);
+  } else if (itemId === "mushroom") {
+    // 蘑菇 - 棕色
+    ctx.fillStyle = "#8b6914";
+    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
+    ctx.fillStyle = "#a67c00";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+    ctx.fillStyle = "#c9a000";
+    ctx.fillRect(x + p * 3, y + p * 2, p, p);
+  } else if (itemId === "iron_ore") {
+    // 铁矿石 - 灰色
+    ctx.fillStyle = "#666";
+    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
+    ctx.fillStyle = "#888";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+    ctx.fillStyle = "#aaa";
+    ctx.fillRect(x + p * 3, y + p * 2, p, p);
+  } else if (itemId === "beast_bone") {
+    // 兽骨 - 白色
+    ctx.fillStyle = "#ccc";
+    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
+    ctx.fillStyle = "#eee";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(x + p * 3, y + p * 2, p, p);
+  } else {
+    // 默认颜色
+    ctx.fillStyle = "#4a8c3f";
+    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
+    ctx.fillStyle = "#6abf5a";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+    ctx.fillStyle = "#8ee07a";
+    ctx.fillRect(x + p * 3, y + p * 2, p, p);
+  }
+  
+  // 添加闪烁效果表示可采集
+  const blink = Math.sin(Date.now() / 300) > 0;
+  if (blink) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+  }
 }
 
 // 装饰物绘制
@@ -656,6 +760,7 @@ function initWorldMap() {
 }
 
 function toggleWorldMap() {
+  console.log("切换大地图，当前状态:", worldMapOpen, "游戏状态:", gameStarted);
   if (worldMapOpen) {
     closeWorldMap();
   } else {
@@ -664,9 +769,17 @@ function toggleWorldMap() {
 }
 
 function openWorldMap() {
-  if (!currentMap || dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen) return;
+  if (!currentMap) {
+    console.log("无法打开大地图：当前地图未加载");
+    return;
+  }
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen) {
+    console.log("无法打开大地图：有其他面板打开");
+    return;
+  }
   worldMapOpen = true;
-  document.getElementById("worldmap-panel").classList.add("active");
+  const panel = document.getElementById("worldmap-panel");
+  panel.classList.add("active");
   renderWorldMap();
 }
 

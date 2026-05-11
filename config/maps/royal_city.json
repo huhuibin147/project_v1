@@ -5040,13 +5040,24 @@
         "target_x": 25,
         "target_y": 21
       }
+    },
+    {
+      "id": "portal_royal_city_to_forest",
+      "type": "portal",
+      "x": 15,
+      "y": 10,
+      "properties": {
+        "target_map": "forest",
+        "target_x": 30,
+        "target_y": 8
+      }
     }
   ],
   "npcs": [
     {
       "npc_id": "innkeeper",
-      "x": 40,
-      "y": 30
+      "x": 41,
+      "y": 31
     },
     {
       "npc_id": "royal_blacksmith",
@@ -5055,8 +5066,8 @@
     }
   ],
   "player_spawn": {
-    "x": 40,
-    "y": 30
+    "x": 41,
+    "y": 31
   },
   "monsters": [
     {

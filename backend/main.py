@@ -575,7 +575,20 @@ async def interact_object(req: ObjectInteractRequest):
                 quest_manager.on_collect(item["item_id"])
     elif obj_type == "gather":
         item_id = props.get("item_id")
+        respawn_time = props.get("respawn_time", 60)
         if item_id:
+            # 检查冷却时间
+            if req.map_id in player_profile.map_states:
+                obj_state = player_profile.map_states[req.map_id].get("objects", {}).get(req.object_id, {})
+                last_gathered = obj_state.get("last_gathered", 0)
+                import time
+                current_time = int(time.time())
+                if current_time - last_gathered < respawn_time:
+                    remaining = respawn_time - (current_time - last_gathered)
+                    result["success"] = False
+                    result["message"] = f"采集点还在冷却中，还需等待 {remaining} 秒"
+                    return result
+            
             player_profile.add_item(item_id, 1)
             if req.map_id not in player_profile.map_states:
                 player_profile.map_states[req.map_id] = {"objects": {}}
