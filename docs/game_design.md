@@ -47,7 +47,9 @@ RPG 系统
 ### 前端架构
 
 - **渲染**：Canvas 逐像素绘制，无外部图片资源
+- **管理器模块**：`GameManager`（核心）、`InputManager`（输入）、`RenderManager`（渲染优化）、`LoadingManager`（加载状态）
 - **游戏循环**：`requestAnimationFrame`，每帧 `update(dt)` + `render()`
+- **脏矩形优化**：只在状态变化时重绘，减少不必要的渲染
 - **摄像机**：跟随玩家居中，边界钳制，视口裁剪优化
 - **深度排序**：NPC、怪物、玩家按 Y 坐标排序绘制
 - **UI 面板**：DOM 元素覆盖在 Canvas 上，`.active` 类控制显示
@@ -376,7 +378,12 @@ project_v1/
 │   ├── index.html
 │   ├── css/style.css
 │   └── js/
-│       ├── game.js         # 游戏主循环
+│       ├── managers/       # 管理器模块
+│       │   ├── GameManager.js    # 游戏核心管理器
+│       │   ├── InputManager.js   # 输入管理器
+│       │   ├── RenderManager.js  # 渲染管理器
+│       │   └── LoadingManager.js # 加载管理器
+│       ├── game.js         # 游戏主循环（精简版）
 │       ├── map.js          # 地图系统
 │       ├── player.js       # 玩家控制
 │       ├── combat.js       # 战斗系统

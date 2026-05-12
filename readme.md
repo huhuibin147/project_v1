@@ -116,6 +116,12 @@ project_v1/
 │       ├── turn.py             # 回合解析核心
 │       └── engine.py           # 对外统一接口
 ├── frontend/                   # 前端界面（HTML5 Canvas + JS）
+│   └── js/
+│       └── managers/           # 管理器模块
+│           ├── GameManager.js    # 游戏核心管理器
+│           ├── InputManager.js   # 输入管理器
+│           ├── RenderManager.js  # 渲染管理器
+│           └── LoadingManager.js # 加载管理器
 ├── docs/                       # 设计文档
 │   ├── game_design.md          #   游戏设计文档（系统总览）
 │   ├── items_equipment.md      #   物品与装备系统
@@ -153,6 +159,7 @@ project_v1/
 - [NPC 对话优化设计](docs/npc_agent_optimization.md)
 - [物品系统优化设计](docs/item_system_optimization.md)
 - [任务系统优化设计](docs/quest_system_optimization.md)
+- [前端游戏主循环优化设计](docs/frontend_gamejs_optimization.md)
 - [物品生成器](docs/item_generator.md)
 - [地图生成器](docs/map_generator.md)
 - [优化分析](docs/optimization_analysis.md)
