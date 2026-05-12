@@ -1,0 +1,441 @@
+{
+  "forge_iron_sword": {
+    "recipe_id": "forge_iron_sword",
+    "name": "锻造铁剑",
+    "description": "用铁矿石锻造一把坚固的铁剑",
+    "output": { "item_id": "iron_sword", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 3 },
+      { "item_id": "beast_bone", "quantity": 1 }
+    ],
+    "gold_cost": 50,
+    "level_requirement": 3,
+    "success_rate": 1.0,
+    "fail_return_rate": 0.5,
+    "category": "weapon",
+    "tier": "basic",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_iron_dagger": {
+    "recipe_id": "forge_iron_dagger",
+    "name": "锻造铁匕首",
+    "description": "用铁矿石锻造一把轻便的匕首",
+    "output": { "item_id": "iron_dagger", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 2 },
+      { "item_id": "beast_bone", "quantity": 1 }
+    ],
+    "gold_cost": 40,
+    "level_requirement": 2,
+    "success_rate": 1.0,
+    "fail_return_rate": 0.5,
+    "category": "weapon",
+    "tier": "basic",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_iron_axe": {
+    "recipe_id": "forge_iron_axe",
+    "name": "锻造铁斧",
+    "description": "用铁矿石锻造一把沉重的铁斧",
+    "output": { "item_id": "iron_axe", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 4 },
+      { "item_id": "beast_bone", "quantity": 2 }
+    ],
+    "gold_cost": 60,
+    "level_requirement": 3,
+    "success_rate": 1.0,
+    "fail_return_rate": 0.5,
+    "category": "weapon",
+    "tier": "basic",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_steel_sword": {
+    "recipe_id": "forge_steel_sword",
+    "name": "锻造精钢剑",
+    "description": "用精钢锭锻造一把锋利的精钢剑",
+    "output": { "item_id": "steel_sword", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 5 },
+      { "item_id": "steel_ingot", "quantity": 2 }
+    ],
+    "gold_cost": 150,
+    "level_requirement": 5,
+    "success_rate": 0.9,
+    "fail_return_rate": 0.5,
+    "category": "weapon",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_silver_dagger": {
+    "recipe_id": "forge_silver_dagger",
+    "name": "锻造银匕首",
+    "description": "用精钢和铁矿石锻造一把银光闪闪的匕首",
+    "output": { "item_id": "silver_dagger", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 3 },
+      { "item_id": "steel_ingot", "quantity": 2 }
+    ],
+    "gold_cost": 130,
+    "level_requirement": 5,
+    "success_rate": 0.9,
+    "fail_return_rate": 0.5,
+    "category": "weapon",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_bronze_hammer": {
+    "recipe_id": "forge_bronze_hammer",
+    "name": "锻造青铜锤",
+    "description": "用精钢和兽骨锻造一把沉重的战锤",
+    "output": { "item_id": "bronze_hammer", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 4 },
+      { "item_id": "steel_ingot", "quantity": 2 },
+      { "item_id": "beast_bone", "quantity": 1 }
+    ],
+    "gold_cost": 200,
+    "level_requirement": 6,
+    "success_rate": 0.9,
+    "fail_return_rate": 0.5,
+    "category": "weapon",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_mithril_sword": {
+    "recipe_id": "forge_mithril_sword",
+    "name": "锻造秘银剑",
+    "description": "用魔法水晶和精钢锻造一把秘银剑",
+    "output": { "item_id": "mithril_sword", "quantity": 1 },
+    "materials": [
+      { "item_id": "magic_crystal", "quantity": 4 },
+      { "item_id": "steel_ingot", "quantity": 3 },
+      { "item_id": "beast_bone", "quantity": 2 }
+    ],
+    "gold_cost": 400,
+    "level_requirement": 10,
+    "success_rate": 0.75,
+    "fail_return_rate": 0.4,
+    "category": "weapon",
+    "tier": "advanced",
+    "rarity_guarantee": "rare"
+  },
+  "forge_darkgold_dagger": {
+    "recipe_id": "forge_darkgold_dagger",
+    "name": "锻造暗金匕首",
+    "description": "用暗影精华和魔法水晶锻造一把暗金匕首",
+    "output": { "item_id": "darkgold_dagger", "quantity": 1 },
+    "materials": [
+      { "item_id": "magic_crystal", "quantity": 3 },
+      { "item_id": "shadow_essence", "quantity": 2 },
+      { "item_id": "beast_bone", "quantity": 2 }
+    ],
+    "gold_cost": 600,
+    "level_requirement": 12,
+    "success_rate": 0.7,
+    "fail_return_rate": 0.4,
+    "category": "weapon",
+    "tier": "advanced",
+    "rarity_guarantee": "epic"
+  },
+  "forge_crystal_staff": {
+    "recipe_id": "forge_crystal_staff",
+    "name": "锻造魔晶法杖",
+    "description": "用魔法水晶和古代碎片锻造一把蕴含魔力的法杖",
+    "output": { "item_id": "crystal_staff", "quantity": 1 },
+    "materials": [
+      { "item_id": "magic_crystal", "quantity": 3 },
+      { "item_id": "ancient_shard", "quantity": 2 },
+      { "item_id": "steel_ingot", "quantity": 2 }
+    ],
+    "gold_cost": 700,
+    "level_requirement": 14,
+    "success_rate": 0.65,
+    "fail_return_rate": 0.35,
+    "category": "weapon",
+    "tier": "master",
+    "rarity_guarantee": "epic"
+  },
+  "forge_leather_armor": {
+    "recipe_id": "forge_leather_armor",
+    "name": "锻造皮甲",
+    "description": "用狼皮和棉布缝制一件皮甲",
+    "output": { "item_id": "leather_armor", "quantity": 1 },
+    "materials": [
+      { "item_id": "wolf_pelt", "quantity": 3 },
+      { "item_id": "cloth", "quantity": 2 }
+    ],
+    "gold_cost": 40,
+    "level_requirement": 2,
+    "success_rate": 1.0,
+    "fail_return_rate": 0.5,
+    "category": "armor",
+    "tier": "basic",
+    "rarity_guarantee": "common"
+  },
+  "forge_iron_shield": {
+    "recipe_id": "forge_iron_shield",
+    "name": "锻造铁盾",
+    "description": "用铁矿石锻造一面铁盾",
+    "output": { "item_id": "iron_shield", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 4 },
+      { "item_id": "beast_bone", "quantity": 2 }
+    ],
+    "gold_cost": 80,
+    "level_requirement": 4,
+    "success_rate": 1.0,
+    "fail_return_rate": 0.5,
+    "category": "armor",
+    "tier": "basic",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_iron_helmet": {
+    "recipe_id": "forge_iron_helmet",
+    "name": "锻造铁盔",
+    "description": "用铁矿石锻造一顶铁盔",
+    "output": { "item_id": "iron_helmet", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 3 },
+      { "item_id": "beast_bone", "quantity": 1 }
+    ],
+    "gold_cost": 60,
+    "level_requirement": 3,
+    "success_rate": 1.0,
+    "fail_return_rate": 0.5,
+    "category": "armor",
+    "tier": "basic",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_iron_armor": {
+    "recipe_id": "forge_iron_armor",
+    "name": "锻造铁甲",
+    "description": "用铁矿石锻造一副铁甲",
+    "output": { "item_id": "iron_armor", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 6 },
+      { "item_id": "beast_bone", "quantity": 2 },
+      { "item_id": "cloth", "quantity": 1 }
+    ],
+    "gold_cost": 200,
+    "level_requirement": 5,
+    "success_rate": 0.9,
+    "fail_return_rate": 0.5,
+    "category": "armor",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_steel_shield": {
+    "recipe_id": "forge_steel_shield",
+    "name": "锻造精钢盾",
+    "description": "用精钢锭锻造一面精钢盾",
+    "output": { "item_id": "steel_shield", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 5 },
+      { "item_id": "steel_ingot", "quantity": 3 }
+    ],
+    "gold_cost": 180,
+    "level_requirement": 6,
+    "success_rate": 0.9,
+    "fail_return_rate": 0.5,
+    "category": "armor",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_hard_leather_armor": {
+    "recipe_id": "forge_hard_leather_armor",
+    "name": "锻造硬皮衣",
+    "description": "用狼皮和兽骨锻造一件硬皮衣",
+    "output": { "item_id": "hard_leather_armor", "quantity": 1 },
+    "materials": [
+      { "item_id": "wolf_pelt", "quantity": 5 },
+      { "item_id": "cloth", "quantity": 3 },
+      { "item_id": "beast_bone", "quantity": 1 }
+    ],
+    "gold_cost": 150,
+    "level_requirement": 5,
+    "success_rate": 0.9,
+    "fail_return_rate": 0.5,
+    "category": "armor",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_silver_helmet": {
+    "recipe_id": "forge_silver_helmet",
+    "name": "锻造银盔",
+    "description": "用精钢锭锻造一顶银盔",
+    "output": { "item_id": "silver_helmet", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 4 },
+      { "item_id": "steel_ingot", "quantity": 2 },
+      { "item_id": "beast_bone", "quantity": 1 }
+    ],
+    "gold_cost": 200,
+    "level_requirement": 6,
+    "success_rate": 0.9,
+    "fail_return_rate": 0.5,
+    "category": "armor",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_steel_armor": {
+    "recipe_id": "forge_steel_armor",
+    "name": "锻造精钢甲",
+    "description": "用精钢锭锻造一副精钢甲",
+    "output": { "item_id": "steel_armor", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 6 },
+      { "item_id": "steel_ingot", "quantity": 4 },
+      { "item_id": "beast_bone", "quantity": 2 }
+    ],
+    "gold_cost": 400,
+    "level_requirement": 10,
+    "success_rate": 0.75,
+    "fail_return_rate": 0.4,
+    "category": "armor",
+    "tier": "advanced",
+    "rarity_guarantee": "rare"
+  },
+  "forge_mithril_shield": {
+    "recipe_id": "forge_mithril_shield",
+    "name": "锻造秘银盾",
+    "description": "用魔法水晶和暗影精华锻造一面秘银盾",
+    "output": { "item_id": "mithril_shield", "quantity": 1 },
+    "materials": [
+      { "item_id": "magic_crystal", "quantity": 5 },
+      { "item_id": "steel_ingot", "quantity": 3 },
+      { "item_id": "shadow_essence", "quantity": 1 }
+    ],
+    "gold_cost": 550,
+    "level_requirement": 12,
+    "success_rate": 0.7,
+    "fail_return_rate": 0.4,
+    "category": "armor",
+    "tier": "advanced",
+    "rarity_guarantee": "epic"
+  },
+  "forge_dragon_leather_armor": {
+    "recipe_id": "forge_dragon_leather_armor",
+    "name": "锻造龙皮衣",
+    "description": "用龙鳞和暗影精华锻造一件龙皮衣",
+    "output": { "item_id": "dragon_leather_armor", "quantity": 1 },
+    "materials": [
+      { "item_id": "dragon_scale", "quantity": 3 },
+      { "item_id": "magic_crystal", "quantity": 2 },
+      { "item_id": "shadow_essence", "quantity": 2 }
+    ],
+    "gold_cost": 600,
+    "level_requirement": 13,
+    "success_rate": 0.65,
+    "fail_return_rate": 0.35,
+    "category": "armor",
+    "tier": "master",
+    "rarity_guarantee": "epic"
+  },
+  "forge_ring_of_power": {
+    "recipe_id": "forge_ring_of_power",
+    "name": "锻造力量戒指",
+    "description": "用铁矿石和兽骨锻造一枚力量戒指",
+    "output": { "item_id": "ring_of_power", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 2 },
+      { "item_id": "beast_bone", "quantity": 1 }
+    ],
+    "gold_cost": 200,
+    "level_requirement": 3,
+    "success_rate": 1.0,
+    "fail_return_rate": 0.5,
+    "category": "accessory",
+    "tier": "basic",
+    "rarity_guarantee": "common"
+  },
+  "forge_life_necklace": {
+    "recipe_id": "forge_life_necklace",
+    "name": "锻造生命项链",
+    "description": "用兽骨和棉布锻造一条生命项链",
+    "output": { "item_id": "life_necklace", "quantity": 1 },
+    "materials": [
+      { "item_id": "beast_bone", "quantity": 2 },
+      { "item_id": "cloth", "quantity": 2 }
+    ],
+    "gold_cost": 180,
+    "level_requirement": 2,
+    "success_rate": 1.0,
+    "fail_return_rate": 0.5,
+    "category": "accessory",
+    "tier": "basic",
+    "rarity_guarantee": "common"
+  },
+  "forge_silver_ring": {
+    "recipe_id": "forge_silver_ring",
+    "name": "锻造银戒指",
+    "description": "用精钢锭和魔法水晶锻造一枚银戒指",
+    "output": { "item_id": "silver_ring", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 3 },
+      { "item_id": "steel_ingot", "quantity": 2 },
+      { "item_id": "magic_crystal", "quantity": 1 }
+    ],
+    "gold_cost": 350,
+    "level_requirement": 7,
+    "success_rate": 0.85,
+    "fail_return_rate": 0.5,
+    "category": "accessory",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_guardian_necklace": {
+    "recipe_id": "forge_guardian_necklace",
+    "name": "锻造守护项链",
+    "description": "用精钢锭和兽骨锻造一条守护项链",
+    "output": { "item_id": "guardian_necklace", "quantity": 1 },
+    "materials": [
+      { "item_id": "iron_ore", "quantity": 2 },
+      { "item_id": "steel_ingot", "quantity": 2 },
+      { "item_id": "beast_bone", "quantity": 2 }
+    ],
+    "gold_cost": 320,
+    "level_requirement": 6,
+    "success_rate": 0.9,
+    "fail_return_rate": 0.5,
+    "category": "accessory",
+    "tier": "intermediate",
+    "rarity_guarantee": "uncommon"
+  },
+  "forge_darkgold_ring": {
+    "recipe_id": "forge_darkgold_ring",
+    "name": "锻造暗金戒指",
+    "description": "用暗影精华和魔法水晶锻造一枚暗金戒指",
+    "output": { "item_id": "darkgold_ring", "quantity": 1 },
+    "materials": [
+      { "item_id": "magic_crystal", "quantity": 3 },
+      { "item_id": "shadow_essence", "quantity": 2 },
+      { "item_id": "ancient_shard", "quantity": 2 }
+    ],
+    "gold_cost": 900,
+    "level_requirement": 14,
+    "success_rate": 0.6,
+    "fail_return_rate": 0.35,
+    "category": "accessory",
+    "tier": "master",
+    "rarity_guarantee": "epic"
+  },
+  "forge_eternal_necklace": {
+    "recipe_id": "forge_eternal_necklace",
+    "name": "锻造永恒项链",
+    "description": "用龙鳞和古代碎片锻造一条永恒项链",
+    "output": { "item_id": "eternal_necklace", "quantity": 1 },
+    "materials": [
+      { "item_id": "magic_crystal", "quantity": 3 },
+      { "item_id": "dragon_scale", "quantity": 2 },
+      { "item_id": "ancient_shard", "quantity": 2 }
+    ],
+    "gold_cost": 800,
+    "level_requirement": 13,
+    "success_rate": 0.65,
+    "fail_return_rate": 0.35,
+    "category": "accessory",
+    "tier": "master",
+    "rarity_guarantee": "epic"
+  }
+}

@@ -160,7 +160,7 @@ function drawNPC(ctx, npc) {
   ctx.fillText(npc.name, x + s / 2, y - 4);
 
   // 交互提示
-  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen && !combatOpen) {
+  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !gameMenuOpen && !combatOpen && !forgePanelOpen) {
     npc.showPrompt = true;
     const prompt = "按 E 交互";
     const pw = ctx.measureText(prompt).width + 10;
@@ -235,6 +235,9 @@ function openNpcInteract(npc) {
   } else if (npc.npc_id === "skill_master") {
     html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
     html += '<button class="btn-interact" onclick="interactLearnSkill()">学习技能 (4)</button>';
+  } else if (npc.npc_id === "blacksmith") {
+    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
+    html += '<button class="btn-interact" onclick="interactForge()">锻造 (4)</button>';
   } else {
     html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
   }
@@ -262,6 +265,12 @@ function interactShop() {
   if (!interactNpcId) return;
   closeNpcInteract();
   openShop(interactNpcId);
+}
+
+function interactForge() {
+  if (!interactNpcId) return;
+  closeNpcInteract();
+  openForgePanel(interactNpcId);
 }
 
 function interactQuest() {

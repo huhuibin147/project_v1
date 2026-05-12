@@ -228,7 +228,16 @@ function renderEquipment() {
       detailParts.push(`[${rarityName}]`);
       const detailStr = detailParts.join(" ");
 
-      statsEl.innerHTML = `${detailStr} ${formatStatsText(slotData.stats)}`;
+      let affixStr = "";
+      if (slotData.affixes && slotData.affixes.length > 0) {
+        const affixNames = slotData.affixes.map(a => {
+          if (typeof a === "object" && a.name) return a.name;
+          return a;
+        }).join(", ");
+        affixStr = ` | 词条: ${affixNames}`;
+      }
+
+      statsEl.innerHTML = `${detailStr} ${formatStatsText(slotData.stats)}${affixStr}`;
       statsEl.style.color = rarityColor;
       btnEl.style.display = "inline-block";
     } else {

@@ -322,6 +322,7 @@ function returnToMainMenu() {
     if (shopOpen) closeShop();
     if (playerInfoOpen) closePlayerInfo();
     if (talentPanelOpen) closeTalentPanel();
+    if (forgePanelOpen) closeForgePanel();
     if (npcInteractOpen) closeNpcInteract();
     if (combatOpen) endCombat();
 

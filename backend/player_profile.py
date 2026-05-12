@@ -138,6 +138,7 @@ class PlayerProfile:
 
     def _calc_equip_bonus(self) -> dict:
         from item_system import ITEMS_DB
+        from affix_system import get_item_affixes, calc_affix_stat_bonus
         bonus = {"attack": 0, "defense": 0, "speed": 0, "max_hp": 0, "max_mp": 0}
         for slot_name, item_id in self.equipment.items():
             if item_id:
@@ -145,6 +146,10 @@ class PlayerProfile:
                 stats = info.get("stats", {})
                 for key in bonus:
                     bonus[key] += stats.get(key, 0)
+                affixes = get_item_affixes(item_id, self.inventory)
+                affix_bonus = calc_affix_stat_bonus(affixes, bonus)
+                for key in bonus:
+                    bonus[key] += affix_bonus.get(key, 0)
         return bonus
 
     def _recalc_stats(self):
@@ -257,25 +262,32 @@ class PlayerProfile:
 
     def _get_equipment_detail(self) -> dict:
         from item_system import ITEMS_DB
+        from affix_system import get_item_affixes, get_item_rarity
         result = {}
         for slot_name in EQUIP_SLOTS:
             item_id = self.equipment.get(slot_name)
             if item_id:
                 info = ITEMS_DB.get(item_id, {})
+                affixes = get_item_affixes(item_id, self.inventory)
+                rarity = get_item_rarity(item_id, self.inventory)
                 result[slot_name] = {
                     "item_id": item_id,
                     "name": info.get("name", item_id),
                     "type": info.get("type", "unknown"),
                     "description": info.get("description", ""),
                     "stats": info.get("stats", {}),
-                    "rarity": info.get("rarity", "common"),
+                    "rarity": rarity,
                     "tier": info.get("tier"),
                     "level_range": info.get("level_range"),
-                    "affixes": info.get("affixes", []),
+                    "affixes": affixes,
                 }
             else:
                 result[slot_name] = None
         return result
+
+    def get_equipment_affixes(self) -> list[dict]:
+        from affix_system import get_all_equipment_affixes
+        return get_all_equipment_affixes(self.equipment, self.inventory)
 
     def get_equipment_info(self) -> dict:
         bonus = self._calc_equip_bonus()
@@ -569,6 +581,10 @@ class PlayerProfile:
             effect = ITEM_EFFECTS.get(item_id, {})
             heal_value = effect.get("value") if effect.get("type") == "heal" else None
             mp_value = effect.get("value") if effect.get("type") == "restore_mp" else None
+            instance_affixes = item.get("instance_affixes")
+            instance_rarity = item.get("instance_rarity")
+            affixes = instance_affixes if instance_affixes is not None else info.get("affixes", [])
+            rarity = instance_rarity if instance_rarity else info.get("rarity", "common")
             result.append({
                 "item_id": item_id,
                 "name": info.get("name", item_id),
@@ -581,10 +597,10 @@ class PlayerProfile:
                 "stats": info.get("stats"),
                 "heal_value": heal_value,
                 "mp_value": mp_value,
-                "rarity": info.get("rarity", "common"),
+                "rarity": rarity,
                 "tier": info.get("tier"),
                 "level_range": info.get("level_range"),
-                "affixes": info.get("affixes", []),
+                "affixes": affixes,
                 "required_class": info.get("required_class"),
             })
         return result

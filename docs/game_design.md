@@ -376,15 +376,18 @@ project_v1/
 
 ## Phase 1：核心玩法补全（优先级：高）
 
-### 1.1 锻造系统实现
-- 锻造配方配置 `config/forge_recipes.json`
-- 后端 `backend/forge_system.py`
-- 前端锻造面板（铁匠交互新增「锻造」选项）
+### 1.1 锻造系统 ✅ 已完成
+- ✅ 锻造配方配置 `config/forge_recipes.json`（25 种配方，覆盖武器/防具/饰品）
+- ✅ 后端 `backend/forge_system.py`（配方查询、材料检查、锻造执行、稀有度抽取）
+- ✅ 前端锻造面板（铁匠交互新增「锻造」选项，支持分类筛选、分页、锻造结果弹窗）
+- ✅ API 路由：`GET /api/forge/recipes`、`POST /api/forge/craft`
 
-### 1.2 装备词条系统实现
-- 词条配置 `config/affixes.json`
-- 后端 `backend/affix_system.py`
-- 前端装备卡片显示词条信息
+### 1.2 装备词条系统 ✅ 已完成
+- ✅ 词条配置 `config/affixes.json`（5 大类别，30+ 词条）
+- ✅ 后端 `backend/affix_system.py`（词条生成、属性加成计算、装备词条查询）
+- ✅ 前端装备卡片显示词条信息（名称 + 描述）
+- ✅ 词条效果集成到战斗引擎（on_attack/on_hit/on_kill/conditional/passive）
+- ✅ API 路由：`GET /api/affixes/types`
 
 ### 1.3 多敌人与 BOSS 战
 - `CombatSession` 支持怪物列表（1-3 个怪物）

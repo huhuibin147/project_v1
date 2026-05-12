@@ -73,6 +73,7 @@ class CombatSession:
         self.player_shield: int = 0
         self.skill_cooldowns: dict[str, int] = {}
         self.talent_passives: dict = player_snapshot.get("talent_passives", {})
+        self.equipment_affixes: list[dict] = player_snapshot.get("equipment_affixes", [])
 
         self.phase = CombatPhase.PLAYER_TURN
         self.turn_count = 0
@@ -362,7 +363,11 @@ def _execute_monster_action(session: CombatSession, action: str) -> list[dict]:
             session.player_speed,
             session.player_defending
         )
-        actual_dmg, shield_absorbed = _apply_shield(session, result["damage"], is_player=True)
+        raw_dmg = result["damage"]
+        affix_hit_logs = []
+        if session.equipment_affixes:
+            affix_hit_logs, raw_dmg = _apply_affix_on_hit(session, raw_dmg)
+        actual_dmg, shield_absorbed = _apply_shield(session, raw_dmg, is_player=True)
         session.player_hp = max(0, session.player_hp - actual_dmg)
         reflect_dmg = _apply_reflect(session, actual_dmg, is_player=False)
         lifesteal_heal = _apply_lifesteal(session, actual_dmg, is_player=False)
@@ -377,6 +382,7 @@ def _execute_monster_action(session: CombatSession, action: str) -> list[dict]:
         if shield_absorbed > 0:
             entry["text"] += f"（护盾吸收 {shield_absorbed}）"
         logs.append(entry)
+        logs.extend(affix_hit_logs)
         if reflect_dmg > 0:
             logs.append({"type": "reflect", "text": f"反伤！{monster_name}受到 {reflect_dmg} 点反弹伤害！"})
         if lifesteal_heal > 0:
@@ -588,6 +594,111 @@ def _apply_talent_conditional(session: CombatSession) -> list[dict]:
     return logs
 
 
+def _apply_affix_on_attack(session: CombatSession, damage: int) -> list[dict]:
+    logs = []
+    for affix in session.equipment_affixes:
+        if affix.get("category") != "on_attack":
+            continue
+        for eff in affix.get("effects", []):
+            if eff.get("type") == "on_hit":
+                trigger_chance = eff.get("trigger_chance", 0.1)
+                if random.random() < trigger_chance:
+                    apply_effect = eff.get("apply_effect")
+                    duration = eff.get("effect_duration", 3)
+                    if apply_effect == "thunder_damage":
+                        extra_dmg = max(1, int(damage * 0.5))
+                        session.monster_hp = max(0, session.monster_hp - extra_dmg)
+                        logs.append({"type": "affix", "text": f"词条【{affix['name']}】触发！雷击造成 {extra_dmg} 点额外伤害！"})
+                    elif apply_effect in ("burn", "freeze", "stun", "poison", "bleed", "silence", "speed_down"):
+                        new_eff = StatusEffect(apply_effect, duration, source=f"affix:{affix['affix_id']}")
+                        session.monster_effects = _add_effect(session.monster_effects, new_eff)
+                        eff_name = EFFECT_NAMES.get(apply_effect, apply_effect)
+                        logs.append({"type": "affix", "text": f"词条【{affix['name']}】触发！怪物被{eff_name}！"})
+            elif eff.get("type") == "lifesteal":
+                trigger_chance = eff.get("trigger_chance", 0.1)
+                if random.random() < trigger_chance:
+                    ls_pct = eff.get("value", 0.1)
+                    heal = max(1, int(damage * ls_pct))
+                    session.player_hp = min(session.player_max_hp, session.player_hp + heal)
+                    logs.append({"type": "affix", "text": f"词条【{affix['name']}】触发！吸血恢复 {heal} 点生命。"})
+    return logs
+
+
+def _apply_affix_on_hit(session: CombatSession, damage: int) -> tuple[list[dict], int]:
+    logs = []
+    reduced_damage = damage
+    for affix in session.equipment_affixes:
+        if affix.get("category") != "on_hit":
+            continue
+        for eff in affix.get("effects", []):
+            if eff.get("type") == "reflect":
+                trigger_chance = eff.get("trigger_chance", 1.0)
+                if random.random() < trigger_chance:
+                    reflect_pct = eff.get("value", 0.15)
+                    reflect_dmg = max(1, int(damage * reflect_pct))
+                    session.monster_hp = max(0, session.monster_hp - reflect_dmg)
+                    logs.append({"type": "affix", "text": f"词条【{affix['name']}】触发！反弹 {reflect_dmg} 点伤害！"})
+            elif eff.get("type") == "damage_reduce":
+                trigger_chance = eff.get("trigger_chance", 0.1)
+                if random.random() < trigger_chance:
+                    reduce_pct = eff.get("value", 0.5)
+                    reduction = int(reduced_damage * reduce_pct)
+                    reduced_damage = max(1, reduced_damage - reduction)
+                    logs.append({"type": "affix", "text": f"词条【{affix['name']}】触发！减伤 {reduction} 点！"})
+    return logs, reduced_damage
+
+
+def _apply_affix_on_kill(session: CombatSession) -> tuple[list[dict], float, float]:
+    logs = []
+    gold_mult = 1.0
+    exp_mult = 1.0
+    for affix in session.equipment_affixes:
+        if affix.get("category") != "on_kill":
+            continue
+        for eff in affix.get("effects", []):
+            if eff.get("type") == "gold_bonus":
+                gold_mult += eff.get("value", 0.15)
+                logs.append({"type": "affix", "text": f"词条【{affix['name']}】触发！金币获取 +{int(eff.get('value', 0.15) * 100)}%"})
+            elif eff.get("type") == "exp_bonus":
+                exp_mult += eff.get("value", 0.10)
+                logs.append({"type": "affix", "text": f"词条【{affix['name']}】触发！经验获取 +{int(eff.get('value', 0.10) * 100)}%"})
+    return logs, gold_mult, exp_mult
+
+
+def _apply_affix_conditional(session: CombatSession) -> list[dict]:
+    logs = []
+    for affix in session.equipment_affixes:
+        if affix.get("category") != "conditional":
+            continue
+        for eff in affix.get("effects", []):
+            if eff.get("type") == "conditional_stat":
+                condition = eff.get("condition")
+                if condition == "hp_below_30" and session.player_hp < session.player_max_hp * 0.3:
+                    stat = eff.get("stat", "attack")
+                    pct = eff.get("value", 0.2)
+                    if stat == "attack":
+                        boost = max(1, int(session.base_player_attack * pct))
+                        new_eff = StatusEffect("attack_up", 1, value=boost, source=f"affix:{affix['affix_id']}")
+                        session.player_effects = _add_effect(session.player_effects, new_eff)
+                        _recalculate_player_buffs(session)
+                        logs.append({"type": "affix", "text": f"词条【{affix['name']}】触发！攻击力 +{boost}！"})
+    return logs
+
+
+def _apply_affix_regen(session: CombatSession) -> list[dict]:
+    logs = []
+    for affix in session.equipment_affixes:
+        if affix.get("category") != "passive":
+            continue
+        for eff in affix.get("effects", []):
+            if eff.get("type") == "stat_flat" and eff.get("stat") == "regen_percent":
+                pct = eff.get("value", 0.03)
+                heal = max(1, int(session.player_max_hp * pct))
+                session.player_hp = min(session.player_max_hp, session.player_hp + heal)
+                logs.append({"type": "affix", "text": f"词条【{affix['name']}】再生恢复 {heal} 点生命。"})
+    return logs
+
+
 def resolve_turn(session: CombatSession, action: str,
                  action_data: dict = None) -> dict:
     session.turn_count += 1
@@ -602,6 +713,16 @@ def resolve_turn(session: CombatSession, action: str,
     if session.talent_passives:
         talent_cond_logs = _apply_talent_conditional(session)
         log_entries.extend(talent_cond_logs)
+
+    # Affix: conditional triggers
+    if session.equipment_affixes:
+        affix_cond_logs = _apply_affix_conditional(session)
+        log_entries.extend(affix_cond_logs)
+
+    # Affix: regen
+    if session.equipment_affixes:
+        affix_regen_logs = _apply_affix_regen(session)
+        log_entries.extend(affix_regen_logs)
 
     # Talent: MP regen
     if session.talent_passives and session.talent_passives.get("mp_regen", 0) > 0:
@@ -662,6 +783,11 @@ def resolve_turn(session: CombatSession, action: str,
             talent_atk_logs = _apply_talent_on_attack(session, actual_dmg)
             log_entries.extend(talent_atk_logs)
 
+        # Affix: on attack triggers
+        if session.equipment_affixes:
+            affix_atk_logs = _apply_affix_on_attack(session, actual_dmg)
+            log_entries.extend(affix_atk_logs)
+
     elif action == "defend":
         # Talent: defend boost
         defend_reduction = 0.5
@@ -714,6 +840,14 @@ def resolve_turn(session: CombatSession, action: str,
         session.exp_reward = session.monster_config["exp_reward"]
         log_entries.append({"type": "victory",
                             "text": f"击败了{session.monster_config['name']}！"})
+        # Affix: on kill triggers
+        if session.equipment_affixes:
+            affix_kill_logs, gold_mult, exp_mult = _apply_affix_on_kill(session)
+            log_entries.extend(affix_kill_logs)
+            if gold_mult > 1.0:
+                session.gold_reward = int(session.gold_reward * gold_mult)
+            if exp_mult > 1.0:
+                session.exp_reward = int(session.exp_reward * exp_mult)
         # Talent: on kill triggers
         if session.talent_passives:
             talent_kill_logs = _apply_talent_on_kill(session)

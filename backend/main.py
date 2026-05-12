@@ -755,24 +755,6 @@ async def npc_learn_skill(req: LearnSkillRequest):
     }
 
 
-# ===== 锻造系统预留接口 =====
-
-class ForgeRequest(BaseModel):
-    item_id: str
-    materials: list[dict] = []
-
-@app.get("/api/forge/recipes")
-async def get_forge_recipes():
-    """获取可用锻造配方列表（预留接口）。"""
-    return {"recipes": [], "message": "锻造系统开发中，敬请期待"}
-
-
-@app.post("/api/forge/craft")
-async def forge_craft(req: ForgeRequest):
-    """锻造装备（预留接口）。"""
-    return {"success": False, "message": "锻造系统开发中，敬请期待"}
-
-
 # ===== 天赋系统 =====
 
 class TalentLearnRequest(BaseModel):
@@ -791,20 +773,6 @@ async def learn_talent(req: TalentLearnRequest):
 async def reset_talents():
     result = player_profile.reset_talents()
     return result
-
-
-# ===== 词条系统预留接口 =====
-
-@app.get("/api/affixes/types")
-async def get_affix_types():
-    """获取可用词条类型列表（预留接口）。"""
-    return {"affixes": [], "message": "词条系统开发中，敬请期待"}
-
-
-@app.post("/api/affixes/enchant")
-async def enchant_item(req: ForgeRequest):
-    """为装备附加词条（预留接口）。"""
-    return {"success": False, "message": "词条系统开发中，敬请期待"}
 
 
 # ===== 任务系统 =====
@@ -947,6 +915,7 @@ async def combat_start(req: CombatStartRequest):
         "speed": player_profile.speed,
         "skills": getattr(player_profile, "skills", []),
         "talent_passives": player_profile.get_talent_passives() if hasattr(player_profile, "get_talent_passives") else {},
+        "equipment_affixes": player_profile.get_equipment_affixes() if hasattr(player_profile, "get_equipment_affixes") else [],
     }
 
     from skill_system import format_skill_for_frontend
@@ -1056,6 +1025,71 @@ async def combat_end(req: CombatEndRequest):
     remove_session(req.session_id)
     player_profile._save()
     return {"success": True, "player_info": player_profile.get_info()}
+
+
+# ===== 锻造系统接口 =====
+
+class ForgeCraftRequest(BaseModel):
+    recipe_id: str
+    npc_id: str = "blacksmith"
+
+
+@app.get("/api/forge/recipes")
+async def get_forge_recipes(npc_id: str = "blacksmith"):
+    from forge_system import get_all_recipes, get_recipes_by_category, format_recipe_for_frontend
+    all_recipes = get_all_recipes()
+    formatted = []
+    for recipe in all_recipes:
+        formatted.append(
+            format_recipe_for_frontend(
+                recipe, player_profile.level, player_profile.gold, player_profile.inventory
+            )
+        )
+    return {
+        "recipes": formatted,
+        "player_level": player_profile.level,
+        "player_gold": player_profile.gold,
+    }
+
+
+@app.post("/api/forge/craft")
+async def forge_craft(req: ForgeCraftRequest):
+    from forge_system import execute_forge
+    result = execute_forge(
+        req.recipe_id, player_profile.level, player_profile.gold, player_profile.inventory
+    )
+    if result.player_inventory is not None:
+        player_profile.inventory = result.player_inventory
+    player_profile.gold = result.player_gold
+    player_profile._save()
+
+    response = {
+        "success": result.success,
+        "message": result.message,
+        "forged": result.forged,
+    }
+    if result.forged:
+        response["result"] = {
+            "item_id": result.output_item_id,
+            "name": result.output_name,
+            "rarity": result.output_rarity,
+            "affixes": result.output_affixes,
+        }
+    else:
+        response["result"] = {
+            "returned_materials": result.returned_materials,
+        }
+    response["player_inventory"] = player_profile.get_inventory()
+    response["player_gold"] = player_profile.gold
+    return response
+
+
+# ===== 词条系统接口 =====
+
+@app.get("/api/affixes/types")
+async def get_affix_types():
+    from affix_system import get_affix_categories
+    return {"categories": get_affix_categories()}
 
 
 # 挂载静态文件（放在路由之后）

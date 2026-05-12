@@ -1,0 +1,236 @@
+{
+  "sharp": {
+    "affix_id": "sharp",
+    "name": "锋利",
+    "category": "passive",
+    "description": "攻击力 +5%",
+    "effects": [
+      { "type": "stat_percent", "stat": "attack", "value": 0.05 }
+    ],
+    "tier": 1,
+    "weight": 40,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["weapon"]
+  },
+  "burning": {
+    "affix_id": "burning",
+    "name": "灼烧",
+    "category": "on_attack",
+    "description": "攻击时 15% 概率附加灼烧效果",
+    "effects": [
+      { "type": "on_hit", "trigger_chance": 0.15, "apply_effect": "burn", "effect_duration": 3 }
+    ],
+    "tier": 2,
+    "weight": 30,
+    "level_range": { "min": 1, "max": 15 },
+    "compatible_slots": ["weapon"]
+  },
+  "frost": {
+    "affix_id": "frost",
+    "name": "冰霜",
+    "category": "on_attack",
+    "description": "攻击时 10% 概率冻结 1 回合",
+    "effects": [
+      { "type": "on_hit", "trigger_chance": 0.10, "apply_effect": "freeze", "effect_duration": 1 }
+    ],
+    "tier": 2,
+    "weight": 25,
+    "level_range": { "min": 1, "max": 15 },
+    "compatible_slots": ["weapon"]
+  },
+  "thunder": {
+    "affix_id": "thunder",
+    "name": "雷击",
+    "category": "on_attack",
+    "description": "攻击时 8% 概率造成额外 50% 伤害",
+    "effects": [
+      { "type": "on_hit", "trigger_chance": 0.08, "apply_effect": "thunder_damage", "effect_duration": 0 }
+    ],
+    "tier": 3,
+    "weight": 15,
+    "level_range": { "min": 5, "max": 20 },
+    "compatible_slots": ["weapon"]
+  },
+  "lifesteal_affix": {
+    "affix_id": "lifesteal_affix",
+    "name": "吸血",
+    "category": "on_attack",
+    "description": "造成伤害时 10% 恢复 HP",
+    "effects": [
+      { "type": "lifesteal", "trigger_chance": 0.10, "value": 0.10 }
+    ],
+    "tier": 2,
+    "weight": 25,
+    "level_range": { "min": 3, "max": 20 },
+    "compatible_slots": ["weapon"]
+  },
+  "crit_bonus": {
+    "affix_id": "crit_bonus",
+    "name": "暴击",
+    "category": "passive",
+    "description": "暴击率 +5%",
+    "effects": [
+      { "type": "stat_flat", "stat": "crit_rate", "value": 0.05 }
+    ],
+    "tier": 2,
+    "weight": 30,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["weapon", "accessory"]
+  },
+  "desperate": {
+    "affix_id": "desperate",
+    "name": "绝境",
+    "category": "conditional",
+    "description": "HP<30% 时攻击力 +20%",
+    "effects": [
+      { "type": "conditional_stat", "condition": "hp_below_30", "stat": "attack", "value": 0.20 }
+    ],
+    "tier": 3,
+    "weight": 15,
+    "level_range": { "min": 5, "max": 20 },
+    "compatible_slots": ["weapon"]
+  },
+  "sturdy": {
+    "affix_id": "sturdy",
+    "name": "坚固",
+    "category": "passive",
+    "description": "防御力 +8%",
+    "effects": [
+      { "type": "stat_percent", "stat": "defense", "value": 0.08 }
+    ],
+    "tier": 1,
+    "weight": 40,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["shield", "head", "body"]
+  },
+  "thorns": {
+    "affix_id": "thorns",
+    "name": "荆棘",
+    "category": "on_hit",
+    "description": "受击时反弹 15% 伤害",
+    "effects": [
+      { "type": "reflect", "trigger_chance": 1.0, "value": 0.15 }
+    ],
+    "tier": 2,
+    "weight": 25,
+    "level_range": { "min": 3, "max": 20 },
+    "compatible_slots": ["shield", "head", "body"]
+  },
+  "shield_affix": {
+    "affix_id": "shield_affix",
+    "name": "护盾",
+    "category": "on_hit",
+    "description": "受击时 10% 概率减伤 50%",
+    "effects": [
+      { "type": "damage_reduce", "trigger_chance": 0.10, "value": 0.50 }
+    ],
+    "tier": 2,
+    "weight": 25,
+    "level_range": { "min": 3, "max": 20 },
+    "compatible_slots": ["shield", "head", "body"]
+  },
+  "vitality": {
+    "affix_id": "vitality",
+    "name": "生命",
+    "category": "passive",
+    "description": "最大 HP +10%",
+    "effects": [
+      { "type": "stat_percent", "stat": "max_hp", "value": 0.10 }
+    ],
+    "tier": 1,
+    "weight": 35,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["shield", "head", "body", "accessory"]
+  },
+  "regen_affix": {
+    "affix_id": "regen_affix",
+    "name": "再生",
+    "category": "passive",
+    "description": "每回合恢复 3% 最大HP",
+    "effects": [
+      { "type": "stat_flat", "stat": "regen_percent", "value": 0.03 }
+    ],
+    "tier": 3,
+    "weight": 15,
+    "level_range": { "min": 5, "max": 20 },
+    "compatible_slots": ["shield", "head", "body"]
+  },
+  "agile": {
+    "affix_id": "agile",
+    "name": "灵活",
+    "category": "passive",
+    "description": "速度 +5",
+    "effects": [
+      { "type": "stat_flat", "stat": "speed", "value": 5 }
+    ],
+    "tier": 1,
+    "weight": 35,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["accessory"]
+  },
+  "vitality_acc": {
+    "affix_id": "vitality_acc",
+    "name": "生命",
+    "category": "passive",
+    "description": "最大 HP +10%",
+    "effects": [
+      { "type": "stat_percent", "stat": "max_hp", "value": 0.10 }
+    ],
+    "tier": 1,
+    "weight": 35,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["accessory"]
+  },
+  "mana_affix": {
+    "affix_id": "mana_affix",
+    "name": "魔力",
+    "category": "passive",
+    "description": "最大 MP +10%",
+    "effects": [
+      { "type": "stat_percent", "stat": "max_mp", "value": 0.10 }
+    ],
+    "tier": 1,
+    "weight": 30,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["accessory"]
+  },
+  "greed": {
+    "affix_id": "greed",
+    "name": "贪婪",
+    "category": "on_kill",
+    "description": "金币获取 +15%",
+    "effects": [
+      { "type": "gold_bonus", "value": 0.15 }
+    ],
+    "tier": 2,
+    "weight": 25,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["accessory"]
+  },
+  "hunter": {
+    "affix_id": "hunter",
+    "name": "猎手",
+    "category": "on_kill",
+    "description": "经验获取 +10%",
+    "effects": [
+      { "type": "exp_bonus", "value": 0.10 }
+    ],
+    "tier": 2,
+    "weight": 25,
+    "level_range": { "min": 1, "max": 20 },
+    "compatible_slots": ["accessory"]
+  },
+  "speed_affix": {
+    "affix_id": "speed_affix",
+    "name": "迅捷",
+    "category": "passive",
+    "description": "速度 +8",
+    "effects": [
+      { "type": "stat_flat", "stat": "speed", "value": 8 }
+    ],
+    "tier": 3,
+    "weight": 15,
+    "level_range": { "min": 5, "max": 20 },
+    "compatible_slots": ["accessory"]
+  }
+}

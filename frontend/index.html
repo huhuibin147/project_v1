@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>青石村 - LLM NPC 冒险</title>
   <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/forge.css">
 </head>
 
 <body>
@@ -62,6 +63,29 @@
           <button class="start-btn secondary" onclick="closeSavePanel()">返回</button>
         </div>
       </div>
+    </div>
+
+    <!-- 锻造面板 -->
+    <div id="forge-panel">
+      <div class="forge-header">
+        <h2>⚒️ 锻造</h2>
+        <span class="forge-header-info">💰 <span id="player-gold-forge">0</span> 金币</span>
+        <button class="forge-close" onclick="closeForgePanel()">×</button>
+      </div>
+      <div id="forge-message"></div>
+      <div class="forge-filters">
+        <button class="forge-filter-btn active" data-filter="all" onclick="filterForgeRecipes('all')">全部</button>
+        <button class="forge-filter-btn" data-filter="weapon" onclick="filterForgeRecipes('weapon')">武器</button>
+        <button class="forge-filter-btn" data-filter="armor" onclick="filterForgeRecipes('armor')">护甲</button>
+        <button class="forge-filter-btn" data-filter="accessory" onclick="filterForgeRecipes('accessory')">饰品</button>
+      </div>
+      <div id="forge-recipes"></div>
+      <div class="forge-pagination" id="forge-pagination"></div>
+    </div>
+
+    <!-- 锻造结果弹窗 -->
+    <div id="forge-result-overlay">
+      <div id="forge-result-content"></div>
     </div>
   </div>
 
@@ -578,6 +602,7 @@
   <script src="/static/js/combat.js"></script>
   <script src="/static/js/quest.js"></script>
   <script src="/static/js/talent.js"></script>
+  <script src="/static/js/forge.js"></script>
   <script src="/static/js/help.js"></script>
   <script src="/static/js/start_screen.js"></script>
   <script src="/static/js/game.js"></script>

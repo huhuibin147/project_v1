@@ -246,7 +246,12 @@ function renderInventoryList(container, pageItems) {
 
     let affixesHtml = "";
     if (item.affixes && item.affixes.length > 0) {
-      affixesHtml = `<div class="item-affixes">${item.affixes.map(a => `<span class="affix-tag">${a}</span>`).join("")}</div>`;
+      affixesHtml = `<div class="item-affixes">${item.affixes.map(a => {
+        if (typeof a === "object" && a.name) {
+          return `<span class="affix-tag" title="${a.description || ""}">${a.name}</span>`;
+        }
+        return `<span class="affix-tag">${a}</span>`;
+      }).join("")}</div>`;
     }
 
     const classRestrictionHtml = getClassRestrictionHtml(item);
@@ -499,7 +504,12 @@ function renderShop() {
 
     let affixesHtml = "";
     if (item.affixes && item.affixes.length > 0) {
-      affixesHtml = `<div class="item-affixes">${item.affixes.map(a => `<span class="affix-tag">${a}</span>`).join("")}</div>`;
+      affixesHtml = `<div class="item-affixes">${item.affixes.map(a => {
+        if (typeof a === "object" && a.name) {
+          return `<span class="affix-tag" title="${a.description || ""}">${a.name}</span>`;
+        }
+        return `<span class="affix-tag">${a}</span>`;
+      }).join("")}</div>`;
     }
 
     const classRestrictionHtml = getClassRestrictionHtml(item);
