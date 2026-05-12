@@ -34,7 +34,7 @@ ensure_config()
 import json
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from routes.context import player_profile, npc_agents, sync_npc_slots
@@ -98,21 +98,27 @@ migrate_old_saves()
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return {
-        "success": False,
-        "error": "validation_error",
-        "detail": exc.errors(),
-    }
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "error": "validation_error",
+            "detail": exc.errors(),
+        },
+    )
 
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     logging.error(f"Unhandled exception: {exc}", exc_info=True)
-    return {
-        "success": False,
-        "error": "internal_error",
-        "message": "服务器内部错误",
-    }
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "error": "internal_error",
+            "message": "服务器内部错误",
+        },
+    )
 
 
 app.include_router(npc_router)

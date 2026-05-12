@@ -67,7 +67,7 @@ function getItemName(itemId) {
 }
 
 function drawHUD(ctx) {
-  if (typeof helpVisible === 'undefined' || !helpVisible) return;
+  if (typeof helpOpen === 'undefined' || !helpOpen) return;
   
   const canvas = GameManager.getCanvas();
   if (!canvas) return;

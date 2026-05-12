@@ -109,3 +109,8 @@ class CombatEndRequest(BaseModel):
 class ForgeCraftRequest(BaseModel):
     recipe_id: str
     npc_id: str = "blacksmith"
+
+
+class ForgeRerollRequest(BaseModel):
+    item_id: str
+    slot: str

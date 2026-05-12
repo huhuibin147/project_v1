@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from routes.context import player_profile, quest_manager, ITEMS_DB
+from routes.models import CombatStartRequest, CombatActionRequest, CombatEndRequest
 
 from combat.engine import (
     create_combat_session, get_session, remove_session,
@@ -29,7 +30,7 @@ async def get_monsters_config():
 
 
 @router.post("/combat/start")
-async def combat_start(req):
+async def combat_start(req: CombatStartRequest):
     cleanup_expired_sessions()
 
     map_file = MAPS_DIR / f"{req.map_id}.json"
@@ -98,7 +99,7 @@ async def combat_start(req):
 
 
 @router.post("/combat/action")
-async def combat_action(req):
+async def combat_action(req: CombatActionRequest):
     session = get_session(req.session_id)
     if not session:
         raise HTTPException(404, "战斗会话不存在或已过期")
@@ -165,7 +166,7 @@ async def combat_action(req):
 
 
 @router.post("/combat/end")
-async def combat_end(req):
+async def combat_end(req: CombatEndRequest):
     remove_session(req.session_id)
     player_profile._save()
     return {"success": True, "player_info": player_profile.get_info()}

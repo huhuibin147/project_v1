@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from routes.context import player_profile, quest_manager
+from routes.models import TransferRequest, ObjectInteractRequest
 
 router = APIRouter(prefix="/api", tags=["map"])
 
@@ -37,7 +38,7 @@ async def get_map(map_id: str):
 
 
 @router.post("/map/transfer")
-async def transfer_map(req):
+async def transfer_map(req: TransferRequest):
     map_file = MAPS_DIR / f"{req.target_map}.json"
     if not map_file.exists():
         raise HTTPException(status_code=404, detail=f"目标地图 '{req.target_map}' 不存在")
@@ -57,7 +58,7 @@ async def transfer_map(req):
 
 
 @router.post("/map/object/interact")
-async def interact_object(req):
+async def interact_object(req: ObjectInteractRequest):
     map_file = MAPS_DIR / f"{req.map_id}.json"
     if not map_file.exists():
         raise HTTPException(status_code=404, detail=f"地图 '{req.map_id}' 不存在")

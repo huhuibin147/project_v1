@@ -6,9 +6,8 @@ const PLAYER_SIZE = TILE_SIZE;
 
 // 计算自适应速度
 function getPlayerSpeed() {
-  // 基于画布宽度调整速度，确保在不同分辨率下移动体验一致
-  // 以1920px宽度为基准，速度为BASE_PLAYER_SPEED
-  const canvasWidth = canvas?.width || 1920;
+  const gameCanvas = GameManager.getCanvas();
+  const canvasWidth = gameCanvas?.width || 1920;
   const scaleFactor = canvasWidth / 1920;
   return Math.max(2, Math.round(BASE_PLAYER_SPEED * Math.max(0.8, scaleFactor)));
 }

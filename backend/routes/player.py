@@ -8,6 +8,7 @@ from routes.context import (
     player_profile, quest_manager, npc_agents,
     ITEMS_DB, ITEM_EFFECTS, format_skill_for_frontend,
 )
+from routes.models import NewGameRequest, LoadSaveRequest, PlayerUpdateRequest, EquipRequest, UnequipRequest, UseItemRequest, PositionRequest
 
 router = APIRouter(prefix="/api", tags=["player"])
 
@@ -33,7 +34,7 @@ async def get_player_classes():
 
 
 @router.post("/player/update")
-async def update_player(req):
+async def update_player(req: PlayerUpdateRequest):
     if req.name:
         player_profile.set_name(req.name)
     if req.class_id:
@@ -54,7 +55,7 @@ async def get_equipment():
 
 
 @router.post("/equip")
-async def equip_item(req):
+async def equip_item(req: EquipRequest):
     result = player_profile.equip_item(req.item_id)
     if not result["success"]:
         return result
@@ -65,7 +66,7 @@ async def equip_item(req):
 
 
 @router.post("/unequip")
-async def unequip_slot(req):
+async def unequip_slot(req: UnequipRequest):
     result = player_profile.unequip_slot(req.slot)
     if not result["success"]:
         return result
@@ -76,7 +77,7 @@ async def unequip_slot(req):
 
 
 @router.post("/use_item")
-async def use_item(req):
+async def use_item(req: UseItemRequest):
     item = ITEMS_DB.get(req.item_id)
     if not item:
         return {"success": False, "message": "物品不存在"}
@@ -107,7 +108,7 @@ async def list_saves():
 
 
 @router.post("/saves/new")
-async def new_game(req):
+async def new_game(req: NewGameRequest):
     if not req.name.strip():
         raise HTTPException(status_code=400, detail="名称不能为空")
     npc_agents.clear()
@@ -118,7 +119,7 @@ async def new_game(req):
 
 
 @router.post("/saves/load")
-async def load_save(req):
+async def load_save(req: LoadSaveRequest):
     success = player_profile.load_from_slot(req.slot)
     if not success:
         raise HTTPException(status_code=400, detail="存档不存在或已损坏")
@@ -139,6 +140,6 @@ async def delete_save(slot: int):
 
 
 @router.post("/player/position")
-async def save_position(req):
+async def save_position(req: PositionRequest):
     player_profile.set_position(req.x, req.y)
     return {"success": True}

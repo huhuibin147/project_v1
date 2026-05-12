@@ -9,6 +9,7 @@ from routes.context import (
     NPC_CONFIG_FILE, ITEMS_DB, ITEM_EFFECTS,
     format_skill_for_frontend,
 )
+from routes.models import ChatRequest, TradeRequest, HealServiceRequest, LearnSkillRequest
 from skill_system import get_skill, can_learn_skill
 
 router = APIRouter(prefix="/api", tags=["npc"])
@@ -32,7 +33,7 @@ async def list_npcs():
 
 
 @router.post("/chat")
-async def chat(req):
+async def chat(req: ChatRequest):
     npc = get_npc(req.npc_id)
     result = npc.chat(req.message)
     quest_updates = quest_manager.on_talk(req.npc_id)
@@ -75,7 +76,7 @@ async def get_shop(npc_id: str = "blacksmith"):
 
 
 @router.post("/trade")
-async def trade(req):
+async def trade(req: TradeRequest):
     npc = get_npc(req.npc_id)
     item_info = ITEMS_DB.get(req.item_id)
     if not item_info:
@@ -132,7 +133,7 @@ async def trade(req):
 
 
 @router.post("/npc/service/heal")
-async def npc_heal_service(req):
+async def npc_heal_service(req: HealServiceRequest):
     npc = get_npc(req.npc_id)
     cfg = npc.cfg
     services = cfg.get("services", {})
@@ -223,7 +224,7 @@ async def npc_available_skills(npc_id: str = "skill_master"):
 
 
 @router.post("/npc/service/learn_skill")
-async def npc_learn_skill(req):
+async def npc_learn_skill(req: LearnSkillRequest):
     npc = get_npc(req.npc_id)
     cfg = npc.cfg
     services = cfg.get("services", {})

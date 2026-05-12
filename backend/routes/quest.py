@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from routes.context import player_profile, quest_manager
+from routes.models import TalentLearnRequest, QuestAcceptRequest, QuestAbandonRequest, QuestCompleteRequest, QuestProgressRequest
 
 router = APIRouter(prefix="/api", tags=["quest"])
 
@@ -13,7 +14,7 @@ async def get_talents():
 
 
 @router.post("/talents/learn")
-async def learn_talent(req):
+async def learn_talent(req: TalentLearnRequest):
     return player_profile.learn_talent(req.talent_id)
 
 
@@ -38,7 +39,7 @@ async def get_npc_quests(npc_id: str):
 
 
 @router.post("/quests/accept")
-async def accept_quest(req):
+async def accept_quest(req: QuestAcceptRequest):
     result = quest_manager.accept_quest(req.quest_id)
     if result["success"]:
         result["player_info"] = player_profile.get_info()
@@ -46,12 +47,12 @@ async def accept_quest(req):
 
 
 @router.post("/quests/abandon")
-async def abandon_quest(req):
+async def abandon_quest(req: QuestAbandonRequest):
     return quest_manager.abandon_quest(req.quest_id)
 
 
 @router.post("/quests/complete")
-async def complete_quest(req):
+async def complete_quest(req: QuestCompleteRequest):
     result = quest_manager.complete_quest(req.quest_id)
     if result["success"]:
         result["player_info"] = player_profile.get_info()
@@ -59,7 +60,7 @@ async def complete_quest(req):
 
 
 @router.post("/quests/progress")
-async def update_quest_progress(req):
+async def update_quest_progress(req: QuestProgressRequest):
     updated = []
     if req.event_type == "kill":
         monster_id = req.data.get("monster_id", "")

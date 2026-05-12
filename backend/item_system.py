@@ -14,10 +14,21 @@ def load_items_config() -> dict:
 ITEMS_DB = load_items_config()
 
 
+def build_item_effects_db() -> dict:
+    """构建物品效果字典：{item_id: effect_info}"""
+    effects = {}
+    for item_id, item_info in ITEMS_DB.items():
+        if "effect" in item_info:
+            effects[item_id] = item_info["effect"]
+    return effects
+
+
+ITEM_EFFECTS = build_item_effects_db()
+
+
 def get_item_effect(item_id: str) -> dict:
     """从配置中获取物品效果"""
-    item_info = ITEMS_DB.get(item_id, {})
-    return item_info.get("effect", {})
+    return ITEM_EFFECTS.get(item_id, {})
 
 
 def get_item_category(item_id: str) -> str:

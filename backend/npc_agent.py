@@ -355,7 +355,16 @@ class NPCAgent:
             start = raw.find("{")
             end = raw.rfind("}") + 1
             if start != -1 and end > start:
-                data = json.loads(raw[start:end])
+                try:
+                    data = json.loads(raw[start:end])
+                except json.JSONDecodeError:
+                    data = {
+                        "reply": raw.strip()[:200],
+                        "intent": local_intent if local_intent != "unknown" else "unknown",
+                        "mood": self.mood,
+                        "affinity_change": 0,
+                        "trade_action": None,
+                    }
             else:
                 data = {
                     "reply": raw.strip()[:200],
@@ -421,3 +430,7 @@ class NPCAgent:
             "shop_gold": self.shop_inventory.gold,
             "memory_count": len(self.memory.long_term_memory),
         }
+
+    @property
+    def history(self) -> list:
+        return self.memory.short_term_memory

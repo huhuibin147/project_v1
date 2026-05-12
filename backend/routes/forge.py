@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from routes.context import player_profile
+from routes.models import ForgeCraftRequest, ForgeRerollRequest
 
 router = APIRouter(prefix="/api", tags=["forge"])
 
@@ -26,7 +27,7 @@ async def get_forge_recipes(npc_id: str = "blacksmith"):
 
 
 @router.post("/forge/craft")
-async def forge_craft(req):
+async def forge_craft(req: ForgeCraftRequest):
     from forge_system import execute_forge
     result = execute_forge(
         req.recipe_id, player_profile.level, player_profile.gold, player_profile.inventory,
@@ -62,7 +63,7 @@ async def forge_craft(req):
 
 
 @router.post("/forge/reroll")
-async def forge_reroll(req):
+async def forge_reroll(req: ForgeRerollRequest):
     from affix_system import reroll_single_affix, REROLL_COSTS
     item_id = req.item_id
     slot = req.slot

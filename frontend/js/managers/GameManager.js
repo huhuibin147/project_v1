@@ -46,57 +46,9 @@ const GameManager = (() => {
   }
 
   function render() {
-    if (!ctx || !canvas) return;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    
-    if (typeof camera !== 'undefined') {
-      ctx.translate(-camera.x, -camera.y);
+    if (typeof RenderManager !== 'undefined') {
+      RenderManager.render(ctx, canvas);
     }
-
-    if (typeof drawMap === 'function') drawMap(ctx);
-    if (typeof drawObjects === 'function') drawObjects(ctx);
-    if (typeof drawEnvironmentParticles === 'function') drawEnvironmentParticles(ctx);
-
-    const drawables = [];
-
-    if (typeof npcs !== 'undefined') {
-      for (const npc of npcs) {
-        drawables.push({ type: "npc", y: npc.y, data: npc });
-      }
-    }
-    
-    if (typeof mapMonsters !== 'undefined') {
-      for (const m of mapMonsters) {
-        if (m.alive) {
-          drawables.push({ type: "monster", y: m.y, data: m });
-        }
-      }
-    }
-    
-    if (typeof player !== 'undefined') {
-      drawables.push({ type: "player", y: player.y, data: player });
-    }
-
-    drawables.sort((a, b) => a.y - b.y);
-
-    for (const obj of drawables) {
-      if (obj.type === "npc" && typeof drawNPC === 'function') {
-        drawNPC(ctx, obj.data);
-      } else if (obj.type === "monster" && typeof drawMapMonster === 'function') {
-        drawMapMonster(ctx, obj.data);
-      } else if (obj.type === "player" && typeof drawPlayer === 'function') {
-        drawPlayer(ctx);
-      }
-    }
-
-    ctx.restore();
-
-    if (typeof renderMinimap === 'function') renderMinimap();
-    if (typeof updateHudMapName === 'function') updateHudMapName();
-    if (typeof drawGatherHint === 'function') drawGatherHint();
-    if (typeof drawHUD === 'function') drawHUD(ctx);
   }
 
   async function startGame() {
