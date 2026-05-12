@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 ROOT_DIR = Path(__file__).parent.parent
 CONFIG_DIR = ROOT_DIR / "config"
@@ -223,12 +223,27 @@ class QuestManager:
         if reward_details["affinity"] > 0:
             reward_msgs.append(f"{reward_details['affinity_npc']}好感+{reward_details['affinity']}")
         message = f"任务完成！获得：{'、'.join(reward_msgs)}"
-        return {
+        
+        result = {
             "success": True,
             "message": message,
             "rewards": reward_details,
             "dialogue": cfg.get("dialogue", {}).get("complete", ""),
         }
+        
+        next_quest_id = cfg.get("next_in_chain")
+        if next_quest_id:
+            next_cfg = get_quest_config(next_quest_id)
+            if next_cfg and self._check_prerequisites(next_cfg):
+                accept_result = self.accept_quest(next_quest_id)
+                if accept_result["success"]:
+                    result["next_quest"] = {
+                        "quest_id": next_quest_id,
+                        "quest_name": next_cfg.get("name"),
+                        "message": next_cfg.get("dialogue", {}).get("offer", "")
+                    }
+        
+        return result
 
     def _add_npc_affinity(self, npc_id: str, value: int):
         save_dir = Path(__file__).parent.parent / "data"
@@ -481,3 +496,62 @@ class QuestManager:
                 "completed": current >= required,
             })
         return result
+
+    def _should_reset_daily(self) -> bool:
+        now_utc = datetime.now(timezone.utc)
+        reset_time = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        last_reset_str = self.player.quests.get("daily_reset", "")
+        if not last_reset_str:
+            return True
+        
+        try:
+            last_reset = datetime.fromisoformat(last_reset_str)
+            if last_reset.tzinfo is None:
+                last_reset = last_reset.replace(tzinfo=timezone.utc)
+            return now_utc >= reset_time and last_reset < reset_time
+        except ValueError:
+            return True
+
+    def reset_daily_quests(self) -> list[str]:
+        if not self._should_reset_daily():
+            return []
+        
+        self.player.quests["daily_reset"] = datetime.now(timezone.utc).isoformat()
+        reset_quests = []
+        
+        for quest_id, quest_data in list(self.player.quests.get("active", {}).items()):
+            cfg = get_quest_config(quest_id)
+            if cfg and cfg.get("type") == "daily":
+                quest_data["objectives_progress"] = [0] * len(cfg.get("objectives", []))
+                quest_data["accepted_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                reset_quests.append(quest_id)
+        
+        if reset_quests:
+            self._save()
+        return reset_quests
+
+    def get_quest_chain(self, quest_id: str) -> dict | None:
+        cfg = get_quest_config(quest_id)
+        if not cfg:
+            return None
+        
+        chain_id = cfg.get("chain")
+        if not chain_id:
+            return None
+        
+        chain_quests = []
+        for qid, qcfg in _QUESTS_DB.items():
+            if qcfg.get("chain") == chain_id:
+                chain_quests.append({
+                    "quest_id": qid,
+                    "quest_name": qcfg.get("name"),
+                    "order": qcfg.get("chain_order", 0),
+                    "status": self.get_quest_status(qid),
+                })
+        
+        chain_quests.sort(key=lambda x: x["order"])
+        return {
+            "chain_id": chain_id,
+            "quests": chain_quests,
+        }

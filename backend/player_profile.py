@@ -1,4 +1,6 @@
 import json
+import shutil
+import hashlib
 from pathlib import Path
 from datetime import datetime
 
@@ -10,10 +12,44 @@ SAVE_SLOTS = 3
 EQUIP_SLOTS = ["weapon", "shield", "head", "body", "accessory"]
 DEFAULT_EQUIPMENT = {s: None for s in EQUIP_SLOTS}
 
+STAT_KEYS = ["max_hp", "max_mp", "attack", "defense", "speed"]
+STAT_MIN = 1
+STAT_MAX = 99999
+
 
 def load_defaults() -> dict:
     with open(DEFAULT_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+class StatsCache:
+    def __init__(self):
+        self.equipment_hash = None
+        self.talents_hash = None
+        self.level = None
+        self.class_id = None
+        self.cached_stats = None
+
+    def needs_recalc(self, player: "PlayerProfile") -> bool:
+        current_equip = json.dumps(player.equipment, sort_keys=True)
+        current_talents = json.dumps(player.talents, sort_keys=True)
+        current_equip_hash = hashlib.md5(current_equip.encode()).hexdigest()
+        current_talents_hash = hashlib.md5(current_talents.encode()).hexdigest()
+        return (
+            current_equip_hash != self.equipment_hash or
+            current_talents_hash != self.talents_hash or
+            player.level != self.level or
+            player.class_id != self.class_id
+        )
+
+    def update(self, player: "PlayerProfile", stats: dict):
+        current_equip = json.dumps(player.equipment, sort_keys=True)
+        current_talents = json.dumps(player.talents, sort_keys=True)
+        self.equipment_hash = hashlib.md5(current_equip.encode()).hexdigest()
+        self.talents_hash = hashlib.md5(current_talents.encode()).hexdigest()
+        self.level = player.level
+        self.class_id = player.class_id
+        self.cached_stats = stats
 
 
 def save_dir(slot: int) -> Path:
@@ -29,6 +65,8 @@ class PlayerProfile:
         defaults = load_defaults()
         self.classes = defaults["classes"]
         self.current_slot = None
+        self._stats_cache = StatsCache()
+        self._inventory_index: dict[str, int] = {}
         self._reset_to_defaults(defaults)
 
     def _reset_to_defaults(self, defaults=None):
@@ -59,12 +97,24 @@ class PlayerProfile:
         self.learned_skills = []
         self.talents = []
         self.quests = {"active": {}, "completed": [], "daily_reset": ""}
+        self.forge_streaks = {}
+        self._stats_cache = StatsCache()
+        self._inventory_index = {}
 
     def _save(self):
         if self.current_slot is None:
             return
         save_dir(self.current_slot).mkdir(parents=True, exist_ok=True)
-        data = {
+        self._backup_save()
+        data = self._to_dict()
+        path = save_path(self.current_slot)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        if not self._verify_save(path):
+            self._restore_from_backup()
+
+    def _to_dict(self) -> dict:
+        return {
             "name": self.name,
             "class_id": self.class_id,
             "level": self.level,
@@ -91,8 +141,26 @@ class PlayerProfile:
             "quests": self.quests,
             "save_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        with open(save_path(self.current_slot), "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def _backup_save(self):
+        src = save_path(self.current_slot)
+        bak = save_path(self.current_slot).with_suffix(".json.bak")
+        if src.exists():
+            shutil.copy2(src, bak)
+
+    def _restore_from_backup(self):
+        src = save_path(self.current_slot)
+        bak = save_path(self.current_slot).with_suffix(".json.bak")
+        if bak.exists():
+            shutil.copy2(bak, src)
+
+    def _verify_save(self, path: Path) -> bool:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                json.load(f)
+            return True
+        except (json.JSONDecodeError, IOError):
+            return False
 
     def _load_from_file(self, slot: int):
         path = save_path(slot)
@@ -101,38 +169,64 @@ class PlayerProfile:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            self._from_dict(data)
             self.current_slot = slot
-            self.name = data.get("name", self.name)
-            self.class_id = data.get("class_id", self.class_id)
-            self.level = data.get("level", self.level)
-            self.exp = data.get("exp", self.exp)
-            self.exp_to_next = data.get("exp_to_next", self.exp_to_next)
-            self.hp = data.get("hp", self.hp)
-            self.max_hp = data.get("max_hp", self.max_hp)
-            self.mp = data.get("mp", getattr(self, "mp", self.max_mp))
-            self.max_mp = data.get("max_mp", getattr(self, "max_mp", 30))
-            self.attack = data.get("attack", self.attack)
-            self.defense = data.get("defense", self.defense)
-            self.speed = data.get("speed", self.speed)
-            self.status_effects = data.get("status_effects", [])
-            self.gold = data.get("gold", 0)
-            self.inventory = data.get("inventory", [])
-            self.equipment = data.get("equipment", dict(DEFAULT_EQUIPMENT))
-            self.skills = data.get("skills", [])
-            self.learned_skills = data.get("learned_skills", [])
-            self.talents = data.get("talents", [])
-            for s in EQUIP_SLOTS:
-                if s not in self.equipment:
-                    self.equipment[s] = None
-            self.player_x = data.get("player_x", 25)
-            self.player_y = data.get("player_y", 20)
-            self.current_map = data.get("current_map", "village")
-            self.map_states = data.get("map_states", {})
-            self.quests = data.get("quests", {"active": {}, "completed": [], "daily_reset": ""})
+            self._rebuild_inventory_index()
             self._recalc_stats()
             return True
         except (json.JSONDecodeError, KeyError):
+            bak_path = path.with_suffix(".json.bak")
+            if bak_path.exists():
+                try:
+                    with open(bak_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    self._from_dict(data)
+                    self.current_slot = slot
+                    self._rebuild_inventory_index()
+                    self._recalc_stats()
+                    self._save()
+                    return True
+                except (json.JSONDecodeError, KeyError):
+                    pass
             return False
+
+    def _from_dict(self, data: dict):
+        self.name = data.get("name", self.name)
+        self.class_id = data.get("class_id", self.class_id)
+        self.level = data.get("level", self.level)
+        self.exp = data.get("exp", self.exp)
+        self.exp_to_next = data.get("exp_to_next", self.exp_to_next)
+        self.hp = data.get("hp", self.hp)
+        self.max_hp = data.get("max_hp", self.max_hp)
+        self.mp = data.get("mp", getattr(self, "mp", self.max_mp))
+        self.max_mp = data.get("max_mp", getattr(self, "max_mp", 30))
+        self.attack = data.get("attack", self.attack)
+        self.defense = data.get("defense", self.defense)
+        self.speed = data.get("speed", self.speed)
+        self.status_effects = data.get("status_effects", [])
+        self.gold = data.get("gold", 0)
+        self.inventory = data.get("inventory", [])
+        self.equipment = data.get("equipment", dict(DEFAULT_EQUIPMENT))
+        self.skills = data.get("skills", [])
+        self.learned_skills = data.get("learned_skills", [])
+        self.talents = data.get("talents", [])
+        for s in EQUIP_SLOTS:
+            if s not in self.equipment:
+                self.equipment[s] = None
+        self.player_x = data.get("player_x", 25)
+        self.player_y = data.get("player_y", 20)
+        self.current_map = data.get("current_map", "village")
+        self.map_states = data.get("map_states", {})
+        self.quests = data.get("quests", {"active": {}, "completed": [], "daily_reset": ""})
+        self.forge_streaks = data.get("forge_streaks", {})
+
+    def _rebuild_inventory_index(self):
+        self._inventory_index = {}
+        for item in self.inventory:
+            item_id = item.get("id") or item.get("item_id")
+            if item_id:
+                qty = item.get("quantity", 1)
+                self._inventory_index[item_id] = self._inventory_index.get(item_id, 0) + qty
 
     # ===== 装备系统 =====
 
@@ -153,6 +247,15 @@ class PlayerProfile:
         return bonus
 
     def _recalc_stats(self):
+        if not self._stats_cache.needs_recalc(self):
+            stats = self._stats_cache.cached_stats
+        else:
+            stats = self._calculate_stats()
+            self._stats_cache.update(self, stats)
+
+        self._apply_stats(stats)
+
+    def _calculate_stats(self) -> dict:
         cls = self.classes[self.class_id]
         level_bonus = self.level - 1
         base_attack = cls["base_attack"] + level_bonus * 3
@@ -162,30 +265,42 @@ class PlayerProfile:
         base_max_mp = cls.get("base_mp", 30) + level_bonus * 3
 
         bonus = self._calc_equip_bonus()
-        self.attack = base_attack + bonus["attack"]
-        self.defense = base_defense + bonus["defense"]
-        self.speed = base_speed + bonus["speed"]
+        attack = base_attack + bonus["attack"]
+        defense = base_defense + bonus["defense"]
+        speed = base_speed + bonus["speed"]
         new_max_hp = base_max_hp + bonus["max_hp"]
         new_max_mp = base_max_mp + bonus["max_mp"]
 
         from talent_system import calc_talent_stat_boosts
         talent_boosts = calc_talent_stat_boosts(self.class_id, self.talents)
-        self.attack = int(self.attack * (1 + talent_boosts["attack"]))
-        self.defense = int(self.defense * (1 + talent_boosts["defense"]))
-        self.speed = int(self.speed * (1 + talent_boosts["speed"]))
+        attack = int(attack * (1 + talent_boosts["attack"]))
+        defense = int(defense * (1 + talent_boosts["defense"]))
+        speed = int(speed * (1 + talent_boosts["speed"]))
         new_max_hp = int(new_max_hp * (1 + talent_boosts["max_hp"]))
         new_max_mp = int(new_max_mp * (1 + talent_boosts["max_mp"]))
 
-        if new_max_hp != self.max_hp:
-            old_max = self.max_hp
-            self.max_hp = new_max_hp
-            if self.max_hp < old_max:
-                self.hp = min(self.hp, self.max_hp)
-        if new_max_mp != getattr(self, "max_mp", 30):
-            old_max_mp = getattr(self, "max_mp", 30)
-            self.max_mp = new_max_mp
-            if self.max_mp < old_max_mp:
-                self.mp = min(getattr(self, "mp", self.max_mp), self.max_mp)
+        return {
+            "attack": max(STAT_MIN, min(attack, STAT_MAX)),
+            "defense": max(STAT_MIN, min(defense, STAT_MAX)),
+            "speed": max(STAT_MIN, min(speed, STAT_MAX)),
+            "max_hp": max(STAT_MIN, min(new_max_hp, STAT_MAX)),
+            "max_mp": max(STAT_MIN, min(new_max_mp, STAT_MAX)),
+        }
+
+    def _apply_stats(self, stats: dict):
+        old_max_hp = self.max_hp
+        old_max_mp = getattr(self, "max_mp", 30)
+
+        self.attack = stats["attack"]
+        self.defense = stats["defense"]
+        self.speed = stats["speed"]
+        self.max_hp = stats["max_hp"]
+        self.max_mp = stats["max_mp"]
+
+        if self.max_hp < old_max_hp:
+            self.hp = min(self.hp, self.max_hp)
+        if self.max_mp < old_max_mp:
+            self.mp = min(getattr(self, "mp", self.max_mp), self.max_mp)
         self._save()
 
     def equip_item(self, item_id: str) -> dict:
@@ -288,6 +403,23 @@ class PlayerProfile:
     def get_equipment_affixes(self) -> list[dict]:
         from affix_system import get_all_equipment_affixes
         return get_all_equipment_affixes(self.equipment, self.inventory)
+
+    def get_item_affixes_for_equipment(self, item_id: str, slot: str) -> list[dict]:
+        from affix_system import get_item_affixes
+        return get_item_affixes(item_id, self.inventory)
+
+    def get_item_rarity_for_equipment(self, item_id: str, slot: str) -> str:
+        from affix_system import get_item_rarity
+        return get_item_rarity(item_id, self.inventory)
+
+    def update_equipment_affixes(self, slot: str, new_affixes: list[dict]):
+        item_id = self.equipment.get(slot)
+        if not item_id:
+            return
+        for item in self.inventory:
+            if item.get("item_id") == item_id and item.get("instance_affixes") is not None:
+                item["instance_affixes"] = new_affixes
+                return
 
     def get_equipment_info(self) -> dict:
         bonus = self._calc_equip_bonus()
@@ -573,12 +705,12 @@ class PlayerProfile:
     # ===== 统一背包与金币操作 =====
 
     def get_inventory(self) -> list[dict]:
-        from item_system import ITEMS_DB, ITEM_EFFECTS
+        from item_system import ITEMS_DB, get_item_effect
         result = []
         for item in self.inventory:
             item_id = item["item_id"]
             info = ITEMS_DB.get(item_id, {})
-            effect = ITEM_EFFECTS.get(item_id, {})
+            effect = get_item_effect(item_id)
             heal_value = effect.get("value") if effect.get("type") == "heal" else None
             mp_value = effect.get("value") if effect.get("type") == "restore_mp" else None
             instance_affixes = item.get("instance_affixes")
@@ -606,28 +738,30 @@ class PlayerProfile:
         return result
 
     def get_item_quantity(self, item_id: str) -> int:
-        for item in self.inventory:
-            if item["item_id"] == item_id:
-                return item["quantity"]
-        return 0
+        return self._inventory_index.get(item_id, 0)
 
     def add_item(self, item_id: str, quantity: int = 1):
         for item in self.inventory:
             if item["item_id"] == item_id:
                 item["quantity"] += quantity
+                self._inventory_index[item_id] = self._inventory_index.get(item_id, 0) + quantity
                 self._save()
                 return
         self.inventory.append({"item_id": item_id, "quantity": quantity})
+        self._inventory_index[item_id] = self._inventory_index.get(item_id, 0) + quantity
         self._save()
 
     def remove_item(self, item_id: str, quantity: int = 1) -> bool:
+        if self._inventory_index.get(item_id, 0) < quantity:
+            return False
         for item in self.inventory:
             if item["item_id"] == item_id:
-                if item["quantity"] < quantity:
-                    return False
                 item["quantity"] -= quantity
                 if item["quantity"] == 0:
                     self.inventory.remove(item)
+                self._inventory_index[item_id] -= quantity
+                if self._inventory_index[item_id] <= 0:
+                    del self._inventory_index[item_id]
                 self._save()
                 return True
         return False

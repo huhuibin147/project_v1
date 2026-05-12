@@ -141,12 +141,12 @@ class TestItemSystem(unittest.TestCase):
     """物品系统测试"""
 
     def setUp(self):
-        from item_system import Inventory, buy_item, sell_item, ITEMS_DB, ITEM_EFFECTS
+        from item_system import Inventory, buy_item, sell_item, ITEMS_DB, get_item_effect
         self.Inventory = Inventory
         self.buy_item = buy_item
         self.sell_item = sell_item
         self.ITEMS_DB = ITEMS_DB
-        self.ITEM_EFFECTS = ITEM_EFFECTS
+        self.get_item_effect = get_item_effect
 
     # ---- BKE-07: 添加物品到背包 ----
 
@@ -216,12 +216,12 @@ class TestItemSystem(unittest.TestCase):
     # ---- BKE-17: 物品效果定义存在 ----
 
     def test_bke_17_item_effects_defined(self):
-        consumable_items = [iid for iid, info in self.ITEMS_DB.items()
+        consumable_items = [item_id for item_id, info in self.ITEMS_DB.items()
                             if info.get("type") in ("consumable",)]
         for item_id in consumable_items:
             with self.subTest(item=item_id):
-                self.assertIn(item_id, self.ITEM_EFFECTS,
-                              f"消耗品 {item_id} 缺少效果定义")
+                effect = self.get_item_effect(item_id)
+                self.assertTrue(effect, f"消耗品 {item_id} 缺少效果定义")
 
 
 class TestSkillSystem(unittest.TestCase):

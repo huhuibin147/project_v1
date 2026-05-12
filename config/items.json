@@ -268,19 +268,29 @@
     "id": "health_potion",
     "name": "生命药水",
     "type": "consumable",
+    "category": "consumable",
     "description": "恢复少量生命值。",
     "buy_price": 30,
     "sell_price": 15,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 30
+    }
   },
   "antidote": {
     "id": "antidote",
     "name": "解毒药",
     "type": "consumable",
+    "category": "consumable",
     "description": "解除中毒状态。",
     "buy_price": 25,
     "sell_price": 12,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "cure",
+      "effect": "poison"
+    }
   },
   "torch": {
     "id": "torch",
@@ -322,28 +332,43 @@
     "id": "bread",
     "name": "面包",
     "type": "food",
+    "category": "food",
     "description": "刚出炉的面包，能填饱肚子。",
     "buy_price": 5,
     "sell_price": 2,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 10
+    }
   },
   "dried_meat": {
     "id": "dried_meat",
     "name": "肉干",
     "type": "food",
+    "category": "food",
     "description": "风干的肉条，适合长途旅行携带。",
     "buy_price": 12,
     "sell_price": 6,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 20
+    }
   },
   "wine": {
     "id": "wine",
     "name": "米酒",
     "type": "food",
+    "category": "food",
     "description": "村里自酿的米酒，味道醇厚。",
     "buy_price": 20,
     "sell_price": 10,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 5
+    }
   },
   "cloth": {
     "id": "cloth",
@@ -358,10 +383,15 @@
     "id": "bandage",
     "name": "绷带",
     "type": "consumable",
+    "category": "consumable",
     "description": "简易的止血绷带。",
     "buy_price": 8,
     "sell_price": 4,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 15
+    }
   },
   "candle": {
     "id": "candle",
@@ -385,10 +415,15 @@
     "id": "mushroom",
     "name": "蘑菇",
     "type": "food",
+    "category": "food",
     "description": "森林里采的蘑菇，味道鲜美。",
     "buy_price": 0,
     "sell_price": 8,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 8
+    }
   },
   "wood_sword": {
     "id": "wood_sword",
@@ -1270,46 +1305,75 @@
     "id": "greater_health_potion",
     "name": "强效生命药水",
     "type": "consumable",
+    "category": "consumable",
     "description": "恢复大量生命值。",
     "buy_price": 80,
     "sell_price": 40,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 80
+    }
   },
   "mana_potion": {
     "id": "mana_potion",
     "name": "魔力药水",
     "type": "consumable",
+    "category": "consumable",
     "description": "恢复中等魔法值。",
     "buy_price": 60,
     "sell_price": 30,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "restore_mp",
+      "value": 50
+    }
   },
   "purify_potion": {
     "id": "purify_potion",
     "name": "净化药水",
     "type": "consumable",
+    "category": "consumable",
     "description": "解除诅咒状态。",
     "buy_price": 50,
     "sell_price": 25,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "cure",
+      "effect": "curse"
+    }
   },
   "strength_elixir": {
     "id": "strength_elixir",
     "name": "力量药剂",
     "type": "consumable",
+    "category": "consumable",
     "description": "暂时提升攻击力。",
     "buy_price": 60,
     "sell_price": 30,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "buff",
+      "stat": "attack",
+      "value": 5,
+      "duration": 3
+    }
   },
   "speed_elixir": {
     "id": "speed_elixir",
     "name": "速度药剂",
     "type": "consumable",
+    "category": "consumable",
     "description": "暂时提升速度。",
     "buy_price": 60,
     "sell_price": 30,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "buff",
+      "stat": "speed",
+      "value": 5,
+      "duration": 3
+    }
   },
   "beast_bone": {
     "id": "beast_bone",
@@ -1360,46 +1424,71 @@
     "id": "grilled_fish",
     "name": "烤鱼",
     "type": "food",
+    "category": "food",
     "description": "香喷喷的烤鱼，回味无穷。",
     "buy_price": 15,
     "sell_price": 7,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 25
+    }
   },
   "jam": {
     "id": "jam",
     "name": "果酱",
     "type": "food",
+    "category": "food",
     "description": "甜美的果酱，涂面包最好。",
     "buy_price": 8,
     "sell_price": 4,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 12
+    }
   },
   "honey": {
     "id": "honey",
     "name": "蜂蜜",
     "type": "food",
+    "category": "food",
     "description": "森林里采的蜂蜜，甘甜可口。",
     "buy_price": 18,
     "sell_price": 9,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 15
+    }
   },
   "rations": {
     "id": "rations",
     "name": "干粮",
     "type": "food",
+    "category": "food",
     "description": "行军干粮，耐储存。",
     "buy_price": 10,
     "sell_price": 5,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 30
+    }
   },
   "stew": {
     "id": "stew",
     "name": "炖汤",
     "type": "food",
+    "category": "food",
     "description": "热腾腾的炖汤，暖身又暖心。",
     "buy_price": 22,
     "sell_price": 11,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "heal",
+      "value": 35
+    }
   },
   "lockpick": {
     "id": "lockpick",
@@ -1423,118 +1512,193 @@
     "id": "small_mana_potion",
     "name": "小型魔力药水",
     "type": "consumable",
+    "category": "consumable",
     "description": "恢复少量魔法值。",
     "buy_price": 30,
     "sell_price": 15,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "restore_mp",
+      "value": 20
+    }
   },
   "greater_mana_potion": {
     "id": "greater_mana_potion",
     "name": "大型魔力药水",
     "type": "consumable",
+    "category": "consumable",
     "description": "恢复大量魔法值。",
     "buy_price": 120,
     "sell_price": 60,
-    "stackable": true
+    "stackable": true,
+    "effect": {
+      "type": "restore_mp",
+      "value": 100
+    }
   },
   "scroll_heavy_strike": {
     "id": "scroll_heavy_strike",
     "name": "技能书：重击",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习战士技能「重击」。仅限战士使用。",
     "buy_price": 200,
     "sell_price": 50,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "heavy_strike"
+    },
+    "required_class": "warrior"
   },
   "scroll_fireball": {
     "id": "scroll_fireball",
     "name": "技能书：火球术",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习法师技能「火球术」。仅限法师使用。",
     "buy_price": 200,
     "sell_price": 50,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "fireball"
+    },
+    "required_class": "mage"
   },
   "scroll_heal": {
     "id": "scroll_heal",
     "name": "技能书：治愈术",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习法师技能「治愈术」。仅限法师使用。",
     "buy_price": 200,
     "sell_price": 50,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "heal"
+    },
+    "required_class": "mage"
   },
   "scroll_shield_wall": {
     "id": "scroll_shield_wall",
     "name": "技能书：盾墙",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习战士技能「盾墙」。仅限战士使用。",
     "buy_price": 250,
     "sell_price": 60,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "shield_wall"
+    },
+    "required_class": "warrior"
   },
   "scroll_backstab": {
     "id": "scroll_backstab",
     "name": "技能书：背刺",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习盗贼技能「背刺」。仅限盗贼使用。",
     "buy_price": 200,
     "sell_price": 50,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "backstab"
+    },
+    "required_class": "rogue"
   },
   "scroll_frost_bolt": {
     "id": "scroll_frost_bolt",
     "name": "技能书：冰冻术",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习法师技能「冰冻术」。仅限法师使用。",
     "buy_price": 250,
     "sell_price": 60,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "frost_bolt"
+    },
+    "required_class": "mage"
   },
   "scroll_poison_blade": {
     "id": "scroll_poison_blade",
     "name": "技能书：毒刃",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习盗贼技能「毒刃」。仅限盗贼使用。",
     "buy_price": 250,
     "sell_price": 60,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "poison_blade"
+    },
+    "required_class": "rogue"
   },
   "scroll_evasion": {
     "id": "scroll_evasion",
     "name": "技能书：闪避",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习盗贼技能「闪避」。仅限盗贼使用。",
     "buy_price": 300,
     "sell_price": 75,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "evasion"
+    },
+    "required_class": "rogue"
   },
   "scroll_magic_shield": {
     "id": "scroll_magic_shield",
     "name": "技能书：魔力护盾",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习法师技能「魔力护盾」。仅限法师使用。",
     "buy_price": 300,
     "sell_price": 75,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "magic_shield"
+    },
+    "required_class": "mage"
   },
   "scroll_berserk": {
     "id": "scroll_berserk",
     "name": "技能书：狂暴",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习战士技能「狂暴」。仅限战士使用。",
     "buy_price": 300,
     "sell_price": 75,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "berserk"
+    },
+    "required_class": "warrior"
   },
   "scroll_thunder_strike": {
     "id": "scroll_thunder_strike",
     "name": "技能书：雷霆一击",
-    "type": "consumable",
+    "type": "skill_book",
+    "category": "skill_book",
     "description": "学习通用技能「雷霆一击」。仅限战士或法师使用，需要等级8。",
     "buy_price": 500,
     "sell_price": 125,
-    "stackable": true
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "thunder_strike"
+    }
   },
   "cave_mushroom": {
     "id": "cave_mushroom",

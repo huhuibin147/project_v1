@@ -86,7 +86,7 @@ class CombatSession:
 
 # --- Item effects (shared with item_system) ---
 
-from item_system import ITEM_EFFECTS
+from item_system import get_item_effect
 
 
 # --- Damage calculation ---
@@ -260,7 +260,7 @@ def _process_effects(session: CombatSession, is_player: bool) -> list[dict]:
 # --- Item use ---
 
 def _use_item_in_combat(session: CombatSession, item_id: str) -> dict:
-    effect = ITEM_EFFECTS.get(item_id)
+    effect = get_item_effect(item_id)
     if not effect:
         return {"type": "use_item", "success": False, "text": "该物品无法在战斗中使用。"}
 
@@ -990,45 +990,39 @@ def _execute_skill(session: CombatSession, skill_id: str) -> dict:
         return entry
 
     elif skill_type == "heal":
-        for eff in effects:
-            if eff["type"] == "heal":
-                old_hp = session.player_hp
-                session.player_hp = min(session.player_max_hp, session.player_hp + eff["value"])
-                healed = session.player_hp - old_hp
-                return {"type": "skill", "skill_id": skill_id, "success": True,
-                        "text": f"使用 {skill['name']}！恢复了 {healed} 点生命值。"}
+        heal_amount = int(session.player_max_hp * power)
+        session.player_hp = min(session.player_max_hp, session.player_hp + heal_amount)
         return {"type": "skill", "skill_id": skill_id, "success": True,
-                "text": f"使用 {skill['name']}！但没有任何效果。"}
+                "text": f"使用 {skill['name']}！恢复了 {heal_amount} 点生命。"}
 
     elif skill_type == "buff":
-        buff_names = []
-        buff_name_map = {
-            "evasion_up": "闪避提升", "attack_up": "攻击提升", "defense_up": "防御提升",
-            "speed_up": "速度提升", "damage_reduction": "伤害减免",
-            "shield": "护盾", "regen": "再生", "reflect": "反伤", "lifesteal": "吸血",
-        }
         for eff in effects:
-            se = StatusEffect(eff["type"], eff["duration"], eff.get("value", 0),
-                              source=f"skill:{skill_id}")
-            session.player_effects = _add_effect(session.player_effects, se)
+            new_eff = StatusEffect(eff["type"], eff["duration"],
+                                   value=eff.get("value", 0), source=f"skill:{skill_id}")
+            session.player_effects = _add_effect(session.player_effects, new_eff)
             if eff["type"] in STAT_BUFF_MAP:
-                _apply_buff(session, se)
-            buff_names.append(buff_name_map.get(eff["type"], eff["type"]))
+                _recalculate_player_buffs(session)
         return {"type": "skill", "skill_id": skill_id, "success": True,
-                "text": f"使用 {skill['name']}！获得了{'+'.join(buff_names)}效果。"}
+                "text": f"使用 {skill['name']}！获得了增益效果。"}
 
-    return {"type": "skill", "success": False, "text": "技能类型未实现。"}
+    elif skill_type == "shield":
+        shield_value = skill.get("shield_value", 0)
+        session.player_shield += shield_value
+        return {"type": "skill", "skill_id": skill_id, "success": True,
+                "text": f"使用 {skill['name']}！获得了 {shield_value} 点护盾。"}
+
+    return {"type": "skill", "success": False, "text": "未知技能类型。"}
 
 
 # --- Session management ---
 
 _combat_sessions: dict[str, CombatSession] = {}
+SESSION_TIMEOUT = 600
 
 
 def create_combat_session(monster_id: str, monster_config: dict,
                           player_snapshot: dict) -> CombatSession:
-    cleanup_expired_sessions()
-    session_id = str(uuid.uuid4())[:8]
+    session_id = str(uuid.uuid4())
     session = CombatSession(session_id, monster_id, monster_config, player_snapshot)
     _combat_sessions[session_id] = session
     return session
@@ -1038,13 +1032,13 @@ def get_session(session_id: str) -> CombatSession | None:
     return _combat_sessions.get(session_id)
 
 
-def remove_session(session_id: str):
+def remove_session(session_id: str) -> None:
     _combat_sessions.pop(session_id, None)
 
 
-def cleanup_expired_sessions(max_age_seconds: int = 600):
+def cleanup_expired_sessions() -> None:
     now = time.time()
     expired = [sid for sid, s in _combat_sessions.items()
-               if now - s.created_at > max_age_seconds]
+               if now - s.created_at > SESSION_TIMEOUT]
     for sid in expired:
         del _combat_sessions[sid]

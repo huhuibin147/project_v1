@@ -3,6 +3,10 @@ from pathlib import Path
 from llm_client import chat_completion
 from item_system import Inventory, buy_item, sell_item, get_item_info, ITEMS_DB
 from player_profile import player as player_profile
+from intent_classifier import classify_intent, extract_trade_action
+from npc_memory import MemoryManager
+from npc_affinity import AffinitySystem
+from npc_cache import ResponseCache
 
 MAX_HISTORY = 10
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -59,8 +63,8 @@ def load_npc_config(npc_id: str) -> dict:
     return all_npcs[npc_id]
 
 
-def build_system_prompt(cfg: dict, mood: str, affinity: int,
-                        history_text: str, shop_info: str,
+def build_system_prompt(cfg: dict, mood: str, affinity: int, affinity_context: str,
+                        history_text: str, long_term_context: str, shop_info: str,
                         shop_item_ids: list[str], player_inventory: list[dict] = None) -> str:
     p = cfg["personality"]
 
@@ -78,10 +82,8 @@ def build_system_prompt(cfg: dict, mood: str, affinity: int,
             parts.append(f"幽默感={pp['humor']}")
         params_desc = f"\n性格参数：{', '.join(parts)}"
 
-    # 只列出该 NPC 自己卖的物品 ID
     item_ids = ", ".join(shop_item_ids) if shop_item_ids else "（无商品）"
     
-    # 玩家背包信息
     player_items_info = ""
     if player_inventory:
         player_items = []
@@ -98,6 +100,7 @@ def build_system_prompt(cfg: dict, mood: str, affinity: int,
 当前状态：
 - 情绪：{mood}
 - 对玩家好感度：{affinity}/100
+- {affinity_context}
 
 你的商店信息：
 {shop_info}
@@ -105,6 +108,8 @@ def build_system_prompt(cfg: dict, mood: str, affinity: int,
 注意：你只卖上面列出的物品。如果玩家要买你没有的东西，请告诉他你这里没有。
 你也可以收购玩家手里的物品，但价格要合理。
 {player_items_info}
+
+{long_term_context}
 
 玩家和你的对话历史：
 {history_text if history_text else "（第一次对话）"}
@@ -120,14 +125,17 @@ class NPCAgent:
         self.cfg = load_npc_config(npc_id)
         self.name = self.cfg["name"]
         self.mood = self.cfg.get("default_mood", "平静")
-        self.affinity = self.cfg.get("default_affinity", 50)
-        self.history: list[dict] = []
         self.slot = slot
         self._update_save_file()
 
         # 物品系统：NPC 商店库存和玩家背包
         self.shop_inventory = self._init_shop_inventory()
-        self.acquired_inventory = Inventory(gold=0)  # 从玩家处收购的物品，独立存放
+        self.acquired_inventory = Inventory(gold=0)
+
+        # 优化模块
+        self.memory = MemoryManager()
+        self.affinity_system = AffinitySystem(self.cfg.get("default_affinity", 50))
+        self.response_cache = ResponseCache()
 
         self._load()
 
@@ -144,10 +152,11 @@ class NPCAgent:
         self._update_save_file()
         # 重置状态并加载新存档
         self.mood = self.cfg.get("default_mood", "平静")
-        self.affinity = self.cfg.get("default_affinity", 50)
-        self.history = []
         self.shop_inventory = self._init_shop_inventory()
         self.acquired_inventory = Inventory(gold=0)
+        self.memory = MemoryManager()
+        self.affinity_system = AffinitySystem(self.cfg.get("default_affinity", 50))
+        self.response_cache = ResponseCache()
         self._load()
 
     def _init_shop_inventory(self) -> Inventory:
@@ -164,10 +173,12 @@ class NPCAgent:
             "npc_id": self.npc_id,
             "name": self.name,
             "mood": self.mood,
-            "affinity": self.affinity,
-            "history": self.history,
+            "affinity": self.affinity_system.affinity,
+            "history": self.memory.short_term_memory,
             "shop_inventory": self.shop_inventory.to_save(),
             "acquired_inventory": self.acquired_inventory.to_save(),
+            "memory": self.memory.to_save(),
+            "response_cache": self.response_cache.to_save(),
         }
         with open(self._save_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -179,13 +190,18 @@ class NPCAgent:
             with open(self._save_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
             self.mood = data.get("mood", self.mood)
-            self.affinity = data.get("affinity", self.affinity)
-            self.history = data.get("history", [])
+            self.affinity_system.affinity = data.get("affinity", self.affinity_system.affinity)
+            if "history" in data:
+                self.memory.short_term_memory = data.get("history", [])
             if "shop_inventory" in data:
                 self.shop_inventory = Inventory.from_save(data["shop_inventory"])
                 self._merge_new_shop_items()
             if "acquired_inventory" in data:
                 self.acquired_inventory = Inventory.from_save(data["acquired_inventory"])
+            if "memory" in data:
+                self.memory.from_save(data["memory"])
+            if "response_cache" in data:
+                self.response_cache.from_save(data["response_cache"])
         except (json.JSONDecodeError, KeyError):
             pass
 
@@ -203,22 +219,22 @@ class NPCAgent:
             return "（商店暂时没有货物）"
         lines = []
         for item in items:
-            lines.append(f"- {item['name']}（{item['item_id']}）：{item['quantity']} 个，售价 {item['buy_price']} 金币，收购价 {item['sell_price']} 金币")
+            discount = self.affinity_system.get_discount_multiplier()
+            buy_price = int(item["buy_price"] * discount)
+            lines.append(f"- {item['name']}（{item['item_id']}）：{item['quantity']} 个，售价 {buy_price} 金币，收购价 {item['sell_price']} 金币")
         return "\n".join(lines)
 
     def _build_messages(self, player_input: str) -> list[dict]:
-        history_text = ""
-        for h in self.history[-MAX_HISTORY * 2:]:
-            role = "玩家" if h["role"] == "player" else self.name
-            history_text += f"{role}：{h['content']}\n"
+        history_text = self.memory.get_short_term_history()
+        long_term_context = self.memory.get_long_term_context()
+        affinity_context = self.affinity_system.get_context_description()
 
         shop_info = self._get_shop_info()
-        # 只传入该 NPC 商店实际有的物品 ID
         shop_item_ids = [item["item_id"] for item in self.shop_inventory.items]
-        # 获取玩家背包信息
         player_inventory = player_profile.get_inventory()
-        system = build_system_prompt(self.cfg, self.mood, self.affinity,
-                                     history_text, shop_info, shop_item_ids, player_inventory)
+        system = build_system_prompt(self.cfg, self.mood, self.affinity_system.affinity,
+                                     affinity_context, history_text, long_term_context,
+                                     shop_info, shop_item_ids, player_inventory)
         return [
             {"role": "system", "content": system},
             {"role": "user", "content": player_input},
@@ -241,7 +257,8 @@ class NPCAgent:
             return None
 
         if action == "buy":
-            buy_price = item_info["buy_price"]
+            discount = self.affinity_system.get_discount_multiplier()
+            buy_price = int(item_info["buy_price"] * discount)
             if buy_price <= 0:
                 return "这个东西不卖的。"
             total = buy_price * quantity
@@ -254,7 +271,9 @@ class NPCAgent:
             player_profile.add_item(item_id, quantity)
             self.shop_inventory.gold += total
             self.shop_inventory.remove_item(item_id, quantity)
-            return f"好嘞！{quantity} 个{item_info['name']}，收你 {total} 金币。"
+            
+            discount_text = f"（给你打了折，原价 {item_info['buy_price'] * quantity}，现价 {total}）" if discount < 1.0 else ""
+            return f"好嘞！{quantity} 个{item_info['name']}，收你 {total} 金币。{discount_text}"
 
         elif action == "sell":
             sell_price = item_info["sell_price"]
@@ -275,6 +294,58 @@ class NPCAgent:
         return None
 
     def chat(self, player_input: str) -> dict:
+        # 1. 本地意图分类
+        local_intent = classify_intent(player_input)
+        
+        # 2. 检查缓存（仅对闲聊意图）
+        if local_intent == "chat":
+            affinity_level = self.affinity_system.get_level()
+            cached_response = self.response_cache.get(player_input, affinity_level)
+            if cached_response:
+                self.memory.add_short_term("player", player_input)
+                self.memory.add_short_term("npc", cached_response)
+                self._save()
+                return {
+                    "reply": cached_response,
+                    "intent": "chat",
+                    "mood": self.mood,
+                    "affinity": self.affinity_system.affinity,
+                    "trade": False,
+                    "player_inventory": player_profile.get_inventory(),
+                    "player_gold": player_profile.gold,
+                    "shop_inventory": self.shop_inventory.to_list(),
+                    "shop_gold": self.shop_inventory.gold,
+                    "cached": True,
+                }
+        
+        # 3. 如果是交易意图，尝试直接处理
+        if local_intent == "trade":
+            shop_item_ids = [item["item_id"] for item in self.shop_inventory.items]
+            player_inventory = player_profile.get_inventory()
+            trade_action = extract_trade_action(player_input, shop_item_ids, player_inventory)
+            
+            if trade_action:
+                trade_message = self._try_trade(trade_action)
+                if trade_message:
+                    reply = trade_message
+                    self.memory.add_short_term("player", player_input)
+                    self.memory.add_short_term("npc", reply)
+                    self.memory.add_long_term("trade_completed", f"玩家{trade_action['action']}了{trade_action['quantity']}个{trade_action['item_id']}", importance=2)
+                    self._save()
+                    return {
+                        "reply": reply,
+                        "intent": "trade",
+                        "mood": self.mood,
+                        "affinity": self.affinity_system.affinity,
+                        "trade": True,
+                        "player_inventory": player_profile.get_inventory(),
+                        "player_gold": player_profile.gold,
+                        "shop_inventory": self.shop_inventory.to_list(),
+                        "shop_gold": self.shop_inventory.gold,
+                        "cached": False,
+                    }
+        
+        # 4. 调用 LLM（复杂对话）
         messages = self._build_messages(player_input)
         raw = chat_completion(messages, temperature=0.8)
 
@@ -288,7 +359,7 @@ class NPCAgent:
             else:
                 data = {
                     "reply": raw.strip()[:200],
-                    "intent": "unknown",
+                    "intent": local_intent if local_intent != "unknown" else "unknown",
                     "mood": self.mood,
                     "affinity_change": 0,
                     "trade_action": None,
@@ -296,31 +367,44 @@ class NPCAgent:
 
         self.mood = data.get("mood", self.mood)
         change = data.get("affinity_change", 0)
-        self.affinity = max(0, min(100, self.affinity + change))
+        self.affinity_system.update_affinity(change)
 
         # 尝试执行交易
         trade_action = data.get("trade_action")
         trade_message = self._try_trade(trade_action)
 
-        # 如果交易成功，将交易结果附加到回复中
         reply = data["reply"]
         if trade_message:
             reply = f"{reply}\n【{trade_message}】"
 
-        self.history.append({"role": "player", "content": player_input})
-        self.history.append({"role": "npc", "content": reply})
+        self.memory.add_short_term("player", player_input)
+        self.memory.add_short_term("npc", reply)
+        
+        # 记录长期记忆
+        intent = data.get("intent", "unknown")
+        if intent == "quest":
+            self.memory.add_long_term("quest_topic", f"玩家询问任务相关：{player_input[:50]}", importance=3)
+        elif trade_action:
+            self.memory.add_long_term("trade_completed", f"玩家{trade_action.get('action', 'unknown')}了{trade_action.get('quantity', 1)}个{trade_action.get('item_id', 'unknown')}", importance=2)
+        
+        # 缓存闲聊回答
+        if intent == "chat":
+            affinity_level = self.affinity_system.get_level()
+            self.response_cache.put(player_input, affinity_level, reply)
+
         self._save()
 
         return {
             "reply": reply,
-            "intent": data.get("intent", "unknown"),
+            "intent": intent,
             "mood": self.mood,
-            "affinity": self.affinity,
+            "affinity": self.affinity_system.affinity,
             "trade": trade_action is not None and trade_message is not None,
             "player_inventory": player_profile.get_inventory(),
             "player_gold": player_profile.gold,
             "shop_inventory": self.shop_inventory.to_list(),
             "shop_gold": self.shop_inventory.gold,
+            "cached": False,
         }
 
     def get_status(self) -> dict:
@@ -328,8 +412,12 @@ class NPCAgent:
             "npc_id": self.npc_id,
             "name": self.name,
             "mood": self.mood,
-            "affinity": self.affinity,
+            "affinity": self.affinity_system.affinity,
+            "affinity_level": self.affinity_system.get_level(),
+            "affinity_style": self.affinity_system.get_dialog_style(),
+            "discount_multiplier": self.affinity_system.get_discount_multiplier(),
             "personality": self.cfg.get("personality_params", {}),
             "player_gold": player_profile.gold,
             "shop_gold": self.shop_inventory.gold,
+            "memory_count": len(self.memory.long_term_memory),
         }

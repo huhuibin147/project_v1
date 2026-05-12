@@ -16,6 +16,14 @@ RARITY_AFFIX_COUNT = {
 
 RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"]
 
+REROLL_COSTS = {
+    "common": 50,
+    "uncommon": 100,
+    "rare": 200,
+    "epic": 500,
+    "legendary": 1000,
+}
+
 
 def load_affixes_config() -> dict:
     with open(AFFIXES_FILE, "r", encoding="utf-8") as f:
@@ -34,8 +42,9 @@ def get_affix(affix_id: str) -> dict | None:
     return AFFIXES_DB.get(affix_id)
 
 
-def generate_affixes(equip_slot: str, rarity: str, player_level: int) -> list[dict]:
-    count = RARITY_AFFIX_COUNT.get(rarity, 0)
+def generate_affixes(equip_slot: str, rarity: str, player_level: int, count: int = None) -> list[dict]:
+    if count is None:
+        count = RARITY_AFFIX_COUNT.get(rarity, 0)
     if count == 0:
         return []
 
@@ -45,7 +54,10 @@ def generate_affixes(equip_slot: str, rarity: str, player_level: int) -> list[di
             continue
         lr = affix.get("level_range", {})
         if lr.get("min", 1) <= player_level <= lr.get("max", 99):
-            pool.append(affix)
+            weight = _get_dynamic_weight(affix, player_level)
+            affix_copy = dict(affix)
+            affix_copy["_dynamic_weight"] = weight
+            pool.append(affix_copy)
 
     if not pool:
         return []
@@ -54,12 +66,35 @@ def generate_affixes(equip_slot: str, rarity: str, player_level: int) -> list[di
     return [_format_affix(a) for a in selected]
 
 
+def _get_dynamic_weight(affix: dict, player_level: int) -> float:
+    base_weight = affix.get("weight", 1)
+    multipliers = affix.get("level_weight_multipliers", {})
+
+    for range_str, multiplier in multipliers.items():
+        if _level_in_range(player_level, range_str):
+            return base_weight * multiplier
+
+    return base_weight
+
+
+def _level_in_range(level: int, range_str: str) -> bool:
+    if "+" in range_str:
+        min_level = int(range_str.replace("+", ""))
+        return level >= min_level
+    if "-" in range_str:
+        parts = range_str.split("-")
+        min_level = int(parts[0])
+        max_level = int(parts[1])
+        return min_level <= level <= max_level
+    return False
+
+
 def _weighted_sample_without_replacement(items: list[dict], count: int) -> list[dict]:
     count = min(count, len(items))
     result = []
     remaining = list(items)
     for _ in range(count):
-        weights = [item.get("weight", 1) for item in remaining]
+        weights = [item.get("_dynamic_weight", item.get("weight", 1)) for item in remaining]
         total = sum(weights)
         if total <= 0:
             break
@@ -144,3 +179,32 @@ def get_affix_categories() -> list[dict]:
         {"id": "on_kill", "name": "击杀触发"},
         {"id": "conditional", "name": "条件触发"},
     ]
+
+
+def reroll_single_affix(item_instance: dict, player_level: int) -> dict:
+    current_affixes = item_instance.get("instance_affixes", [])
+    if not current_affixes:
+        return {"success": False, "message": "该装备没有可洗练的词条"}
+
+    rarity = item_instance.get("instance_rarity", "common")
+    cost = REROLL_COSTS.get(rarity, 100)
+
+    replace_idx = random.randint(0, len(current_affixes) - 1)
+    old_affix = current_affixes[replace_idx]
+
+    equip_slot = item_instance.get("equip_slot", "")
+    new_affixes = generate_affixes(equip_slot, rarity, player_level, count=1)
+
+    if not new_affixes:
+        return {"success": False, "message": "无法生成新词条"}
+
+    current_affixes[replace_idx] = new_affixes[0]
+
+    return {
+        "success": True,
+        "message": f"洗练成功！{old_affix['name']} → {new_affixes[0]['name']}",
+        "old_affix": old_affix,
+        "new_affix": new_affixes[0],
+        "cost": cost,
+        "affixes": current_affixes,
+    }

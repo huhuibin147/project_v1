@@ -55,10 +55,13 @@ RPG 系统
 
 ### 后端架构
 
+- **模块化路由**：按功能拆分为 6 个路由模块（`routes/npc.py`、`routes/player.py`、`routes/map.py`、`routes/combat.py`、`routes/forge.py`、`routes/quest.py`）
 - **单例玩家**：全局 `PlayerProfile` 实例，所有操作自动存档
 - **懒加载 NPC**：首次访问时创建，存档切换时重建
 - **内存战斗**：`CombatSession` 仅存内存，10 分钟过期自动清理
 - **配置驱动**：物品、NPC、怪物、技能、地图均为 JSON 配置
+- **共享上下文**：通过 `routes/context.py` 管理全局状态
+- **统一异常处理**：请求验证错误和内部异常的统一返回格式
 
 ---
 
@@ -136,12 +139,12 @@ RPG 系统
 > 背包、装备、商店、锻造。
 
 **实现进度：**
-- ✅ 3.1 背包系统 — 已实现
+- ✅ 3.1 背包系统 — 已实现（配置化效果、分类系统、智能堆叠）
 - ✅ 3.2 装备系统 — 已实现（5 槽位、5 稀有度、3 等级段）
-- ✅ 3.3 消耗品与药水 — 已实现
+- ✅ 3.3 消耗品与药水 — 已实现（效果配置化）
 - ✅ 3.4 经济系统（商店/掉落） — 已实现
-- 🔲 3.5 锻造系统 — 规划中
-- 🔲 3.6 词条系统 — 规划中
+- ✅ 3.5 锻造系统 — 已实现（含保底机制）
+- ✅ 3.6 词条系统 — 已实现（含重roll功能）
 
 ### 装备核心
 
@@ -164,7 +167,7 @@ RPG 系统
 > 玩家在干嘛，故事怎么讲。
 
 **实现进度：**
-- ✅ 4.1 任务系统 — 已实现（14 个任务，5 种目标类型）
+- ✅ 4.1 任务系统 — 已实现（14 个任务，5 种目标类型，任务链系统，自动进度触发）
 - ✅ 4.2 NPC 对话系统 — 已实现（LLM 驱动）
 - ✅ 4.3 NPC 服务 — 已实现（治疗/技能学习）
 - 🔲 4.4 主线剧情 — 规划中
@@ -172,8 +175,10 @@ RPG 系统
 ### 任务核心
 
 - 5 种目标类型：击杀、收集、递交、对话、探索
-- NPC 任务链：每个 NPC 有独立任务链，按顺序完成
-- 自动追踪：战斗击杀、物品拾取、NPC 对话自动更新进度
+- NPC 任务链：每个 NPC 有独立任务链，按顺序完成，支持自动接续
+- 自动追踪：战斗击杀、物品拾取、NPC 对话、地图传送自动更新进度
+- 任务链系统：`chain`、`chain_order`、`next_in_chain` 字段定义任务关联
+- 每日任务：基于 UTC 时间的跨时区重置逻辑
 
 ### NPC 对话核心
 
@@ -330,17 +335,41 @@ project_v1/
 │   ├── talents.json        # 天赋定义（30节点）
 │   ├── tiles.json          # 瓦片定义
 │   ├── quests.json         # 任务定义（14个任务）
+│   ├── affixes.json        # 词条定义（30+词条）
+│   ├── forge_recipes.json  # 锻造配方（25种）
 │   └── maps/               # 地图数据
 ├── data/                   # 存档数据
 ├── backend/
-│   ├── main.py             # FastAPI 入口
-│   ├── player_profile.py   # 玩家系统
+│   ├── main.py             # FastAPI 入口（路由注册 + 异常处理）
+│   ├── routes/             # 路由模块
+│   │   ├── __init__.py
+│   │   ├── context.py      # 共享应用上下文
+│   │   ├── models.py       # Pydantic 请求/响应模型
+│   │   ├── npc.py          # NPC 路由（聊天、商店、交易、服务）
+│   │   ├── player.py       # 玩家路由（档案、背包、装备、存档）
+│   │   ├── map.py          # 地图路由（瓦片、地图数据、传送、物件交互）
+│   │   ├── combat.py       # 战斗路由（开始、行动、结束）
+│   │   ├── forge.py        # 锻造/词条路由
+│   │   └── quest.py        # 任务/天赋路由
+│   ├── combat/             # 战斗引擎模块
+│   │   ├── __init__.py
+│   │   ├── session.py      # 战斗会话管理
+│   │   ├── damage.py       # 伤害计算（含属性克制）
+│   │   ├── effects.py      # 状态效果系统（策略模式）
+│   │   ├── events.py       # 事件驱动系统（词条/天赋触发）
+│   │   ├── monster_ai.py   # 怪物 AI 决策
+│   │   ├── skills.py       # 技能执行
+│   │   ├── turn.py         # 回合解析核心
+│   │   └── engine.py       # 对外统一接口
+│   ├── combat_engine.py    # 战斗引擎（兼容层）
+│   ├── player_profile.py   # 玩家系统（含存档备份、属性缓存、物品索引）
 │   ├── npc_agent.py        # NPC Agent
 │   ├── item_system.py      # 物品系统
-│   ├── combat_engine.py    # 战斗引擎
 │   ├── skill_system.py     # 技能系统
 │   ├── talent_system.py    # 天赋系统
 │   ├── quest_manager.py    # 任务系统
+│   ├── forge_system.py     # 锻造系统
+│   ├── affix_system.py     # 词条系统
 │   ├── llm_client.py       # LLM 调用
 │   └── config.py           # 配置加载
 ├── frontend/
@@ -357,6 +386,8 @@ project_v1/
 │       ├── inventory.js    # 背包/商店
 │       ├── player_info.js  # 角色信息
 │       ├── quest.js        # 任务系统
+│       ├── forge.js        # 锻造面板
+│       ├── forge.css       # 锻造面板样式
 │       ├── help.js         # 帮助面板
 │       └── start_screen.js # 开始界面
 ├── docs/                   # 文档

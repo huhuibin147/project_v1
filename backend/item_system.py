@@ -13,42 +13,17 @@ def load_items_config() -> dict:
 
 ITEMS_DB = load_items_config()
 
-# 物品效果定义（战斗和非战斗共用）
-ITEM_EFFECTS = {
-    "health_potion": {"type": "heal", "value": 30},
-    "greater_health_potion": {"type": "heal", "value": 80},
-    "bandage": {"type": "heal", "value": 15},
-    "antidote": {"type": "cure", "effect": "poison"},
-    "purify_potion": {"type": "cure", "effect": "curse"},
-    "strength_elixir": {"type": "buff", "stat": "attack", "value": 5, "duration": 3},
-    "speed_elixir": {"type": "buff", "stat": "speed", "value": 5, "duration": 3},
-    # 魔力药水
-    "small_mana_potion": {"type": "restore_mp", "value": 20},
-    "mana_potion": {"type": "restore_mp", "value": 50},
-    "greater_mana_potion": {"type": "restore_mp", "value": 100},
-    # 食物
-    "bread": {"type": "heal", "value": 10},
-    "dried_meat": {"type": "heal", "value": 20},
-    "wine": {"type": "heal", "value": 5},
-    "mushroom": {"type": "heal", "value": 8},
-    "grilled_fish": {"type": "heal", "value": 25},
-    "jam": {"type": "heal", "value": 12},
-    "honey": {"type": "heal", "value": 15},
-    "rations": {"type": "heal", "value": 30},
-    "stew": {"type": "heal", "value": 35},
-    # 技能书
-    "scroll_heavy_strike": {"type": "learn_skill", "skill_id": "heavy_strike"},
-    "scroll_fireball": {"type": "learn_skill", "skill_id": "fireball"},
-    "scroll_heal": {"type": "learn_skill", "skill_id": "heal"},
-    "scroll_shield_wall": {"type": "learn_skill", "skill_id": "shield_wall"},
-    "scroll_berserk": {"type": "learn_skill", "skill_id": "berserk"},
-    "scroll_backstab": {"type": "learn_skill", "skill_id": "backstab"},
-    "scroll_poison_blade": {"type": "learn_skill", "skill_id": "poison_blade"},
-    "scroll_evasion": {"type": "learn_skill", "skill_id": "evasion"},
-    "scroll_frost_bolt": {"type": "learn_skill", "skill_id": "frost_bolt"},
-    "scroll_magic_shield": {"type": "learn_skill", "skill_id": "magic_shield"},
-    "scroll_thunder_strike": {"type": "learn_skill", "skill_id": "thunder_strike"},
-}
+
+def get_item_effect(item_id: str) -> dict:
+    """从配置中获取物品效果"""
+    item_info = ITEMS_DB.get(item_id, {})
+    return item_info.get("effect", {})
+
+
+def get_item_category(item_id: str) -> str:
+    """从配置中获取物品分类"""
+    item_info = ITEMS_DB.get(item_id, {})
+    return item_info.get("category", "unknown")
 
 
 @dataclass
@@ -63,12 +38,33 @@ class Inventory:
                 return item["quantity"]
         return 0
 
-    def add_item(self, item_id: str, quantity: int = 1):
-        for item in self.items:
-            if item["item_id"] == item_id:
-                item["quantity"] += quantity
-                return
-        self.items.append({"item_id": item_id, "quantity": quantity})
+    def add_item(self, item_id: str, quantity: int = 1, instance_data: dict = None):
+        """添加物品到背包"""
+        item_info = ITEMS_DB.get(item_id)
+        if not item_info:
+            return False
+        
+        stackable = item_info.get("stackable", True)
+        
+        if stackable and instance_data is None:
+            # 可堆叠物品：合并数量
+            for item in self.items:
+                if item["item_id"] == item_id:
+                    item["quantity"] += quantity
+                    return True
+            self.items.append({"item_id": item_id, "quantity": quantity})
+        else:
+            # 不可堆叠物品：每个实例独立
+            for _ in range(quantity):
+                item_instance = {
+                    "item_id": item_id,
+                    "quantity": 1,
+                }
+                if instance_data:
+                    item_instance.update(instance_data)
+                self.items.append(item_instance)
+        
+        return True
 
     def remove_item(self, item_id: str, quantity: int = 1) -> bool:
         for item in self.items:
@@ -86,7 +82,7 @@ class Inventory:
         for item in self.items:
             item_id = item["item_id"]
             info = ITEMS_DB.get(item_id, {})
-            effect = ITEM_EFFECTS.get(item_id, {})
+            effect = get_item_effect(item_id)
             effect_type = effect.get("type")
             heal_value = effect.get("value") if effect_type == "heal" else None
             mp_value = effect.get("value") if effect_type == "restore_mp" else None

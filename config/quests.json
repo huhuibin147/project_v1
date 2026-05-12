@@ -5,6 +5,9 @@
     "description": "铁匠老王最近铁矿储备不足，需要冒险者帮忙收集铁矿来维持铁匠铺的运转。",
     "type": "side",
     "npc_id": "blacksmith",
+    "chain": "blacksmith_questline",
+    "chain_order": 1,
+    "next_in_chain": "blacksmith_wolf",
     "prerequisites": {
       "level": 1,
       "quests_completed": [],
@@ -42,6 +45,9 @@
     "description": "森林里的野狼越来越猖狂，铁匠老王希望有人能清理一些，保护村民安全。",
     "type": "side",
     "npc_id": "blacksmith",
+    "chain": "blacksmith_questline",
+    "chain_order": 2,
+    "next_in_chain": "blacksmith_bear",
     "prerequisites": {
       "level": 2,
       "quests_completed": [
@@ -87,6 +93,8 @@
     "description": "森林深处出现了一只凶暴的暗熊，铁匠老王希望有实力的冒险者能除掉它。",
     "type": "side",
     "npc_id": "blacksmith",
+    "chain": "blacksmith_questline",
+    "chain_order": 3,
     "prerequisites": {
       "level": 4,
       "quests_completed": [

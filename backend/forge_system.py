@@ -9,6 +9,9 @@ ITEMS_FILE = CONFIG_DIR / "items.json"
 
 RARITY_ORDER = ["common", "uncommon", "rare", "epic", "legendary"]
 
+FORGE_PITY_THRESHOLD = 5
+FORGE_PITY_BONUS_PER_FAIL = 0.1
+
 
 def load_recipes_config() -> dict:
     with open(RECIPES_FILE, "r", encoding="utf-8") as f:
@@ -138,16 +141,19 @@ class ForgeResult:
     returned_materials: list = None
     player_inventory: list = None
     player_gold: int = 0
+    forge_streaks: dict = None
 
     def __post_init__(self):
         if self.output_affixes is None:
             self.output_affixes = []
         if self.returned_materials is None:
             self.returned_materials = []
+        if self.forge_streaks is None:
+            self.forge_streaks = {}
 
 
 def execute_forge(recipe_id: str, player_level: int, player_gold: int,
-                  inventory_items: list) -> ForgeResult:
+                  inventory_items: list, forge_streaks: dict = None) -> ForgeResult:
     recipe = RECIPES_DB.get(recipe_id)
     if not recipe:
         return ForgeResult(False, "配方不存在")
@@ -160,6 +166,9 @@ def execute_forge(recipe_id: str, player_level: int, player_gold: int,
     if not check["materials_ok"]:
         names = ", ".join(m["name"] for m in check["missing_materials"])
         return ForgeResult(False, f"材料不足：{names}")
+
+    if forge_streaks is None:
+        forge_streaks = {}
 
     with open(ITEMS_FILE, "r", encoding="utf-8") as f:
         items_db = json.load(f)
@@ -176,10 +185,15 @@ def execute_forge(recipe_id: str, player_level: int, player_gold: int,
     for mat in recipe.get("materials", []):
         _remove_from_inventory(new_items, mat["item_id"], mat["quantity"])
 
-    success_roll = random.random()
-    success_rate = recipe.get("success_rate", 1.0)
+    streak = forge_streaks.get(recipe_id, 0)
+    base_rate = recipe.get("success_rate", 1.0)
+    pity_bonus = min(streak * FORGE_PITY_BONUS_PER_FAIL, 1.0 - base_rate)
+    effective_rate = min(1.0, base_rate + pity_bonus)
 
-    if success_roll < success_rate:
+    success_roll = random.random()
+
+    if success_roll < effective_rate:
+        forge_streaks[recipe_id] = 0
         final_rarity = _roll_rarity(recipe.get("rarity_guarantee", "common"))
 
         from affix_system import generate_affixes
@@ -199,7 +213,8 @@ def execute_forge(recipe_id: str, player_level: int, player_gold: int,
             affix_names = "、".join(a["name"] for a in affixes)
             affix_text = f"，附带词条：{affix_names}"
 
-        message = f"锻造成功！获得【{rarity_name}】{output_name}{affix_text}"
+        pity_text = f"（保底加成 {int(pity_bonus * 100)}%）" if pity_bonus > 0 else ""
+        message = f"锻造成功！获得【{rarity_name}】{output_name}{affix_text}{pity_text}"
 
         return ForgeResult(
             success=True,
@@ -211,8 +226,10 @@ def execute_forge(recipe_id: str, player_level: int, player_gold: int,
             output_affixes=affixes,
             player_inventory=new_items,
             player_gold=new_gold,
+            forge_streaks=forge_streaks,
         )
     else:
+        forge_streaks[recipe_id] = streak + 1
         fail_return_rate = recipe.get("fail_return_rate", 0.5)
         returned = []
         for mat in recipe.get("materials", []):
@@ -231,7 +248,9 @@ def execute_forge(recipe_id: str, player_level: int, player_gold: int,
             parts = [f"{r['name']}×{r['quantity']}" for r in returned]
             return_text = f"返还了：{', '.join(parts)}"
 
-        message = f"锻造失败...{return_text}"
+        next_bonus = min((streak + 1) * FORGE_PITY_BONUS_PER_FAIL, 1.0 - base_rate)
+        pity_text = f"（下次成功率 +{int(next_bonus * 100)}%）" if next_bonus > 0 else ""
+        message = f"锻造失败...{return_text}{pity_text}"
 
         return ForgeResult(
             success=True,
@@ -240,6 +259,7 @@ def execute_forge(recipe_id: str, player_level: int, player_gold: int,
             returned_materials=returned,
             player_inventory=new_items,
             player_gold=new_gold,
+            forge_streaks=forge_streaks,
         )
 
 
