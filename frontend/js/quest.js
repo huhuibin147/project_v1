@@ -406,7 +406,7 @@ let exploreCheckTimer = null;
 function startExploreCheck() {
   if (exploreCheckTimer) return;
   exploreCheckTimer = setInterval(() => {
-    if (!gameStarted || combatOpen || dialogueOpen) return;
+    if (!GameManager.isStarted() || combatOpen || dialogueOpen) return;
     const tile = getPlayerTilePosition();
     if (tile && currentMap) {
       fetch("/api/quests/progress", {
@@ -553,7 +553,7 @@ function buildQuestManagerItemHtml(q) {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "q" && gameStarted && !dialogueOpen && !gameMenuOpen && !combatOpen && !talentPanelOpen) {
+  if (e.key.toLowerCase() === "q" && GameManager.isStarted() && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen) {
     if (questManagerOpen) {
       closeQuestManager();
     } else {

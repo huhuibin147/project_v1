@@ -65,6 +65,16 @@ python3.11 main.py
 
 按 `Ctrl + C` 停止服务。
 
+### 4. 运行前端测试
+
+```bash
+cd frontend
+npm install
+npm test
+```
+
+测试覆盖玩家移动、地图碰撞、战斗状态、背包逻辑、任务管理、天赋数据、GameManager 等核心模块。详见[测试方案文档](docs/test_plan.md)。
+
 ## 操作指南
 
 | 按键 | 功能 |
@@ -116,6 +126,18 @@ project_v1/
 │       ├── turn.py             # 回合解析核心
 │       └── engine.py           # 对外统一接口
 ├── frontend/                   # 前端界面（HTML5 Canvas + JS）
+│   ├── __tests__/              # 前端自动化测试
+│   │   ├── setup.js              # 全局测试环境配置
+│   │   ├── player.test.js        # 玩家移动/位置测试
+│   │   ├── map.test.js           # 地图碰撞/传送门测试
+│   │   ├── combat.test.js        # 战斗状态管理测试
+│   │   ├── inventory.test.js     # 背包逻辑测试
+│   │   ├── quest.test.js         # 任务状态管理测试
+│   │   ├── talent.test.js        # 天赋数据测试
+│   │   ├── GameManager.test.js   # 游戏管理器测试
+│   │   └── game.test.js          # 游戏主逻辑测试
+│   ├── package.json             # Node.js 依赖配置
+│   ├── jest.config.js           # Jest 测试配置
 │   └── js/
 │       └── managers/           # 管理器模块
 │           ├── GameManager.js    # 游戏核心管理器
@@ -150,6 +172,7 @@ project_v1/
 - 任务系统、扩展方向
 
 其他专项文档：
+- [自动化测试方案](docs/test_plan.md)
 - [物品与装备系统](docs/items_equipment.md)
 - [战斗系统设计](docs/combat_system.md)
 - [锻造与词条系统](docs/forge_and_affix_system.md)

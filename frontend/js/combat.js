@@ -327,7 +327,7 @@ function getNearestMonster() {
 
 // 发起战斗
 async function initiateCombat(monsterInstanceId) {
-  if (combatOpen || dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || talentPanelOpen) return;
+  if (combatOpen || dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || talentPanelOpen) return;
 
   await savePlayerPosition();
 

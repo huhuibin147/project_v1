@@ -66,39 +66,6 @@ function getItemName(itemId) {
   return itemNames[itemId] || itemId;
 }
 
-function drawHUD(ctx) {
-  if (typeof helpOpen === 'undefined' || !helpOpen) return;
-  
-  const canvas = GameManager.getCanvas();
-  if (!canvas) return;
-
-  const helpText1 = "WASD/方向键 移动  |  E 与NPC交互  |  I 背包  |  P 角色信息  |  O 菜单";
-  const helpText2 = "靠近NPC按E开始冒险吧";
-
-  ctx.font = "bold 13px monospace";
-  const width1 = ctx.measureText(helpText1).width;
-  const width2 = ctx.measureText(helpText2).width;
-  const maxWidth = Math.max(width1, width2) + 40;
-  const boxHeight = 60;
-
-  const boxX = (canvas.width - maxWidth) / 2;
-  const boxY = (canvas.height - boxHeight) / 2;
-
-  ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-  ctx.strokeStyle = "#f0c060";
-  ctx.lineWidth = 2;
-  ctx.fillRect(boxX, boxY, maxWidth, boxHeight);
-  ctx.strokeRect(boxX, boxY, maxWidth, boxHeight);
-
-  ctx.fillStyle = "#f0c060";
-  ctx.textAlign = "center";
-  ctx.fillText(helpText1, canvas.width / 2, boxY + 25);
-
-  ctx.fillStyle = "#fff";
-  ctx.font = "12px monospace";
-  ctx.fillText(helpText2, canvas.width / 2, boxY + 45);
-}
-
 let portalCooldown = 0;
 function checkPortalAutoTransfer() {
   if (portalCooldown > 0) {

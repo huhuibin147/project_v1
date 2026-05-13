@@ -1,15 +1,12 @@
 // 玩家角色控制
 
-// 基础速度（像素/帧），会根据画布大小自适应
-const BASE_PLAYER_SPEED = 3;
+// 基础速度（像素/帧）
+const BASE_PLAYER_SPEED = 6;
 const PLAYER_SIZE = TILE_SIZE;
 
-// 计算自适应速度
+// 获取恒定速度
 function getPlayerSpeed() {
-  const gameCanvas = GameManager.getCanvas();
-  const canvasWidth = gameCanvas?.width || 1920;
-  const scaleFactor = canvasWidth / 1920;
-  return Math.max(2, Math.round(BASE_PLAYER_SPEED * Math.max(0.8, scaleFactor)));
+  return BASE_PLAYER_SPEED;
 }
 
 const player = {
@@ -70,7 +67,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function updatePlayer() {
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen || worldMapOpen) return;
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen || worldMapOpen) return;
 
   const PLAYER_SPEED = getPlayerSpeed();
   let dx = 0, dy = 0;

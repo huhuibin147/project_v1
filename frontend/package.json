@@ -1,0 +1,15 @@
+{
+  "name": "frontend-tests",
+  "version": "1.0.0",
+  "description": "前端 JS 自动化测试",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-canvas-mock": "^2.5.2"
+  }
+}

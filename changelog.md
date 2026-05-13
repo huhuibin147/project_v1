@@ -1,5 +1,16 @@
 # 更新日志
 
+## 2026-05-13 — 前端自动化测试
+
+- **新增**：前端 JS 自动化测试体系
+  - 测试框架：Jest + jsdom + jest-canvas-mock
+  - 8 个测试套件，142 个测试用例，全部通过
+  - 覆盖模块：player（31用例）、map（22用例）、combat（23用例）、inventory（19用例）、quest（20用例）、talent（7用例）、GameManager（15用例）、game（7用例）
+  - 测试内容：玩家移动/碰撞、地图瓦片/传送门/交互物件、战斗状态/怪物AI、背包格式化/常量、任务状态/NPC查找、天赋数据、游戏管理器菜单/状态
+  - 新增文件：`frontend/package.json`、`frontend/jest.config.js`、`frontend/__tests__/` 下全部测试文件
+- **更新**：readme.md 添加测试章节和项目结构
+- **更新**：test_plan.md 标记已实现用例，补充实现细节
+
 ## 2026-05-10 — 地图美术系统升级 + 建筑类型优化 + 文档更新
 
 - **升级**：地图美术系统

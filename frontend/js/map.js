@@ -760,7 +760,7 @@ function initWorldMap() {
 }
 
 function toggleWorldMap() {
-  console.log("切换大地图，当前状态:", worldMapOpen, "游戏状态:", gameStarted);
+  console.log("切换大地图，当前状态:", worldMapOpen, "游戏状态:", GameManager.isStarted());
   if (worldMapOpen) {
     closeWorldMap();
   } else {
@@ -773,7 +773,7 @@ function openWorldMap() {
     console.log("无法打开大地图：当前地图未加载");
     return;
   }
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || gameMenuOpen || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen) {
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen) {
     console.log("无法打开大地图：有其他面板打开");
     return;
   }

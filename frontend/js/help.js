@@ -12,7 +12,7 @@ function closeHelp() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "h" && !dialogueOpen && !gameMenuOpen && !shopOpen && !inventoryOpen && !playerInfoOpen && !combatOpen && !talentPanelOpen) {
+  if (e.key.toLowerCase() === "h" && !dialogueOpen && !GameManager.isMenuOpen() && !shopOpen && !inventoryOpen && !playerInfoOpen && !combatOpen && !talentPanelOpen) {
     if (helpOpen) {
       closeHelp();
     } else {

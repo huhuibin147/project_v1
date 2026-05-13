@@ -130,7 +130,6 @@ const RenderManager = (() => {
     if (typeof renderMinimap === 'function') renderMinimap();
     if (typeof updateHudMapName === 'function') updateHudMapName();
     if (typeof drawGatherHint === 'function') drawGatherHint();
-    if (typeof drawHUD === 'function') drawHUD(ctx);
 
     updateState();
     dirty = false;

@@ -123,7 +123,7 @@ async function fetchShop(npcId) {
 }
 
 function openInventory() {
-  if (dialogueOpen || gameMenuOpen || combatOpen) return;
+  if (dialogueOpen || GameManager.isMenuOpen() || combatOpen) return;
   inventoryOpen = true;
   inventoryPage.current = 1;
   fetchInventory().then(() => renderInventory());
@@ -680,7 +680,7 @@ async function doUseItem(itemId) {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "i" && !dialogueOpen && !gameMenuOpen && !combatOpen && !talentPanelOpen) {
+  if (e.key.toLowerCase() === "i" && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen) {
     if (inventoryOpen) {
       closeInventory();
     } else {
@@ -689,7 +689,7 @@ document.addEventListener("keydown", (e) => {
     }
   }
   if (e.key === "Escape") {
-    if (gameMenuOpen) closeGameMenu();
+    if (GameManager.isMenuOpen()) closeGameMenu();
     else if (npcInteractOpen) closeNpcInteract();
     else if (shopOpen) closeShop();
     else if (inventoryOpen) closeInventory();

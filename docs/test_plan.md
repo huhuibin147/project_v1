@@ -1,5 +1,7 @@
 # 自动化测试方案
 
+> **实现状态**：前端 JS 测试（层级5）已全部实现，共 8 个测试套件 142 个测试用例，全部通过。后端测试（层级1-4）待实现。
+
 ## 1. 系统架构概览
 
 ```
@@ -75,11 +77,185 @@ project_v1/
 - 物品 API：背包操作、装备管理
 - 地图 API：加载地图、传送
 
-### 层级5：前端 JS 测试（Node.js 环境）
-- 玩家移动逻辑
-- 地图瓦片碰撞检测
-- 战斗 UI 状态管理
-- 背包操作逻辑
+### 层级5：前端 JS 测试（Jest + jsdom）
+
+#### 5.1 技术选型
+- **测试框架**：Jest（最流行的 JS 测试框架）
+- **DOM 模拟**：jsdom（Jest 内置）
+- **Canvas 模拟**：jest-canvas-mock
+- **Fetch 模拟**：jest-fetch-mock 或手动 mock
+- **运行环境**：Node.js
+
+#### 5.2 文件结构
+```
+frontend/
+├── js/                          # 源代码
+│   ├── managers/
+│   │   ├── GameManager.js
+│   │   ├── InputManager.js
+│   │   ├── LoadingManager.js
+│   │   └── RenderManager.js
+│   ├── player.js
+│   ├── map.js
+│   ├── combat.js
+│   ├── inventory.js
+│   ├── quest.js
+│   ├── talent.js
+│   ├── ...
+│   └── game.js
+├── __tests__/                   # 测试文件
+│   ├── setup.js                 # 全局测试配置
+│   ├── player.test.js           # 玩家移动/位置测试
+│   ├── map.test.js              # 地图碰撞/传送门测试
+│   ├── combat.test.js           # 战斗状态管理测试
+│   ├── inventory.test.js        # 背包逻辑测试
+│   ├── quest.test.js            # 任务状态管理测试
+│   ├── talent.test.js           # 天赋数据测试
+│   ├── GameManager.test.js      # 游戏管理器测试
+│   └── game.test.js             # 游戏主逻辑测试
+├── package.json                 # Node.js 依赖配置
+└── jest.config.js               # Jest 配置
+```
+
+#### 5.3 测试用例设计
+
+##### 5.3.1 玩家模块 (player.test.js) ✅ 已实现 (31 用例)
+
+| 编号 | 测试项 | 预期结果 | 状态 |
+|------|--------|----------|------|
+| PLY-01 | getPlayerSpeed 返回恒定速度 | 返回 BASE_PLAYER_SPEED (6) | ✅ |
+| PLY-02 | setPlayerPosition 设置瓦片坐标 | player.x/y = tileX/Y * TILE_SIZE | ✅ |
+| PLY-03 | getPlayerTilePosition 返回瓦片坐标 | 正确计算中心点瓦片坐标 | ✅ |
+| PLY-04 | 按键 W 触发向上移动 | player.direction = "up", dy < 0 | ✅ |
+| PLY-05 | 按键 S 触发向下移动 | player.direction = "down", dy > 0 | ✅ |
+| PLY-06 | 按键 A 触发向左移动 | player.direction = "left", dx < 0 | ✅ |
+| PLY-07 | 按键 D 触发向右移动 | player.direction = "right", dx > 0 | ✅ |
+| PLY-08 | 无按键时 player.moving = false | moving 为 false | ✅ |
+| PLY-09 | 有按键时 player.moving = true | moving 为 true | ✅ |
+| PLY-10 | 面板打开时 updatePlayer 不移动 | 任何面板打开时直接 return | ✅ |
+| PLY-11 | 碰撞检测阻止走入不可行走瓦片 | player 位置不变 | ✅ |
+| PLY-12 | 可行走瓦片允许移动 | player 位置更新 | ✅ |
+
+##### 5.3.2 地图模块 (map.test.js) ✅ 已实现 (22 用例)
+
+| 编号 | 测试项 | 预期结果 | 状态 |
+|------|--------|----------|------|
+| MAP-01 | isWalkable 边界外返回 false | col/row 超出范围返回 false | ✅ |
+| MAP-02 | isWalkable 可行走瓦片返回 true | walkable=true 的瓦片 | ✅ |
+| MAP-03 | isWalkable 不可行走瓦片返回 false | walkable=false 的瓦片 | ✅ |
+| MAP-04 | isWalkable 无地图数据返回 false | currentMap 为 null | ✅ |
+| MAP-05 | checkPortalCollision 玩家在传送门上 | 返回传送门对象 | ✅ |
+| MAP-06 | checkPortalCollision 玩家不在传送门上 | 返回 null | ✅ |
+| MAP-07 | getNearbyInteractableObject 1格内 | 返回物件对象 | ✅ |
+| MAP-08 | getNearbyInteractableObject 超出范围 | 返回 null | ✅ |
+| MAP-09 | getNearbyInteractableObject 排除传送门 | 传送门不参与 E 键交互 | ✅ |
+| MAP-10 | TILE_SIZE 常量值 | 等于 32 | ✅ |
+
+##### 5.3.3 战斗模块 (combat.test.js) ✅ 已实现 (23 用例)
+
+| 编号 | 测试项 | 预期结果 | 状态 |
+|------|--------|----------|------|
+| CBT-01 | combatOpen 初始为 false | 战斗未开启 | ✅ |
+| CBT-02 | checkMonsterCollision 无怪物返回 null | mapMonsters 为空 | ✅ |
+| CBT-03 | checkMonsterCollision 战斗开启时返回 null | combatOpen=true | ✅ |
+| CBT-04 | checkMonsterCollision 1格内检测到怪物 | 返回怪物对象 | ✅ |
+| CBT-05 | checkMonsterCollision 超出范围返回 null | 距离 > 1 | ✅ |
+| CBT-06 | getNearestMonster 返回最近怪物 | 2格内最近怪物 | ✅ |
+| CBT-07 | getNearestMonster 战斗开启时返回 null | combatOpen=true | ✅ |
+| CBT-08 | updateMonsters 巡逻移动 | 怪物向巡逻点移动 | ✅ |
+| CBT-09 | updateMonsters 到达巡逻点切换目标 | patrolIndex 递增 | ✅ |
+| CBT-10 | updateMonsters 死亡/战斗中不移动 | 位置不变 | ✅ |
+
+##### 5.3.4 背包模块 (inventory.test.js) ✅ 已实现 (19 用例)
+
+| 编号 | 测试项 | 预期结果 | 状态 |
+|------|--------|----------|------|
+| INV-01 | formatItemStats 空 stats 返回空字符串 | 返回 "" | ✅ |
+| INV-02 | formatItemStats 正常格式化 | 返回 "攻+10 防+5" | ✅ |
+| INV-03 | RARITY_DEF 包含5个稀有度 | common/uncommon/rare/epic/legendary | ✅ |
+| INV-04 | STAT_LABELS_INV 包含5个属性标签 | attack/defense/speed/max_hp/max_mp | ✅ |
+| INV-05 | TIER_NAMES 包含3个等级段 | tier1/tier2/tier3 | ✅ |
+| INV-06 | ITEMS_PER_PAGE 常量值 | 等于 8 | ✅ |
+| INV-07 | inventoryOpen 初始为 false | 背包未开启 | ✅ |
+| INV-08 | shopOpen 初始为 false | 商店未开启 | ✅ |
+
+##### 5.3.5 任务模块 (quest.test.js) ✅ 已实现 (20 用例)
+
+| 编号 | 测试项 | 预期结果 | 状态 |
+|------|--------|----------|------|
+| QST-01 | questOpen 初始为 false | 任务面板未开启 | ✅ |
+| QST-02 | questManagerOpen 初始为 false | 任务管理未开启 | ✅ |
+| QST-03 | currentQuestTab 初始为 'active' | 默认显示进行中 | ✅ |
+| QST-04 | getNpcNameById 已知 NPC 返回名称 | 返回正确名称 | ✅ |
+| QST-05 | getNpcNameById 未知 NPC 返回 ID | 返回原始 npcId | ✅ |
+| QST-06 | switchQuestTab 切换标签 | currentQuestTab 更新 | ✅ |
+
+##### 5.3.6 天赋模块 (talent.test.js) ✅ 已实现 (7 用例)
+
+| 编号 | 测试项 | 预期结果 | 状态 |
+|------|--------|----------|------|
+| TAL-01 | TREE_NAMES 包含6个天赋树 | berserk/guard/assassin/trick/element/holy | ✅ |
+| TAL-02 | TREE_COLORS 包含6个颜色 | 每个天赋树有对应颜色 | ✅ |
+| TAL-03 | talentPanelOpen 初始为 false | 天赋面板未开启 | ✅ |
+
+##### 5.3.7 GameManager 模块 (GameManager.test.js) ✅ 已实现 (15 用例)
+
+| 编号 | 测试项 | 预期结果 | 状态 |
+|------|--------|----------|------|
+| GM-01 | isStarted 初始返回 false | 游戏未开始 | ✅ |
+| GM-02 | isMenuOpen 初始返回 false | 菜单未打开 | ✅ |
+| GM-03 | openGameMenu 后 isMenuOpen 返回 true | 菜单打开 | ✅ |
+| GM-04 | closeGameMenu 后 isMenuOpen 返回 false | 菜单关闭 | ✅ |
+| GM-05 | toggleGameMenu 切换状态 | 开关交替 | ✅ |
+| GM-06 | stopGame 后 isStarted 返回 false | 游戏停止 | ✅ |
+| GM-07 | getCanvas 返回 canvas 元素 | 非 null | ✅ |
+
+#### 5.4 运行方式
+```bash
+# 安装依赖
+cd frontend && npm install
+
+# 运行所有测试
+npm test
+
+# 运行单个测试文件
+npx jest player.test.js
+
+# 运行并生成覆盖率报告
+npm test -- --coverage
+
+# 监听模式（开发时使用）
+npm test -- --watch
+```
+
+#### 5.5 测试策略说明
+
+1. **纯逻辑函数优先**：优先测试不依赖 DOM/Canvas/fetch 的纯函数
+2. **状态管理测试**：测试全局状态变量的初始值和状态转换
+3. **常量验证**：验证配置常量的正确性
+4. **DOM 模拟测试**：使用 jsdom 模拟 DOM 环境测试 UI 交互
+5. **Canvas Mock**：使用 jest-canvas-mock 避免 Canvas API 报错
+6. **Fetch Mock**：手动 mock fetch 避免真实网络请求
+7. **不测试渲染**：Canvas 绘制函数（drawPlayer/drawMap 等）不做像素级测试
+8. **不测试动画**：动画帧和粒子系统不做测试
+
+#### 5.6 实现细节
+
+**脚本加载方案**：由于源代码使用 IIFE 模式和 `const`/`let` 声明，测试中通过 `loadScript` 函数加载源文件：
+- 使用 Node.js `fs.readFileSync` 读取源文件
+- 移除 `"use strict"` 指令
+- 将 `const`/`let` 替换为 `var` 以暴露变量到全局作用域
+- 使用间接 `eval`（`(0, eval)(code)`）在全局作用域执行代码
+
+**环境模拟**：
+- `setup.js` 中预设 `TILE_SIZE`、`PLAYER_SIZE` 等全局常量
+- 模拟 `requestAnimationFrame`、`fetch`、`console` 等浏览器 API
+- 预置完整的 DOM 结构（canvas、面板、按钮等元素）
+
+**测试隔离**：
+- 每个 `beforeEach` 中重置全局状态变量
+- 使用 `Object.keys(keys).forEach(k => delete keys[k])` 清理按键状态
+- 独立设置 `currentMap`、`tileConfig`、`mapObjects` 等地图数据
 
 ## 3. 测试用例设计
 
@@ -228,7 +404,7 @@ python tests/run_tests.py backend BKE-01
 ## 5. 注意事项
 
 1. **LLM 相关测试不纳入**：npc_agent.py 依赖外部 LLM API，不做自动化测试
-2. **前端 JS 测试暂不实现**：需要 Node.js + jsdom 环境，复杂度高
+2. **前端 JS 测试已实现**：使用 Jest + jsdom，覆盖玩家移动、地图碰撞、战斗状态、背包逻辑、任务管理、天赋数据、GameManager 等模块
 3. **API 测试使用 TestClient**：不需要真正启动 HTTP 服务
 4. **测试数据隔离**：测试使用临时目录，不修改真实存档
 5. **配置数据测试复用**：复用 validate_all.py 的逻辑

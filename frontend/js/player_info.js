@@ -100,7 +100,7 @@ async function fetchEquipmentInfo() {
 }
 
 function openPlayerInfo() {
-  if (dialogueOpen || shopOpen || gameMenuOpen || combatOpen) return;
+  if (dialogueOpen || shopOpen || GameManager.isMenuOpen() || combatOpen) return;
   playerInfoOpen = true;
   Promise.all([fetchPlayerInfo(), fetchEquipmentInfo()]).then(() => renderPlayerInfo());
   document.getElementById("player-info-panel").classList.add("active");
@@ -355,7 +355,7 @@ function updatePlayerHUD() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "p" && !dialogueOpen && !gameMenuOpen && !combatOpen && !talentPanelOpen) {
+  if (e.key.toLowerCase() === "p" && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen) {
     if (playerInfoOpen) {
       closePlayerInfo();
     } else {
