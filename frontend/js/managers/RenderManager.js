@@ -9,10 +9,11 @@ const RenderManager = (() => {
     cameraY: 0,
     monsterCount: 0,
     npcCount: 0,
-    mapObjectsHash: ''
+    mapObjectsHash: '',
+    monsterPositionsHash: ''
   };
   let frameCount = 0;
-  let forceRenderEveryNFrames = 60;
+  let forceRenderEveryNFrames = 2;
 
   function checkDirty() {
     if (dirty) return true;
@@ -32,6 +33,10 @@ const RenderManager = (() => {
     if (typeof mapMonsters !== 'undefined') {
       const aliveCount = mapMonsters.filter(m => m.alive).length;
       if (aliveCount !== lastState.monsterCount) {
+        return true;
+      }
+      const posHash = mapMonsters.filter(m => m.alive).map(m => `${m.x.toFixed(1)},${m.y.toFixed(1)}`).join('|');
+      if (posHash !== lastState.monsterPositionsHash) {
         return true;
       }
     }
@@ -64,6 +69,7 @@ const RenderManager = (() => {
 
     if (typeof mapMonsters !== 'undefined') {
       lastState.monsterCount = mapMonsters.filter(m => m.alive).length;
+      lastState.monsterPositionsHash = mapMonsters.filter(m => m.alive).map(m => `${m.x.toFixed(1)},${m.y.toFixed(1)}`).join('|');
     }
 
     if (typeof npcs !== 'undefined') {

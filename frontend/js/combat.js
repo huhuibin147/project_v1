@@ -213,6 +213,17 @@ function drawMapMonster(ctx, monster) {
     ctx.fillStyle = "#ff8888";
     ctx.textAlign = "center";
     ctx.fillText(displayName, x + s / 2, y - 4);
+
+    const maxHp = config.stats?.hp || 100;
+    const barWidth = s - p * 2;
+    const barHeight = 3;
+    const barY = y - 18;
+    const barX = x + p;
+    ctx.fillStyle = "#333";
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    const hpRatio = Math.min(1, maxHp / 500);
+    ctx.fillStyle = "#44cc44";
+    ctx.fillRect(barX, barY, barWidth * hpRatio, barHeight);
   }
 
   if (config.type === "elite") {

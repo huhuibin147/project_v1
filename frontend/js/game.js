@@ -142,3 +142,68 @@ function saveGame() {
 function returnToMainMenu() {
   GameManager.returnToMainMenu();
 }
+
+// ===== 面板拖拽 =====
+
+function makeDraggable(panelId, headerSelector) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+
+  const header = panel.querySelector(headerSelector || ".panel-header");
+  if (!header) return;
+
+  let isDragging = false;
+  let startX, startY, origLeft, origTop;
+
+  header.style.cursor = "move";
+
+  header.addEventListener("mousedown", (e) => {
+    if (e.target.tagName === "BUTTON" || e.target.closest("button")) return;
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    const rect = panel.getBoundingClientRect();
+    panel.style.transform = "none";
+    panel.style.left = rect.left + "px";
+    panel.style.top = rect.top + "px";
+    origLeft = rect.left;
+    origTop = rect.top;
+    panel.style.transition = "none";
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    panel.style.left = (origLeft + dx) + "px";
+    panel.style.top = (origTop + dy) + "px";
+    panel.style.transform = "none";
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      panel.style.transition = "";
+    }
+  });
+}
+
+function initPanelDrag() {
+  makeDraggable("inventory-panel");
+  makeDraggable("player-info-panel");
+  makeDraggable("shop-panel");
+  makeDraggable("game-menu-panel");
+  makeDraggable("skill-learn-panel");
+  makeDraggable("heal-panel");
+  makeDraggable("npc-interact-panel");
+  makeDraggable("quest-manager-panel");
+  makeDraggable("talent-panel");
+  makeDraggable("help-panel");
+  makeDraggable("dialogue-panel", "#dialogue-header");
+  makeDraggable("forge-panel", ".forge-header");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initPanelDrag();
+});

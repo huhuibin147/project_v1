@@ -189,6 +189,7 @@ async def combat_action(req: CombatActionRequest):
         if gold_loss > 0:
             player_profile.spend_gold(gold_loss)
         player_profile.hp = 1
+        session.player_hp = 1
         player_profile._save()
         state["gold_lost"] = gold_loss
 

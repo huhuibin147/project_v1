@@ -1,7 +1,7 @@
 // 玩家角色控制
 
-// 基础速度（像素/帧）
-const BASE_PLAYER_SPEED = 6;
+// 基础速度（像素/秒）
+const BASE_PLAYER_SPEED = 360;
 const PLAYER_SIZE = TILE_SIZE;
 
 // 获取恒定速度
@@ -69,10 +69,11 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
-function updatePlayer() {
+function updatePlayer(dt) {
   if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen || worldMapOpen) return;
 
-  const PLAYER_SPEED = getPlayerSpeed();
+  const dtSeconds = dt ? dt / 1000 : 1 / 60;
+  const PLAYER_SPEED = getPlayerSpeed() * dtSeconds;
   let dx = 0, dy = 0;
 
   if (keys["w"] || keys["arrowup"])    { dy = -PLAYER_SPEED; player.direction = "up"; }

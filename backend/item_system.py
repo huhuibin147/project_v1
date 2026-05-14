@@ -89,8 +89,19 @@ class Inventory:
         return False
 
     def to_list(self) -> list[dict]:
-        result = []
+        grouped = {}
         for item in self.items:
+            item_id = item["item_id"]
+            instance_affixes = item.get("instance_affixes")
+            instance_rarity = item.get("instance_rarity")
+            key = (item_id, str(sorted(instance_affixes)) if instance_affixes else "", instance_rarity or "")
+            if key not in grouped:
+                grouped[key] = item.copy()
+            else:
+                grouped[key]["quantity"] += item["quantity"]
+
+        result = []
+        for key, item in grouped.items():
             item_id = item["item_id"]
             info = ITEMS_DB.get(item_id, {})
             effect = get_item_effect(item_id)

@@ -215,7 +215,20 @@ def _execute_aoe_damage_skill(session, skill, power, effects):
 
 
 def _execute_heal_skill(session, skill, power):
-    heal_amount = int(session.player_max_hp * power)
+    effects = skill.get("effects", [])
+    flat_heal = 0
+    for eff in effects:
+        if eff.get("type") == "heal":
+            flat_heal += eff.get("value", 0)
+
+    if flat_heal > 0:
+        heal_amount = flat_heal
+    else:
+        heal_amount = int(session.player_max_hp * power)
+
+    if session.talent_passives and session.talent_passives.get("heal_boost", 0) > 0:
+        heal_amount = int(heal_amount * (1 + session.talent_passives["heal_boost"]))
+
     session.player_hp = min(session.player_max_hp, session.player_hp + heal_amount)
     return {"type": "skill", "skill_id": skill["skill_id"], "success": True,
             "text": f"使用 {skill['name']}！恢复了 {heal_amount} 点生命。"}

@@ -38,7 +38,7 @@ const GameManager = (() => {
   }
 
   function update(dt) {
-    if (typeof updatePlayer === 'function') updatePlayer();
+    if (typeof updatePlayer === 'function') updatePlayer(dt);
     if (typeof updateCamera === 'function') updateCamera();
     if (typeof checkPortalAutoTransfer === 'function') checkPortalAutoTransfer();
     if (typeof updateMonsters === 'function') updateMonsters(dt);
