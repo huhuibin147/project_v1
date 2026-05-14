@@ -294,4 +294,110 @@ describe('战斗模块 (combat.js)', () => {
       expect(result).toBeInstanceOf(Promise);
     });
   });
+
+  describe('CBT-11~14: 战斗日志虚拟滚动', () => {
+    beforeEach(() => {
+      combatLogBuffer = [];
+      var logDiv = document.getElementById('combat-log');
+      if (logDiv) logDiv.innerHTML = '';
+    });
+
+    it('CBT-11: combatLogBuffer 初始应为空数组', () => {
+      expect(Array.isArray(combatLogBuffer)).toBe(true);
+      expect(combatLogBuffer.length).toBe(0);
+    });
+
+    it('CBT-12: appendCombatLog 应向缓冲区添加条目', () => {
+      appendCombatLog([{ type: 'player_attack', text: '你攻击了史莱姆！' }]);
+      expect(combatLogBuffer.length).toBe(1);
+    });
+
+    it('CBT-13: 日志超过 MAX_LOG_ENTRIES 时应裁剪旧条目', () => {
+      var entries = [];
+      for (var i = 0; i < 60; i++) {
+        entries.push({ type: 'player_attack', text: '攻击 ' + i });
+      }
+      appendCombatLog(entries);
+      expect(combatLogBuffer.length).toBeLessThanOrEqual(50);
+    });
+
+    it('CBT-14: renderCombatLog 应只渲染最近 VISIBLE_LOG_ENTRIES 条', () => {
+      for (var i = 0; i < 30; i++) {
+        combatLogBuffer.push({ type: 'player_attack', text: '攻击 ' + i });
+      }
+      renderCombatLog();
+      var logDiv = document.getElementById('combat-log');
+      var entries = logDiv.querySelectorAll('.combat-log-entry');
+      expect(entries.length).toBeLessThanOrEqual(15);
+    });
+  });
+
+  describe('CBT-15~17: 伤害数字弹出动画', () => {
+    it('CBT-15: showDamageNumbers 应为玩家攻击调用 spawnDamageNumber', () => {
+      var panel = document.getElementById('combat-panel');
+      if (!panel) return;
+      combatState = { monsters: [{ alive: true }] };
+      currentTargetIndex = 0;
+      var monsterArea = document.getElementById('combat-monster-area');
+      if (monsterArea) {
+        var slot = document.createElement('div');
+        slot.className = 'combat-monster-slot';
+        slot.setAttribute('data-index', '0');
+        monsterArea.appendChild(slot);
+      }
+      showDamageNumbers([{ type: 'player_attack', damage: 25 }]);
+      var numEl = panel.querySelector('.damage-number');
+      expect(numEl).not.toBeNull();
+    });
+
+    it('CBT-16: showDamageNumbers 暴击应使用 damage-crit 类', () => {
+      var panel = document.getElementById('combat-panel');
+      if (!panel) return;
+      combatState = { monsters: [{ alive: true }] };
+      currentTargetIndex = 0;
+      var monsterArea = document.getElementById('combat-monster-area');
+      if (monsterArea) {
+        var slot = document.createElement('div');
+        slot.className = 'combat-monster-slot';
+        slot.setAttribute('data-index', '0');
+        monsterArea.appendChild(slot);
+      }
+      showDamageNumbers([{ type: 'player_attack', damage: 50, crit: true }]);
+      var critEl = panel.querySelector('.damage-crit');
+      expect(critEl).not.toBeNull();
+    });
+
+    it('CBT-17: showDamageNumbers 无 damage 字段不应生成数字', () => {
+      var panel = document.getElementById('combat-panel');
+      if (!panel) return;
+      var beforeCount = panel.querySelectorAll('.damage-number').length;
+      showDamageNumbers([{ type: 'player_defend', text: '你防御了' }]);
+      var afterCount = panel.querySelectorAll('.damage-number').length;
+      expect(afterCount).toBe(beforeCount);
+    });
+  });
+
+  describe('CBT-18~19: 目标选择', () => {
+    beforeEach(() => {
+      combatState = {
+        monsters: [
+          { name: '史莱姆', hp: 50, max_hp: 50, alive: true, is_boss: false, monster_id: 'slime', effects: [] },
+          { name: '哥布林', hp: 40, max_hp: 40, alive: true, is_boss: false, monster_id: 'goblin', effects: [] },
+        ],
+        phase: 'player_turn',
+      };
+      currentTargetIndex = 0;
+    });
+
+    it('CBT-18: selectTarget 应切换 currentTargetIndex', () => {
+      selectTarget(1);
+      expect(currentTargetIndex).toBe(1);
+    });
+
+    it('CBT-19: selectTarget 不应选择死亡怪物', () => {
+      combatState.monsters[1].alive = false;
+      selectTarget(1);
+      expect(currentTargetIndex).toBe(0);
+    });
+  });
 });

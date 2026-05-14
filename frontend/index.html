@@ -78,6 +78,7 @@
         <button class="forge-filter-btn" data-filter="weapon" onclick="filterForgeRecipes('weapon')">武器</button>
         <button class="forge-filter-btn" data-filter="armor" onclick="filterForgeRecipes('armor')">护甲</button>
         <button class="forge-filter-btn" data-filter="accessory" onclick="filterForgeRecipes('accessory')">饰品</button>
+        <input type="text" id="forge-search" class="forge-search-input" placeholder="搜索配方..." oninput="searchForgeRecipes(this.value)" autocomplete="off">
       </div>
       <div id="forge-recipes"></div>
       <div class="forge-pagination" id="forge-pagination"></div>
@@ -160,6 +161,7 @@
           <button class="view-btn active" id="view-list" onclick="switchInventoryView('list')" title="列表">☰</button>
           <button class="view-btn" id="view-grid" onclick="switchInventoryView('grid')" title="格子">⊞</button>
         </div>
+        <input type="text" class="inventory-search" id="inventory-search" placeholder="搜索物品..." oninput="searchInventory(this.value)">
         <div class="filter-tabs">
           <button class="filter-btn active" data-filter="all" onclick="filterInventory('all')">全部</button>
           <button class="filter-btn" data-filter="weapon" onclick="filterInventory('weapon')">武器</button>
@@ -455,16 +457,7 @@
       </div>
       <div id="combat-body">
         <div id="combat-monster-area">
-          <canvas id="monster-sprite-canvas" width="96" height="96"></canvas>
-          <div id="combat-monster-name">史莱姆</div>
-          <div class="combat-hp-bar-row">
-            <span class="combat-hp-label">HP</span>
-            <div class="combat-hp-bar">
-              <div class="combat-hp-fill monster-hp" id="combat-monster-hp-bar"></div>
-            </div>
-            <span class="combat-hp-text" id="combat-monster-hp-text">30/30</span>
-          </div>
-          <div id="combat-monster-effects"></div>
+          <div id="combat-monsters-container"></div>
         </div>
 
         <div id="combat-log"></div>
@@ -489,6 +482,7 @@
       </div>
 
       <div id="combat-actions">
+        <div id="combat-target-hint">Tab 切换目标</div>
         <button class="btn-combat" id="btn-combat-attack" onclick="combatAction('attack')">
           攻击 (1)
         </button>

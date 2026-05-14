@@ -155,4 +155,101 @@ describe('背包模块 (inventory.js)', () => {
       expect(shopPage.current).toBe(1);
     });
   });
+
+  describe('INV-09~11: 搜索过滤功能', () => {
+    beforeEach(() => {
+      inventoryState.items = [
+        { item_id: 'sword1', name: '铁剑', type: 'weapon', equip_slot: 'weapon', stats: { attack: 10 }, description: '一把普通的铁剑', affixes: [], quantity: 1, sell_price: 5, rarity: 'common' },
+        { item_id: 'potion1', name: '生命药水', type: 'consumable', description: '回复50HP', affixes: [], quantity: 3, sell_price: 2, rarity: 'common', heal_value: 50 },
+        { item_id: 'armor1', name: '皮甲', type: 'armor', equip_slot: 'body', stats: { defense: 5 }, description: '轻便的皮甲', affixes: [{ name: '坚韧', description: '防御力提升10%' }], quantity: 1, sell_price: 8, rarity: 'uncommon' },
+      ];
+      inventoryDisplay.filter = 'all';
+      inventoryDisplay.search = '';
+      if (typeof playerInfo === 'undefined') {
+        global.playerInfo = { equipment: {} };
+      } else {
+        playerInfo.equipment = {};
+      }
+    });
+
+    it('INV-09: searchInventory 应设置搜索关键词', () => {
+      searchInventory('铁剑');
+      expect(inventoryDisplay.search).toBe('铁剑');
+    });
+
+    it('INV-10: getFilteredItems 应按名称搜索', () => {
+      inventoryDisplay.search = '铁剑';
+      var result = getFilteredItems();
+      expect(result.length).toBe(1);
+      expect(result[0].item_id).toBe('sword1');
+    });
+
+    it('INV-10: getFilteredItems 应按描述搜索', () => {
+      inventoryDisplay.search = '回复';
+      var result = getFilteredItems();
+      expect(result.length).toBe(1);
+      expect(result[0].item_id).toBe('potion1');
+    });
+
+    it('INV-11: getFilteredItems 应按词条名称搜索', () => {
+      inventoryDisplay.search = '坚韧';
+      var result = getFilteredItems();
+      expect(result.length).toBe(1);
+      expect(result[0].item_id).toBe('armor1');
+    });
+
+    it('搜索无匹配应返回空数组', () => {
+      inventoryDisplay.search = '不存在的物品';
+      var result = getFilteredItems();
+      expect(result.length).toBe(0);
+    });
+
+    it('搜索应不区分大小写', () => {
+      inventoryDisplay.search = 'hp';
+      var result = getFilteredItems();
+      expect(result.length).toBe(1);
+      expect(result[0].item_id).toBe('potion1');
+    });
+
+    it('清空搜索应恢复全部物品', () => {
+      inventoryDisplay.search = '铁剑';
+      getFilteredItems();
+      searchInventory('');
+      var result = getFilteredItems();
+      expect(result.length).toBe(3);
+    });
+  });
+
+  describe('INV-12~13: 拖拽装备功能', () => {
+    it('INV-12: dragItemId 和 dragEquipSlot 初始应为 null', () => {
+      expect(dragItemId).toBeNull();
+      expect(dragEquipSlot).toBeNull();
+    });
+
+    it('INV-13: setupEquipSlotDropTargets 应为函数', () => {
+      expect(typeof setupEquipSlotDropTargets).toBe('function');
+    });
+
+    it('onItemDragStart 应为函数', () => {
+      expect(typeof onItemDragStart).toBe('function');
+    });
+
+    it('onEquipSlotDrop 应为函数', () => {
+      expect(typeof onEquipSlotDrop).toBe('function');
+    });
+  });
+
+  describe('INV-14: DocumentFragment 渲染优化', () => {
+    it('renderInventory 应为函数', () => {
+      expect(typeof renderInventory).toBe('function');
+    });
+
+    it('renderInventoryList 应为函数', () => {
+      expect(typeof renderInventoryList).toBe('function');
+    });
+
+    it('renderInventoryGrid 应为函数', () => {
+      expect(typeof renderInventoryGrid).toBe('function');
+    });
+  });
 });

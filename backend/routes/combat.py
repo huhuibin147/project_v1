@@ -1,4 +1,4 @@
-"""Combat related routes: start, action, end."""
+"""Combat related routes: start, action, end - with multi-enemy support."""
 
 import json
 from pathlib import Path
@@ -39,21 +39,54 @@ async def combat_start(req: CombatStartRequest):
     with open(map_file, "r", encoding="utf-8") as f:
         map_data = json.load(f)
 
-    monster_spawn = None
-    monsters_list = map_data.get("monsters", [])
-    for idx, m in enumerate(monsters_list):
-        instance_id = f"{m['monster_id']}_{idx}"
-        if instance_id == req.monster_instance_id:
-            monster_spawn = m
-            break
+    monster_configs = []
 
-    if not monster_spawn:
-        raise HTTPException(404, "怪物不存在")
+    if req.monster_group_id:
+        groups = map_data.get("monster_groups", [])
+        group = None
+        for g in groups:
+            if g.get("group_id") == req.monster_group_id:
+                group = g
+                break
+        if not group:
+            raise HTTPException(404, "怪物组不存在")
 
-    monster_id = monster_spawn["monster_id"]
-    monster_config = MONSTERS_DB.get(monster_id)
-    if not monster_config:
-        raise HTTPException(404, "怪物配置不存在")
+        for entry in group.get("monsters", []):
+            mid = entry["monster_id"]
+            mc = MONSTERS_DB.get(mid)
+            if not mc:
+                raise HTTPException(404, f"怪物配置不存在: {mid}")
+            config_copy = json.loads(json.dumps(mc))
+            if "count" in entry and entry["count"] > 1:
+                for i in range(entry["count"]):
+                    c = json.loads(json.dumps(config_copy))
+                    if entry["count"] > 1:
+                        c["name"] = f"{c['name']} {chr(65 + i)}"
+                    c["id"] = mid
+                    monster_configs.append(c)
+            else:
+                config_copy["id"] = mid
+                monster_configs.append(config_copy)
+    else:
+        monster_spawn = None
+        monsters_list = map_data.get("monsters", [])
+        for idx, m in enumerate(monsters_list):
+            instance_id = f"{m['monster_id']}_{idx}"
+            if instance_id == req.monster_instance_id:
+                monster_spawn = m
+                break
+
+        if not monster_spawn:
+            raise HTTPException(404, "怪物不存在")
+
+        monster_id = monster_spawn["monster_id"]
+        monster_config = MONSTERS_DB.get(monster_id)
+        if not monster_config:
+            raise HTTPException(404, "怪物配置不存在")
+
+        config_copy = json.loads(json.dumps(monster_config))
+        config_copy["id"] = monster_id
+        monster_configs.append(config_copy)
 
     player_snapshot = {
         "hp": player_profile.hp,
@@ -68,21 +101,17 @@ async def combat_start(req: CombatStartRequest):
         "equipment_affixes": player_profile.get_equipment_affixes() if hasattr(player_profile, "get_equipment_affixes") else [],
     }
 
-    session = create_combat_session(monster_id, monster_config, player_snapshot)
+    session = create_combat_session(monster_configs, player_snapshot)
 
     formatted_skills = [format_skill_for_frontend(s) for s in session.player_skills]
     formatted_skills = [s for s in formatted_skills if s is not None]
 
+    monsters_data = [m.to_dict() for m in session.monsters]
+
     return {
         "session_id": session.session_id,
-        "monster": {
-            "id": monster_id,
-            "name": monster_config["name"],
-            "hp": session.monster_hp,
-            "max_hp": session.monster_max_hp,
-            "sprite_color": monster_config.get("sprite_color", "#888"),
-            "sprite_accent": monster_config.get("sprite_accent", "#555"),
-        },
+        "monsters": monsters_data,
+        "monster": monsters_data[0] if monsters_data else None,
         "player": {
             "hp": session.player_hp,
             "max_hp": session.player_max_hp,
@@ -95,6 +124,7 @@ async def combat_start(req: CombatStartRequest):
         },
         "phase": session.phase.value,
         "log": session.log,
+        "target_index": session.target_index,
     }
 
 
@@ -117,6 +147,8 @@ async def combat_action(req: CombatActionRequest):
     action_data = {"item_id": req.item_id}
     if req.action == "skill" and req.skill_id:
         action_data["skill_id"] = req.skill_id
+    if req.target_index is not None:
+        action_data["target_index"] = req.target_index
     state = resolve_turn(session, req.action, action_data)
 
     if session.phase == CombatPhase.VICTORY and not state.get("fled"):
@@ -136,13 +168,24 @@ async def combat_action(req: CombatActionRequest):
         state["player_inventory"] = player_profile.get_inventory()
         state["player_gold"] = player_profile.gold
 
-        monster_tags = session.monster_config.get("tags", [])
-        quest_updates = quest_manager.on_kill(session.monster_id, monster_tags)
+        all_tags = set()
+        all_monster_ids = []
+        for m in session.monsters:
+            all_monster_ids.append(m.monster_id)
+            all_tags.update(m.config.get("tags", []))
+
+        quest_updates = []
+        for mid in all_monster_ids:
+            qu = quest_manager.on_kill(mid, list(all_tags))
+            if qu:
+                quest_updates.extend(qu)
+
         if quest_updates:
             state["quest_updates"] = quest_updates
 
     elif session.phase == CombatPhase.DEFEAT:
-        gold_loss = min(player_profile.gold, max(10, session.monster_config.get("gold_reward", [10])[0]))
+        gold_rewards = [m.config.get("gold_reward", [10])[0] for m in session.monsters]
+        gold_loss = min(player_profile.gold, max(10, max(gold_rewards) if gold_rewards else 10))
         if gold_loss > 0:
             player_profile.spend_gold(gold_loss)
         player_profile.hp = 1
@@ -159,8 +202,6 @@ async def combat_action(req: CombatActionRequest):
     state["player_max_hp"] = session.player_max_hp
     state["player_mp"] = session.player_mp
     state["player_max_mp"] = session.player_max_mp
-    state["monster_hp"] = session.monster_hp
-    state["monster_max_hp"] = session.monster_max_hp
 
     return state
 

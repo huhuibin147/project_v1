@@ -10,15 +10,18 @@ function getPlayerSpeed() {
 }
 
 const player = {
-  x: 25 * TILE_SIZE,   // 初始位置（路上）
+  x: 25 * TILE_SIZE,
   y: 20 * TILE_SIZE,
   width: PLAYER_SIZE,
   height: PLAYER_SIZE,
-  direction: "down",   // up/down/left/right
+  direction: "down",
   frame: 0,
   moving: false,
   color: "#4488ff",
-  name: "冒险者",      // 玩家名字
+  name: "冒险者",
+  animState: "idle",
+  animTimer: 0,
+  hitFlash: 0,
 };
 
 // 设置玩家位置（瓦片坐标）
@@ -97,13 +100,32 @@ function updatePlayer() {
     player.y += dy;
   }
 
-  // 碰撞检测：碰到怪物触发战斗
   if (typeof checkMonsterCollision === "function") {
     const hitMonster = checkMonsterCollision();
     if (hitMonster) {
       initiateCombat(hitMonster.instance_id);
     }
   }
+
+  if (player.animState === "attack") {
+    player.animTimer--;
+    if (player.animTimer <= 0) {
+      player.animState = "idle";
+    }
+  }
+
+  if (player.hitFlash > 0) {
+    player.hitFlash--;
+  }
+}
+
+function playPlayerAttackAnim() {
+  player.animState = "attack";
+  player.animTimer = 12;
+}
+
+function playPlayerHitAnim() {
+  player.hitFlash = 10;
 }
 
 function drawPlayer(ctx) {
@@ -113,23 +135,22 @@ function drawPlayer(ctx) {
   const p = s / 8;
   const bounce = player.moving ? Math.sin(player.frame * 0.3) * 2 : 0;
 
-  // 阴影
+  if (player.hitFlash > 0 && player.hitFlash % 2 === 0) {
+    ctx.globalAlpha = 0.4;
+  }
+
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fillRect(x + p * 2, y + s - p * 2, p * 4, p * 1);
 
-  // 身体
   ctx.fillStyle = player.color;
   ctx.fillRect(x + p * 2, y + p * 3 + bounce, p * 4, p * 4);
 
-  // 头部
   ctx.fillStyle = "#ffd4a0";
   ctx.fillRect(x + p * 2, y + p * 1 + bounce, p * 4, p * 3);
 
-  // 头发
   ctx.fillStyle = "#5a3a1a";
   ctx.fillRect(x + p * 2, y + p * 0 + bounce, p * 4, p * 2);
 
-  // 眼睛
   ctx.fillStyle = "#333";
   if (player.direction === "down") {
     ctx.fillRect(x + p * 3, y + p * 2 + bounce, p, p);
@@ -138,11 +159,8 @@ function drawPlayer(ctx) {
     ctx.fillRect(x + p * 2, y + p * 2 + bounce, p, p);
   } else if (player.direction === "right") {
     ctx.fillRect(x + p * 5, y + p * 2 + bounce, p, p);
-  } else {
-    // up - 看不到脸
   }
 
-  // 腿
   ctx.fillStyle = "#3a5a8a";
   if (player.moving) {
     const legOffset = Math.sin(player.frame * 0.3) > 0 ? p : -p;
@@ -153,7 +171,54 @@ function drawPlayer(ctx) {
     ctx.fillRect(x + p * 4, y + p * 7 + bounce, p * 2, p * 1);
   }
 
-  // 名字标签
+  if (player.animState === "attack") {
+    const progress = 1 - player.animTimer / 12;
+    const swingAngle = progress * Math.PI;
+    const weaponLen = s * 0.6;
+    let wx, wy;
+
+    if (player.direction === "right") {
+      wx = x + s + Math.cos(swingAngle - Math.PI / 2) * weaponLen * 0.3;
+      wy = y + s / 2 + Math.sin(swingAngle - Math.PI / 2) * weaponLen;
+    } else if (player.direction === "left") {
+      wx = x - Math.cos(swingAngle - Math.PI / 2) * weaponLen * 0.3;
+      wy = y + s / 2 + Math.sin(swingAngle - Math.PI / 2) * weaponLen;
+    } else if (player.direction === "up") {
+      wx = x + s / 2 + Math.sin(swingAngle - Math.PI / 2) * weaponLen;
+      wy = y - Math.cos(swingAngle - Math.PI / 2) * weaponLen * 0.3;
+    } else {
+      wx = x + s / 2 + Math.sin(swingAngle - Math.PI / 2) * weaponLen;
+      wy = y + s + Math.cos(swingAngle - Math.PI / 2) * weaponLen * 0.3;
+    }
+
+    ctx.strokeStyle = "#ccc";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + s / 2, y + s / 2);
+    ctx.lineTo(wx, wy);
+    ctx.stroke();
+
+    ctx.fillStyle = progress < 0.5 ? "#fff" : "#ffd700";
+    ctx.beginPath();
+    ctx.arc(wx, wy, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (progress < 0.6) {
+      ctx.strokeStyle = `rgba(255, 200, 100, ${0.5 - progress})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x + s / 2, y + s / 2, weaponLen * progress * 1.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  if (player.hitFlash > 0) {
+    ctx.fillStyle = `rgba(255, 50, 50, ${player.hitFlash / 10 * 0.4})`;
+    ctx.fillRect(x, y, s, s);
+  }
+
+  ctx.globalAlpha = 1;
+
   ctx.fillStyle = "rgba(0,0,0,0.6)";
   ctx.font = "10px monospace";
   const nameWidth = ctx.measureText(player.name).width + 10;

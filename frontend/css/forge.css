@@ -325,3 +325,99 @@
 .btn-forge-confirm:hover {
   background: linear-gradient(135deg, #e0c060, #c8a84e);
 }
+
+.forge-search-input {
+  margin-left: auto;
+  background: #2a2a4a;
+  border: 1px solid #555;
+  color: #eee;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  outline: none;
+  width: 140px;
+  font-family: inherit;
+}
+
+.forge-search-input:focus {
+  border-color: #c8a84e;
+}
+
+.forge-search-input::placeholder {
+  color: #666;
+}
+
+.forge-progress-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 26, 46, 0.85);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  gap: 8px;
+}
+
+.forge-progress-bar {
+  width: 70%;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.forge-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #c8a84e, #f0c040, #ffd700);
+  border-radius: 4px;
+  transition: width 0.05s linear;
+}
+
+.forge-progress-text {
+  color: #f0c040;
+  font-size: 14px;
+  font-weight: bold;
+  animation: forgeProgressPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes forgeProgressPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.forge-progress-sparks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.forge-spark {
+  position: absolute;
+  bottom: 30%;
+  width: 3px;
+  height: 3px;
+  background: #ffd700;
+  border-radius: 50%;
+  animation: forgeSparkRise ease-out forwards;
+}
+
+@keyframes forgeSparkRise {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.3);
+  }
+}

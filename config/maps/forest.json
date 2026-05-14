@@ -3169,6 +3169,41 @@
       "y": 15
     }
   ],
+  "monster_groups": [
+    {
+      "group_id": "wolf_pack",
+      "x": 41,
+      "y": 20,
+      "monsters": [
+        {"monster_id": "wild_wolf", "count": 2}
+      ]
+    },
+    {
+      "group_id": "spider_nest",
+      "x": 48,
+      "y": 30,
+      "monsters": [
+        {"monster_id": "forest_spider", "count": 3}
+      ]
+    },
+    {
+      "group_id": "shadow_tree_boss",
+      "x": 50,
+      "y": 15,
+      "monsters": [
+        {"monster_id": "shadow_tree_spirit"}
+      ]
+    },
+    {
+      "group_id": "forest_ambush",
+      "x": 35,
+      "y": 40,
+      "monsters": [
+        {"monster_id": "goblin"},
+        {"monster_id": "forest_spider"}
+      ]
+    }
+  ],
   "objects": [
     {
       "id": "portal_to_village",

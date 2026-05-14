@@ -14,6 +14,7 @@ const inventoryState = {
 const inventoryDisplay = {
   view: "list",
   filter: "all",
+  search: "",
 };
 
 const shopState = {
@@ -126,7 +127,10 @@ function openInventory() {
   if (dialogueOpen || GameManager.isMenuOpen() || combatOpen) return;
   inventoryOpen = true;
   inventoryPage.current = 1;
-  fetchInventory().then(() => renderInventory());
+  fetchInventory().then(() => {
+    renderInventory();
+    setupEquipSlotDropTargets();
+  });
   document.getElementById("inventory-panel").classList.add("active");
 }
 
@@ -146,6 +150,17 @@ function getFilteredItems() {
     } else {
       items = items.filter(it => it.type === filter);
     }
+  }
+  if (inventoryDisplay.search) {
+    const q = inventoryDisplay.search.toLowerCase();
+    items = items.filter(it =>
+      (it.name && it.name.toLowerCase().includes(q)) ||
+      (it.description && it.description.toLowerCase().includes(q)) ||
+      (it.affixes && it.affixes.some(a => {
+        const name = typeof a === "object" ? a.name : a;
+        return name && name.toLowerCase().includes(q);
+      }))
+    );
   }
   return items;
 }
@@ -169,9 +184,14 @@ function filterInventory(filter) {
   renderInventory();
 }
 
+function searchInventory(query) {
+  inventoryDisplay.search = query.trim();
+  inventoryPage.current = 1;
+  renderInventory();
+}
+
 function renderInventory() {
   const container = document.getElementById("inventory-items");
-  container.innerHTML = "";
   container.classList.toggle("grid-view", inventoryDisplay.view === "grid");
 
   const filteredItems = getFilteredItems();
@@ -188,11 +208,15 @@ function renderInventory() {
   const start = (inventoryPage.current - 1) * ITEMS_PER_PAGE;
   const pageItems = filteredItems.slice(start, start + ITEMS_PER_PAGE);
 
+  const fragment = document.createDocumentFragment();
   if (inventoryDisplay.view === "grid") {
-    renderInventoryGrid(container, pageItems);
+    renderInventoryGrid(fragment, pageItems);
   } else {
-    renderInventoryList(container, pageItems);
+    renderInventoryList(fragment, pageItems);
   }
+
+  container.innerHTML = "";
+  container.appendChild(fragment);
 
   document.getElementById("inventory-gold").textContent = inventoryState.gold;
   renderPagination("inventory-pagination", totalPages, inventoryPage);
@@ -206,6 +230,13 @@ function renderInventoryList(container, pageItems) {
 
     const canEquip = item.equip_slot && item.stats;
     const isEquipped = isItemEquipped(item.item_id);
+
+    if (canEquip && !isEquipped) {
+      div.draggable = true;
+      div.dataset.itemId = item.item_id;
+      div.dataset.equipSlot = item.equip_slot;
+      div.addEventListener("dragstart", onItemDragStart);
+    }
 
     let statsHtml = "";
     if (canEquip && item.stats) {
@@ -248,7 +279,8 @@ function renderInventoryList(container, pageItems) {
     if (item.affixes && item.affixes.length > 0) {
       affixesHtml = `<div class="item-affixes">${item.affixes.map(a => {
         if (typeof a === "object" && a.name) {
-          return `<span class="affix-tag" title="${a.description || ""}">${a.name}</span>`;
+          const shortDesc = a.description ? a.description.substring(0, 12) : "";
+          return `<span class="affix-tag" title="${a.description || ""}">${a.name}${shortDesc ? `<span class="affix-desc">${shortDesc}</span>` : ""}</span>`;
         }
         return `<span class="affix-tag">${a}</span>`;
       }).join("")}</div>`;
@@ -286,6 +318,13 @@ function renderInventoryGrid(container, pageItems) {
 
     const canEquip = item.equip_slot && item.stats;
     const isEquipped = isItemEquipped(item.item_id);
+
+    if (canEquip && !isEquipped) {
+      div.draggable = true;
+      div.dataset.itemId = item.item_id;
+      div.dataset.equipSlot = item.equip_slot;
+      div.addEventListener("dragstart", onItemDragStart);
+    }
     const rarityColor = getRarityColor(rarityCls);
 
     let equipMark = "";
@@ -506,7 +545,8 @@ function renderShop() {
     if (item.affixes && item.affixes.length > 0) {
       affixesHtml = `<div class="item-affixes">${item.affixes.map(a => {
         if (typeof a === "object" && a.name) {
-          return `<span class="affix-tag" title="${a.description || ""}">${a.name}</span>`;
+          const shortDesc = a.description ? a.description.substring(0, 12) : "";
+          return `<span class="affix-tag" title="${a.description || ""}">${a.name}${shortDesc ? `<span class="affix-desc">${shortDesc}</span>` : ""}</span>`;
         }
         return `<span class="affix-tag">${a}</span>`;
       }).join("")}</div>`;
@@ -645,6 +685,74 @@ function getClassRestrictionHtml(item) {
 function canPlayerEquipItem(item) {
   if (!item.required_class) return true;
   return item.required_class === playerInfo.class_id;
+}
+
+let dragItemId = null;
+let dragEquipSlot = null;
+
+function onItemDragStart(e) {
+  dragItemId = e.currentTarget.dataset.itemId;
+  dragEquipSlot = e.currentTarget.dataset.equipSlot;
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", dragItemId);
+  e.currentTarget.classList.add("dragging");
+
+  const slots = document.querySelectorAll(".equip-slot");
+  slots.forEach(s => {
+    if (s.dataset.slot === dragEquipSlot) {
+      s.classList.add("equip-slot-highlight");
+    }
+  });
+}
+
+function onItemDragEnd(e) {
+  e.currentTarget.classList.remove("dragging");
+  dragItemId = null;
+  dragEquipSlot = null;
+  document.querySelectorAll(".equip-slot-highlight").forEach(s => s.classList.remove("equip-slot-highlight"));
+}
+
+function onEquipSlotDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  const slot = e.currentTarget.dataset.slot;
+  if (dragEquipSlot && dragEquipSlot === slot) {
+    e.currentTarget.classList.add("equip-slot-dragover");
+  }
+}
+
+function onEquipSlotDragLeave(e) {
+  e.currentTarget.classList.remove("equip-slot-dragover");
+}
+
+function onEquipSlotDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove("equip-slot-dragover");
+  document.querySelectorAll(".equip-slot-highlight").forEach(s => s.classList.remove("equip-slot-highlight"));
+
+  const slot = e.currentTarget.dataset.slot;
+  const itemId = e.dataTransfer.getData("text/plain") || dragItemId;
+  if (!itemId) return;
+
+  const item = inventoryState.items.find(it => it.item_id === itemId);
+  if (!item) return;
+
+  if (item.equip_slot !== slot) return;
+  if (!canPlayerEquipItem(item)) return;
+
+  doEquip(itemId);
+}
+
+function setupEquipSlotDropTargets() {
+  const slots = document.querySelectorAll(".equip-slot");
+  slots.forEach(s => {
+    s.removeEventListener("dragover", onEquipSlotDragOver);
+    s.removeEventListener("dragleave", onEquipSlotDragLeave);
+    s.removeEventListener("drop", onEquipSlotDrop);
+    s.addEventListener("dragover", onEquipSlotDragOver);
+    s.addEventListener("dragleave", onEquipSlotDragLeave);
+    s.addEventListener("drop", onEquipSlotDrop);
+  });
 }
 
 function updateGoldDisplay() {

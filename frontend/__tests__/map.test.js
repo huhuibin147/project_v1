@@ -181,6 +181,50 @@ describe('地图模块 (map.js)', () => {
       expect(camera.x).toBe(0);
       expect(camera.y).toBe(0);
     });
+
+    it('应有 smoothing 属性', () => {
+      expect(camera.smoothing).toBeDefined();
+      expect(typeof camera.smoothing).toBe('number');
+      expect(camera.smoothing).toBeGreaterThan(0);
+      expect(camera.smoothing).toBeLessThanOrEqual(1);
+    });
+
+    it('应有 targetX 和 targetY 属性', () => {
+      expect(camera.targetX).toBeDefined();
+      expect(camera.targetY).toBeDefined();
+    });
+  });
+
+  describe('MAP-11~12: 离屏 Canvas 缓存', () => {
+    it('groundCanvasDirty 初始应为 true', () => {
+      expect(groundCanvasDirty).toBe(true);
+    });
+
+    it('groundCanvasMapId 初始应为 null', () => {
+      expect(groundCanvasMapId).toBeNull();
+    });
+
+    it('rebuildGroundCanvas 应为函数', () => {
+      expect(typeof rebuildGroundCanvas).toBe('function');
+    });
+  });
+
+  describe('MAP-13: 摄像机平滑跟随', () => {
+    it('updateCamera 应平滑插值摄像机位置', () => {
+      currentMap = { id: 'test', width: 40, height: 30, layers: { ground: [] } };
+      camera.viewportWidth = 800;
+      camera.viewportHeight = 600;
+      camera.x = 0;
+      camera.y = 0;
+      camera.smoothing = 0.08;
+      player.x = 500;
+      player.y = 400;
+      updateCamera();
+      expect(camera.x).toBeGreaterThan(0);
+      expect(camera.y).toBeGreaterThan(0);
+      expect(camera.x).toBeLessThan(camera.targetX + 1);
+      expect(camera.y).toBeLessThan(camera.targetY + 1);
+    });
   });
 
   describe('particleSystem 粒子系统', () => {

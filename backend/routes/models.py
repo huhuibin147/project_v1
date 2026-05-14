@@ -91,7 +91,8 @@ class QuestProgressRequest(BaseModel):
 
 
 class CombatStartRequest(BaseModel):
-    monster_instance_id: str
+    monster_instance_id: str = None
+    monster_group_id: str = None
     map_id: str
 
 
@@ -100,6 +101,7 @@ class CombatActionRequest(BaseModel):
     action: str
     item_id: str = None
     skill_id: str = None
+    target_index: int = None
 
 
 class CombatEndRequest(BaseModel):

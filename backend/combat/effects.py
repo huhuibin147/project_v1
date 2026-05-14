@@ -1,10 +1,10 @@
-"""Status effect system using strategy pattern."""
+"""Status effect system using strategy pattern with BOSS immunity support."""
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .session import CombatSession, StatusEffect
+    from .session import CombatSession, StatusEffect, MonsterInstance
 
 
 STAT_BUFF_MAP = {
@@ -31,13 +31,16 @@ MUTEX_PAIRS = [("burn", "freeze")]
 
 class EffectHandler(ABC):
     @abstractmethod
-    def tick(self, session: "CombatSession", target_is_player: bool, effect: "StatusEffect") -> list[dict]:
+    def tick(self, session: "CombatSession", target_is_player: bool, effect: "StatusEffect",
+             monster: "MonsterInstance" = None) -> list[dict]:
         pass
 
-    def on_expire(self, session: "CombatSession", target_is_player: bool, effect: "StatusEffect") -> list[dict]:
+    def on_expire(self, session: "CombatSession", target_is_player: bool, effect: "StatusEffect",
+                  monster: "MonsterInstance" = None) -> list[dict]:
         return [{"type": "effect_end", "text": f"{EFFECT_NAMES.get(effect.effect_type, effect.effect_type)}效果消失了。"}]
 
-    def on_add(self, session: "CombatSession", target_is_player: bool, effect: "StatusEffect") -> list[dict]:
+    def on_add(self, session: "CombatSession", target_is_player: bool, effect: "StatusEffect",
+               monster: "MonsterInstance" = None) -> list[dict]:
         return []
 
 
@@ -47,15 +50,19 @@ class DamageOverTimeHandler(EffectHandler):
         self.base_pct = base_pct
         self.stack_multiplier = stack_multiplier
 
-    def tick(self, session, target_is_player, effect):
-        max_hp = session.player_max_hp if target_is_player else session.monster_max_hp
-        dmg_pct = self.base_pct + (self.stack_multiplier * effect.stack if effect.stack > 0 else 0)
-        dmg = max(1, int(max_hp * dmg_pct))
-
+    def tick(self, session, target_is_player, effect, monster=None):
         if target_is_player:
+            max_hp = session.player_max_hp
+            dmg_pct = self.base_pct + (self.stack_multiplier * effect.stack if effect.stack > 0 else 0)
+            dmg = max(1, int(max_hp * dmg_pct))
             session.player_hp = max(0, session.player_hp - dmg)
         else:
-            session.monster_hp = max(0, session.monster_hp - dmg)
+            if monster is None:
+                return []
+            max_hp = monster.max_hp
+            dmg_pct = self.base_pct + (self.stack_multiplier * effect.stack if effect.stack > 0 else 0)
+            dmg = max(1, int(max_hp * dmg_pct))
+            monster.hp = max(0, monster.hp - dmg)
 
         name = EFFECT_NAMES.get(effect.effect_type, effect.effect_type)
         stack_text = f"（{effect.stack} 层）" if effect.stack > 1 else ""
@@ -66,14 +73,17 @@ class HealOverTimeHandler(EffectHandler):
     def __init__(self, heal_pct: float):
         self.heal_pct = heal_pct
 
-    def tick(self, session, target_is_player, effect):
-        max_hp = session.player_max_hp if target_is_player else session.monster_max_hp
-        heal = max(1, int(max_hp * self.heal_pct))
-
+    def tick(self, session, target_is_player, effect, monster=None):
         if target_is_player:
+            max_hp = session.player_max_hp
+            heal = max(1, int(max_hp * self.heal_pct))
             session.player_hp = min(session.player_max_hp, session.player_hp + heal)
         else:
-            session.monster_hp = min(session.monster_max_hp, session.monster_hp + heal)
+            if monster is None:
+                return []
+            max_hp = monster.max_hp
+            heal = max(1, int(max_hp * self.heal_pct))
+            monster.hp = min(monster.max_hp, monster.hp + heal)
 
         name = EFFECT_NAMES.get(effect.effect_type, effect.effect_type)
         return [{"type": "effect", "text": f"{name}！恢复了 {heal} 点生命。"}]
@@ -83,13 +93,13 @@ class BlockActionHandler(EffectHandler):
     def __init__(self, message: str):
         self.message = message
 
-    def tick(self, session, target_is_player, effect):
+    def tick(self, session, target_is_player, effect, monster=None):
         name = EFFECT_NAMES.get(effect.effect_type, effect.effect_type)
         return [{"type": "effect", "text": f"{name}！{self.message}"}]
 
 
 class StatBuffHandler(EffectHandler):
-    def tick(self, session, target_is_player, effect):
+    def tick(self, session, target_is_player, effect, monster=None):
         if not target_is_player:
             return []
 
@@ -106,14 +116,14 @@ class StatBuffHandler(EffectHandler):
 
         return []
 
-    def on_expire(self, session, target_is_player, effect):
+    def on_expire(self, session, target_is_player, effect, monster=None):
         if target_is_player:
             _recalculate_player_buffs(session)
-        return super().on_expire(session, target_is_player, effect)
+        return super().on_expire(session, target_is_player, effect, monster)
 
 
 class PassiveEffectHandler(EffectHandler):
-    def tick(self, session, target_is_player, effect):
+    def tick(self, session, target_is_player, effect, monster=None):
         return []
 
 
@@ -145,7 +155,13 @@ def find_effect(effects: list["StatusEffect"], effect_type: str) -> "StatusEffec
     return None
 
 
-def add_effect(effects: list["StatusEffect"], new_eff: "StatusEffect") -> list["StatusEffect"]:
+def add_effect(effects: list["StatusEffect"], new_eff: "StatusEffect",
+               monster_config: dict = None) -> list["StatusEffect"]:
+    from .session import is_immune_to_effect
+
+    if monster_config and is_immune_to_effect(monster_config, new_eff.effect_type):
+        return effects
+
     for pair_a, pair_b in MUTEX_PAIRS:
         if new_eff.effect_type == pair_a:
             effects = [e for e in effects if e.effect_type != pair_b]
@@ -178,9 +194,14 @@ def _recalculate_player_buffs(session: "CombatSession") -> None:
                 handler.tick(session, target_is_player=True, effect=eff)
 
 
-def process_effects(session: "CombatSession", is_player: bool) -> list[dict]:
-    effects = session.player_effects if is_player else session.monster_effects
-    max_hp = session.player_max_hp if is_player else session.monster_max_hp
+def process_effects(session: "CombatSession", is_player: bool,
+                    monster: "MonsterInstance" = None) -> list[dict]:
+    if is_player:
+        effects = session.player_effects
+    else:
+        if monster is None:
+            return []
+        effects = monster.effects
 
     logs = []
     remaining = []
@@ -189,7 +210,7 @@ def process_effects(session: "CombatSession", is_player: bool) -> list[dict]:
     for eff in effects:
         handler = EFFECT_HANDLERS.get(eff.effect_type)
         if handler:
-            tick_logs = handler.tick(session, is_player, eff)
+            tick_logs = handler.tick(session, is_player, eff, monster)
             logs.extend(tick_logs)
 
         eff.duration -= 1
@@ -201,7 +222,7 @@ def process_effects(session: "CombatSession", is_player: bool) -> list[dict]:
 
             handler = EFFECT_HANDLERS.get(eff.effect_type)
             if handler:
-                expire_logs = handler.on_expire(session, is_player, eff)
+                expire_logs = handler.on_expire(session, is_player, eff, monster)
                 logs.extend(expire_logs)
 
     if is_player:
@@ -209,7 +230,8 @@ def process_effects(session: "CombatSession", is_player: bool) -> list[dict]:
         if expired_buffs:
             _recalculate_player_buffs(session)
     else:
-        session.monster_effects = remaining
+        if monster is not None:
+            monster.effects = remaining
 
     return logs
 

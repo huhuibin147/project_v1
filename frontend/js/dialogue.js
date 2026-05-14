@@ -1,9 +1,11 @@
 // 对话 UI 与 API 调用（支持多 NPC）
 
 let dialogueOpen = false;
+let typewriterTimer = null;
+let typewriterNpcId = null;
+let dialogueShowAll = false;
 
-// 每个 NPC 独立的对话记录
-const dialogueHistory = {};  // { npcId: { messages: [], loading: false } }
+const dialogueHistory = {};
 
 function getDialogueState(npcId) {
   if (!dialogueHistory[npcId]) {
@@ -15,6 +17,7 @@ function getDialogueState(npcId) {
 async function openDialogue(npc) {
   if (combatOpen) return;
   dialogueOpen = true;
+  dialogueShowAll = false;
   activeNpcId = npc.npc_id;
   const state = getDialogueState(npc.npc_id);
 
@@ -90,6 +93,7 @@ function addNPCMessage(npcId, text) {
   const state = getDialogueState(npcId);
   state.messages.push({ role: "npc", text });
   renderDialogue(npcId);
+  startTypewriter(npcId, text);
 }
 
 function addPlayerMessage(npcId, text) {
@@ -98,28 +102,106 @@ function addPlayerMessage(npcId, text) {
   renderDialogue(npcId);
 }
 
+function startTypewriter(npcId, fullText) {
+  if (typewriterTimer) {
+    clearInterval(typewriterTimer);
+    finishTypewriter();
+  }
+  typewriterNpcId = npcId;
+  const container = document.getElementById("dialogue-messages");
+  const lastMsg = container.lastElementChild;
+  if (!lastMsg || !lastMsg.classList.contains("npc")) {
+    renderDialogue(npcId);
+    return;
+  }
+
+  const textSpan = lastMsg.querySelector(".dialogue-text");
+  if (!textSpan) {
+    renderDialogue(npcId);
+    return;
+  }
+
+  textSpan.textContent = "";
+  lastMsg.classList.add("typewriter-active");
+  let charIndex = 0;
+
+  typewriterTimer = setInterval(() => {
+    if (charIndex < fullText.length) {
+      textSpan.textContent += fullText[charIndex];
+      charIndex++;
+      container.scrollTop = container.scrollHeight;
+    } else {
+      clearInterval(typewriterTimer);
+      typewriterTimer = null;
+      lastMsg.classList.remove("typewriter-active");
+      lastMsg.classList.add("typewriter-done");
+    }
+  }, 30);
+}
+
+function finishTypewriter() {
+  if (typewriterTimer) {
+    clearInterval(typewriterTimer);
+    typewriterTimer = null;
+  }
+  const container = document.getElementById("dialogue-messages");
+  const activeMsg = container.querySelector(".typewriter-active");
+  if (activeMsg) {
+    const state = getDialogueState(typewriterNpcId);
+    const lastMsg = state.messages[state.messages.length - 1];
+    const textSpan = activeMsg.querySelector(".dialogue-text");
+    if (textSpan && lastMsg) {
+      textSpan.textContent = lastMsg.text;
+    }
+    activeMsg.classList.remove("typewriter-active");
+    activeMsg.classList.add("typewriter-done");
+  }
+  typewriterNpcId = null;
+}
+
 function renderDialogue(npcId) {
   const container = document.getElementById("dialogue-messages");
   const state = getDialogueState(npcId);
   const npc = npcs.find(n => n.npc_id === npcId);
   container.innerHTML = "";
 
-  const recent = state.messages.slice(-10);
+  const maxRecent = 10;
+  const hasMore = state.messages.length > maxRecent;
+  const recent = dialogueShowAll ? state.messages : state.messages.slice(-maxRecent);
+
+  if (hasMore && !dialogueShowAll) {
+    const moreDiv = document.createElement("div");
+    moreDiv.className = "dialogue-history-toggle";
+    moreDiv.innerHTML = `<button class="btn-history-toggle" onclick="toggleDialogueHistory()">查看更早的 ${state.messages.length - maxRecent} 条消息</button>`;
+    container.appendChild(moreDiv);
+  } else if (hasMore && dialogueShowAll) {
+    const moreDiv = document.createElement("div");
+    moreDiv.className = "dialogue-history-toggle";
+    moreDiv.innerHTML = `<button class="btn-history-toggle" onclick="toggleDialogueHistory()">收起历史消息</button>`;
+    container.appendChild(moreDiv);
+  }
+
   for (const msg of recent) {
     const div = document.createElement("div");
     div.className = `dialogue-msg ${msg.role}`;
     const label = msg.role === "npc" ? (npc ? npc.name : "NPC") : "你";
     const color = msg.role === "npc" ? "#f0c060" : "#60a0f0";
-    div.innerHTML = `<span style="color:${color};font-weight:bold">${label}：</span>${escapeHTML(msg.text)}`;
+    div.innerHTML = `<span class="dialogue-label" style="color:${color}">${label}：</span><span class="dialogue-text">${escapeHTML(msg.text)}</span>`;
     container.appendChild(div);
   }
 
   container.scrollTop = container.scrollHeight;
 
-  // 更新状态
   if (npc) {
     document.getElementById("npc-mood").textContent = npc.mood;
     document.getElementById("npc-affinity").textContent = npc.affinity;
+  }
+}
+
+function toggleDialogueHistory() {
+  dialogueShowAll = !dialogueShowAll;
+  if (activeNpcId) {
+    renderDialogue(activeNpcId);
   }
 }
 
@@ -135,15 +217,21 @@ async function sendMessage() {
   const npc = npcs.find(n => n.npc_id === activeNpcId);
 
   const input = document.getElementById("dialogue-input");
+  const sendBtn = document.getElementById("dialogue-send");
   const text = input.value.trim();
   if (!text || state.loading) return;
 
   input.value = "";
+  finishTypewriter();
   addPlayerMessage(activeNpcId, text);
 
   state.loading = true;
+  input.disabled = true;
+  sendBtn.disabled = true;
+  sendBtn.classList.add("btn-loading");
+
   const loadingEl = document.getElementById("dialogue-loading");
-  loadingEl.textContent = `${npc ? npc.name : "NPC"}正在思考...`;
+  loadingEl.innerHTML = `<span class="loading-dots"></span>${npc ? npc.name : "NPC"}正在思考...`;
   loadingEl.style.display = "block";
 
   try {
@@ -156,13 +244,11 @@ async function sendMessage() {
 
     addNPCMessage(activeNpcId, data.reply);
 
-    // 更新 NPC 状态
     if (npc) {
       npc.mood = data.mood;
       npc.affinity = data.affinity;
     }
 
-    // 更新金币和背包
     if (data.player_gold !== undefined) {
       inventoryState.gold = data.player_gold;
       updateGoldDisplay();
@@ -173,14 +259,16 @@ async function sendMessage() {
 
     showIntentBadge(data.intent);
 
-    // 交易意图已不自动弹出商店按钮，玩家可通过接近NPC的交互面板选择商店
-
   } catch (e) {
     addNPCMessage(activeNpcId, `（${npc ? npc.name : "NPC"}挠了挠头）俺刚才走神了，你说啥来着？`);
     console.error("对话请求失败:", e);
   } finally {
     state.loading = false;
+    input.disabled = false;
+    sendBtn.disabled = false;
+    sendBtn.classList.remove("btn-loading");
     document.getElementById("dialogue-loading").style.display = "none";
+    input.focus();
   }
 }
 

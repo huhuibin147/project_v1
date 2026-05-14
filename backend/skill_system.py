@@ -63,4 +63,5 @@ def format_skill_for_frontend(skill_id: str, cooldown_remaining: int = 0) -> dic
         "power": skill.get("power", 1.0),
         "effects": skill.get("effects", []),
         "cooldown_remaining": cooldown_remaining,
+        "aoe": skill.get("aoe", False),
     }

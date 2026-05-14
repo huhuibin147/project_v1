@@ -586,5 +586,85 @@
     },
     "level": 11,
     "tags": ["humanoid", "city", "elite", "magic"]
+  },
+  "shadow_tree_spirit": {
+    "id": "shadow_tree_spirit",
+    "name": "暗影树精",
+    "description": "沉睡在幽暗森林深处的远古树精，被暗影侵蚀后化为恐怖的存在",
+    "type": "boss",
+    "sprite_color": "#2a4a2a",
+    "sprite_accent": "#1a3a1a",
+    "stats": {
+      "hp": 400,
+      "attack": 22,
+      "defense": 10,
+      "speed": 8
+    },
+    "exp_reward": 300,
+    "gold_reward": [100, 200],
+    "drops": [
+      {"item_id": "ancient_shard", "chance": 0.7},
+      {"item_id": "shadow_essence", "chance": 0.5},
+      {"item_id": "herb", "chance": 0.4},
+      {"item_id": "strength_elixir", "chance": 0.15}
+    ],
+    "ai": {
+      "behavior": "defensive",
+      "attack_weight": 40,
+      "defend_weight": 30,
+      "special_weight": 30,
+      "special": {
+        "type": "apply_effect",
+        "effect": "poison",
+        "chance": 0.4,
+        "duration": 3,
+        "value": 0,
+        "message": "暗影树精释放毒雾！"
+      }
+    },
+    "phases": [
+      {
+        "name": "沉睡",
+        "hp_threshold": 1.0,
+        "ai": {"attack": 0.4, "defend": 0.3, "special": 0.3},
+        "special": {
+          "type": "apply_effect",
+          "effect": "poison",
+          "chance": 0.4,
+          "duration": 3,
+          "value": 0,
+          "message": "暗影树精释放毒雾！"
+        }
+      },
+      {
+        "name": "觉醒",
+        "hp_threshold": 0.6,
+        "ai": {"attack": 0.5, "defend": 0.15, "special": 0.35},
+        "stat_boost": {"attack": 1.3},
+        "special": {
+          "type": "apply_effect",
+          "effect": "burn",
+          "chance": 0.35,
+          "duration": 2,
+          "value": 5,
+          "message": "暗影树精点燃暗焰！"
+        }
+      },
+      {
+        "name": "狂暴",
+        "hp_threshold": 0.25,
+        "ai": {"attack": 0.65, "defend": 0.0, "special": 0.35},
+        "stat_boost": {"attack": 1.6, "defense": 0.8},
+        "special": {
+          "type": "apply_effect",
+          "effect": "stun",
+          "chance": 0.25,
+          "duration": 1,
+          "message": "暗影树精发动暗影震击！"
+        }
+      }
+    ],
+    "level": 8,
+    "tags": ["plant", "forest", "boss", "legendary"]
   }
 }

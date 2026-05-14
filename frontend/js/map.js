@@ -11,9 +11,16 @@ let mapObjects = [];
 const camera = {
   x: 0,
   y: 0,
+  targetX: 0,
+  targetY: 0,
   viewportWidth: 0,
   viewportHeight: 0,
+  smoothing: 0.08,
 };
+
+let groundCanvas = null;
+let groundCanvasDirty = true;
+let groundCanvasMapId = null;
 
 // 粒子系统
 const particleSystem = {
@@ -95,6 +102,8 @@ async function loadMap(mapId) {
     if (!resp.ok) throw new Error(`加载地图 ${mapId} 失败`);
     currentMap = await resp.json();
     mapObjects = currentMap.objects || [];
+    groundCanvasDirty = true;
+    groundCanvasMapId = null;
     return currentMap;
   } catch (e) {
     console.error("加载地图失败:", e);
@@ -109,39 +118,101 @@ function updateCamera() {
   const mapPixelWidth = currentMap.width * TILE_SIZE;
   const mapPixelHeight = currentMap.height * TILE_SIZE;
 
-  // 目标：玩家居中
   let targetX = player.x + PLAYER_SIZE / 2 - camera.viewportWidth / 2;
   let targetY = player.y + PLAYER_SIZE / 2 - camera.viewportHeight / 2;
 
-  // 边界钳制
   if (mapPixelWidth > camera.viewportWidth) {
-    // 地图比视口宽，限制在地图范围内
     targetX = Math.max(0, Math.min(targetX, mapPixelWidth - camera.viewportWidth));
   } else {
-    // 地图比视口窄，居中显示
     targetX = (mapPixelWidth - camera.viewportWidth) / 2;
   }
 
   if (mapPixelHeight > camera.viewportHeight) {
-    // 地图比视口高，限制在地图范围内
     targetY = Math.max(0, Math.min(targetY, mapPixelHeight - camera.viewportHeight));
   } else {
-    // 地图比视口矮，居中显示
     targetY = (mapPixelHeight - camera.viewportHeight) / 2;
   }
 
-  camera.x = targetX;
-  camera.y = targetY;
+  camera.targetX = targetX;
+  camera.targetY = targetY;
+
+  camera.x += (camera.targetX - camera.x) * camera.smoothing;
+  camera.y += (camera.targetY - camera.y) * camera.smoothing;
+
+  if (Math.abs(camera.x - camera.targetX) < 0.5) camera.x = camera.targetX;
+  if (Math.abs(camera.y - camera.targetY) < 0.5) camera.y = camera.targetY;
 }
 
-// 绘制地图（带视口裁剪）
-function drawMap(ctx) {
+function rebuildGroundCanvas() {
   if (!currentMap || !tileConfig) return;
+
+  const mapPixelWidth = currentMap.width * TILE_SIZE;
+  const mapPixelHeight = currentMap.height * TILE_SIZE;
+
+  if (!groundCanvas) {
+    groundCanvas = document.createElement("canvas");
+  }
+  groundCanvas.width = mapPixelWidth;
+  groundCanvas.height = mapPixelHeight;
+
+  const gCtx = groundCanvas.getContext("2d");
+  gCtx.clearRect(0, 0, mapPixelWidth, mapPixelHeight);
 
   const ground = currentMap.layers?.ground;
   if (!ground) return;
 
-  // 计算可见区域的瓦片范围（考虑摄像机偏移）
+  for (let row = 0; row < currentMap.height; row++) {
+    for (let col = 0; col < currentMap.width; col++) {
+      const tileId = ground[row]?.[col];
+      if (tileId === undefined) continue;
+
+      const tileInfo = tileConfig[String(tileId)];
+      if (!tileInfo) continue;
+
+      const x = col * TILE_SIZE;
+      const y = row * TILE_SIZE;
+
+      gCtx.fillStyle = tileInfo.color || "#000";
+      gCtx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+
+      const detailName = tileInfo.detail;
+      if (detailName && tileRenderers[detailName]) {
+        tileRenderers[detailName](gCtx, x, y);
+      }
+
+      if (!tileInfo.walkable) {
+        gCtx.fillStyle = "rgba(0, 0, 0, 0.15)";
+        gCtx.fillRect(x + 2, y + 2, TILE_SIZE, TILE_SIZE);
+      }
+    }
+  }
+
+  groundCanvasDirty = false;
+  groundCanvasMapId = currentMap.id;
+}
+
+function drawMap(ctx) {
+  if (!currentMap || !tileConfig) return;
+
+  if (groundCanvasDirty || groundCanvasMapId !== currentMap.id) {
+    rebuildGroundCanvas();
+  }
+
+  if (groundCanvas) {
+    const sx = Math.max(0, Math.floor(camera.x));
+    const sy = Math.max(0, Math.floor(camera.y));
+    const sw = Math.min(groundCanvas.width - sx, Math.ceil(camera.viewportWidth) + 1);
+    const sh = Math.min(groundCanvas.height - sy, Math.ceil(camera.viewportHeight) + 1);
+
+    if (sw > 0 && sh > 0) {
+      ctx.drawImage(groundCanvas, sx, sy, sw, sh, sx, sy, sw, sh);
+    }
+    return;
+  }
+
+  const ground = currentMap.layers?.ground;
+  if (!ground) return;
+
   const startCol = Math.max(0, Math.floor(camera.x / TILE_SIZE));
   const endCol = Math.min(currentMap.width, Math.ceil((camera.x + camera.viewportWidth) / TILE_SIZE) + 1);
   const startRow = Math.max(0, Math.floor(camera.y / TILE_SIZE));
@@ -155,21 +226,17 @@ function drawMap(ctx) {
       const tileInfo = tileConfig[String(tileId)];
       if (!tileInfo) continue;
 
-      // 使用世界坐标（translate会处理偏移）
       const x = col * TILE_SIZE;
       const y = row * TILE_SIZE;
 
-      // 基础色
       ctx.fillStyle = tileInfo.color || "#000";
       ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
 
-      // 像素细节
       const detailName = tileInfo.detail;
       if (detailName && tileRenderers[detailName]) {
         tileRenderers[detailName](ctx, x, y);
       }
 
-      // 阴影效果（树木、建筑等）
       if (!tileInfo.walkable) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
         ctx.fillRect(x + 2, y + 2, TILE_SIZE, TILE_SIZE);

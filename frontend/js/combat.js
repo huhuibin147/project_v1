@@ -1,4 +1,4 @@
-// 战斗系统
+// 战斗系统 - 多敌人支持
 
 let combatOpen = false;
 let combatSessionId = null;
@@ -6,12 +6,11 @@ let combatState = null;
 let combatAnimating = false;
 let combatItemSelectOpen = false;
 let combatMonsterInstanceId = null;
+let currentTargetIndex = 0;
 
-// 地图上的怪物
 let mapMonsters = [];
 let monstersConfig = {};
 
-// 加载怪物配置
 async function loadMonstersConfig() {
   try {
     const resp = await fetch("/api/monsters");
@@ -23,7 +22,6 @@ async function loadMonstersConfig() {
   }
 }
 
-// 加载当前地图的怪物
 function loadMapMonsters() {
   mapMonsters = [];
   if (!currentMap || !currentMap.monsters) return;
@@ -47,9 +45,35 @@ function loadMapMonsters() {
       direction: "down",
     });
   });
+
+  if (currentMap.monster_groups) {
+    currentMap.monster_groups.forEach((group) => {
+      const firstMonster = group.monsters[0];
+      if (!firstMonster) return;
+      const config = monstersConfig[firstMonster.monster_id];
+      if (!config) return;
+
+      mapMonsters.push({
+        monster_id: firstMonster.monster_id,
+        instance_id: group.group_id,
+        group_id: group.group_id,
+        x: group.x * TILE_SIZE,
+        y: group.y * TILE_SIZE,
+        config: config,
+        alive: true,
+        inCombat: false,
+        patrol: [],
+        patrolIndex: 0,
+        patrolSpeed: 0,
+        animFrame: 0,
+        direction: "down",
+        isGroup: true,
+        groupData: group,
+      });
+    });
+  }
 }
 
-// 更新怪物巡逻
 function updateMonsters(dt) {
   for (const m of mapMonsters) {
     if (!m.alive || m.inCombat || m.patrol.length < 2) continue;
@@ -75,7 +99,6 @@ function updateMonsters(dt) {
   }
 }
 
-// 绘制怪物（地图上）
 function drawMapMonster(ctx, monster) {
   if (!monster.alive) return;
 
@@ -86,27 +109,22 @@ function drawMapMonster(ctx, monster) {
   const config = monster.config;
   const bounce = Math.sin(monster.animFrame * 0.1) * 2;
 
-  // 战斗中灰化
   const alpha = monster.inCombat ? 0.4 : 1.0;
   ctx.globalAlpha = alpha;
 
-  // 阴影
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fillRect(x + p * 2, y + s - p * 2, p * 4, p * 1);
 
-  // 根据怪物类型绘制不同形状
   const type = monster.monster_id;
   const color = config.sprite_color;
   const accent = config.sprite_accent;
 
   if (type === "slime") {
-    // 史莱姆：弹跳球
     ctx.fillStyle = color;
     ctx.fillRect(x + p * 1, y + p * 4 + bounce, p * 6, p * 3);
     ctx.fillRect(x + p * 2, y + p * 3 + bounce, p * 4, p * 1);
     ctx.fillStyle = accent;
     ctx.fillRect(x + p * 2, y + p * 3 + bounce, p * 4, p * 1);
-    // 眼睛
     ctx.fillStyle = "#fff";
     ctx.fillRect(x + p * 3, y + p * 5 + bounce, p, p);
     ctx.fillRect(x + p * 5, y + p * 5 + bounce, p, p);
@@ -114,66 +132,66 @@ function drawMapMonster(ctx, monster) {
     ctx.fillRect(x + p * 3, y + p * 5 + bounce, p * 0.5, p * 0.5);
     ctx.fillRect(x + p * 5, y + p * 5 + bounce, p * 0.5, p * 0.5);
   } else if (type === "wild_wolf") {
-    // 野狼：低矮四足
     ctx.fillStyle = color;
     ctx.fillRect(x + p * 1, y + p * 5 + bounce, p * 6, p * 2);
     ctx.fillRect(x + p * 0, y + p * 4 + bounce, p * 2, p * 2);
     ctx.fillStyle = accent;
     ctx.fillRect(x + p * 0, y + p * 4 + bounce, p * 2, p * 2);
-    // 腿
     ctx.fillStyle = color;
     ctx.fillRect(x + p * 2, y + p * 7 + bounce, p, p);
     ctx.fillRect(x + p * 5, y + p * 7 + bounce, p, p);
-    // 眼睛
     ctx.fillStyle = "#ff0";
     ctx.fillRect(x + p * 1, y + p * 4 + bounce, p * 0.5, p * 0.5);
   } else if (type === "forest_spider") {
-    // 毒蛛：多腿
     ctx.fillStyle = color;
     ctx.fillRect(x + p * 3, y + p * 4 + bounce, p * 2, p * 2);
-    // 腿
     ctx.fillStyle = accent;
     ctx.fillRect(x + p * 1, y + p * 3 + bounce, p * 2, p);
     ctx.fillRect(x + p * 5, y + p * 3 + bounce, p * 2, p);
     ctx.fillRect(x + p * 1, y + p * 6 + bounce, p * 2, p);
     ctx.fillRect(x + p * 5, y + p * 6 + bounce, p * 2, p);
-    // 眼睛
     ctx.fillStyle = "#f00";
     ctx.fillRect(x + p * 3, y + p * 4 + bounce, p * 0.5, p * 0.5);
     ctx.fillRect(x + p * 4.5, y + p * 4 + bounce, p * 0.5, p * 0.5);
   } else if (type === "goblin") {
-    // 哥布林：人形尖耳
     ctx.fillStyle = color;
     ctx.fillRect(x + p * 2, y + p * 3 + bounce, p * 4, p * 4);
     ctx.fillRect(x + p * 3, y + p * 1 + bounce, p * 2, p * 3);
-    // 尖耳
     ctx.fillStyle = accent;
     ctx.fillRect(x + p * 2, y + p * 1 + bounce, p, p * 2);
     ctx.fillRect(x + p * 5, y + p * 1 + bounce, p, p * 2);
-    // 眼睛
     ctx.fillStyle = "#f00";
     ctx.fillRect(x + p * 3, y + p * 3 + bounce, p, p);
     ctx.fillRect(x + p * 5, y + p * 3 + bounce, p, p);
-    // 腿
     ctx.fillStyle = accent;
     ctx.fillRect(x + p * 2, y + p * 7 + bounce, p * 2, p);
     ctx.fillRect(x + p * 4, y + p * 7 + bounce, p * 2, p);
   } else if (type === "dark_bear") {
-    // 暗熊：大型四足
     ctx.fillStyle = color;
     ctx.fillRect(x + p * 0, y + p * 3 + bounce, p * 8, p * 4);
     ctx.fillRect(x + p * 0, y + p * 2 + bounce, p * 3, p * 2);
     ctx.fillStyle = accent;
     ctx.fillRect(x + p * 0, y + p * 2 + bounce, p * 3, p * 2);
-    // 腿
     ctx.fillStyle = color;
     ctx.fillRect(x + p * 1, y + p * 7 + bounce, p * 2, p);
     ctx.fillRect(x + p * 5, y + p * 7 + bounce, p * 2, p);
-    // 眼睛
     ctx.fillStyle = "#f00";
     ctx.fillRect(x + p * 1, y + p * 2 + bounce, p * 0.5, p * 0.5);
+  } else if (type === "shadow_tree_spirit") {
+    ctx.fillStyle = color;
+    ctx.fillRect(x + p * 1, y + p * 2 + bounce, p * 6, p * 5);
+    ctx.fillStyle = accent;
+    ctx.fillRect(x + p * 2, y + p * 1 + bounce, p * 4, p * 2);
+    ctx.fillStyle = "#4a0e4a";
+    ctx.fillRect(x + p * 2, y + p * 3 + bounce, p * 1.5, p * 1.5);
+    ctx.fillRect(x + p * 4.5, y + p * 3 + bounce, p * 1.5, p * 1.5);
+    ctx.fillStyle = "#0f0";
+    ctx.fillRect(x + p * 2.5, y + p * 3.5 + bounce, p * 0.5, p * 0.5);
+    ctx.fillRect(x + p * 5, y + p * 3.5 + bounce, p * 0.5, p * 0.5);
+    ctx.fillStyle = "#1a3a1a";
+    ctx.fillRect(x + p * 1, y + p * 7 + bounce, p * 2, p);
+    ctx.fillRect(x + p * 5, y + p * 7 + bounce, p * 2, p);
   } else {
-    // 通用形状
     ctx.fillStyle = color;
     ctx.fillRect(x + p * 2, y + p * 3 + bounce, p * 4, p * 4);
     ctx.fillStyle = accent;
@@ -182,42 +200,47 @@ function drawMapMonster(ctx, monster) {
 
   ctx.globalAlpha = 1.0;
 
-  // 名字标签
   if (!monster.inCombat) {
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.font = "10px monospace";
-    const nameWidth = ctx.measureText(config.name).width + 10;
+    let displayName = config.name;
+    if (monster.isGroup) {
+      const count = monster.groupData.monsters.reduce((s, m) => s + (m.count || 1), 0);
+      if (count > 1) displayName = `${displayName} x${count}`;
+    }
+    const nameWidth = ctx.measureText(displayName).width + 10;
     ctx.fillRect(x + s / 2 - nameWidth / 2, y - 14, nameWidth, 14);
     ctx.fillStyle = "#ff8888";
     ctx.textAlign = "center";
-    ctx.fillText(config.name, x + s / 2, y - 4);
+    ctx.fillText(displayName, x + s / 2, y - 4);
   }
 
-  // 精英标记
   if (config.type === "elite") {
     ctx.fillStyle = "#ff0";
     ctx.font = "bold 10px monospace";
     ctx.textAlign = "center";
     ctx.fillText("★", x + s / 2, y - 18);
+  } else if (config.type === "boss") {
+    ctx.fillStyle = "#f44";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("♛", x + s / 2, y - 18);
   }
 }
 
-// 绘制战斗面板中的怪物精灵（放大版）
-function drawMonsterSprite(monsterId) {
-  const canvas = document.getElementById("monster-sprite-canvas");
+function drawMonsterSpriteOnCanvas(canvas, monsterId, isBoss, currentPhase) {
   if (!canvas) return;
   const mCtx = canvas.getContext("2d");
-  mCtx.clearRect(0, 0, 96, 96);
+  mCtx.clearRect(0, 0, canvas.width, canvas.height);
 
   const config = monstersConfig[monsterId];
   if (!config) return;
 
-  const s = 96;
+  const s = canvas.width;
   const p = s / 8;
   const color = config.sprite_color;
   const accent = config.sprite_accent;
 
-  // 阴影
   mCtx.fillStyle = "rgba(0,0,0,0.2)";
   mCtx.fillRect(p * 2, s - p * 2, p * 4, p * 1);
 
@@ -279,15 +302,33 @@ function drawMonsterSprite(monsterId) {
     mCtx.fillRect(p * 5, p * 7, p * 2, p);
     mCtx.fillStyle = "#f00";
     mCtx.fillRect(p * 1, p * 2, p * 0.5, p * 0.5);
+  } else if (monsterId === "shadow_tree_spirit") {
+    mCtx.fillStyle = color;
+    mCtx.fillRect(p * 1, p * 2, p * 6, p * 5);
+    mCtx.fillStyle = accent;
+    mCtx.fillRect(p * 2, p * 1, p * 4, p * 2);
+    mCtx.fillStyle = "#4a0e4a";
+    mCtx.fillRect(p * 2, p * 3, p * 1.5, p * 1.5);
+    mCtx.fillRect(p * 4.5, p * 3, p * 1.5, p * 1.5);
+    mCtx.fillStyle = "#0f0";
+    mCtx.fillRect(p * 2.5, p * 3.5, p * 0.5, p * 0.5);
+    mCtx.fillRect(p * 5, p * 3.5, p * 0.5, p * 0.5);
+    mCtx.fillStyle = "#1a3a1a";
+    mCtx.fillRect(p * 1, p * 7, p * 2, p);
+    mCtx.fillRect(p * 5, p * 7, p * 2, p);
   } else {
     mCtx.fillStyle = color;
     mCtx.fillRect(p * 2, p * 3, p * 4, p * 4);
     mCtx.fillStyle = accent;
     mCtx.fillRect(p * 3, p * 1, p * 2, p * 3);
   }
+
+  if (isBoss && currentPhase >= 2) {
+    mCtx.fillStyle = "rgba(255, 0, 0, 0.15)";
+    mCtx.fillRect(0, 0, s, s);
+  }
 }
 
-// 检查玩家是否碰到怪物
 function checkMonsterCollision() {
   if (combatOpen || !mapMonsters.length) return null;
 
@@ -303,7 +344,6 @@ function checkMonsterCollision() {
   return null;
 }
 
-// 获取最近的可交互怪物
 function getNearestMonster() {
   if (combatOpen || !mapMonsters.length) return null;
 
@@ -325,20 +365,26 @@ function getNearestMonster() {
   return nearest;
 }
 
-// 发起战斗
 async function initiateCombat(monsterInstanceId) {
   if (combatOpen || dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || talentPanelOpen) return;
 
   await savePlayerPosition();
 
+  const mapMonster = mapMonsters.find(m => m.instance_id === monsterInstanceId);
+  const isGroup = mapMonster && mapMonster.isGroup;
+
   try {
+    const body = { map_id: currentMap.id };
+    if (isGroup) {
+      body.monster_group_id = monsterInstanceId;
+    } else {
+      body.monster_instance_id = monsterInstanceId;
+    }
+
     const resp = await fetch("/api/combat/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        monster_instance_id: monsterInstanceId,
-        map_id: currentMap.id,
-      }),
+      body: JSON.stringify(body),
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -347,7 +393,6 @@ async function initiateCombat(monsterInstanceId) {
     }
 
     combatSessionId = data.session_id;
-    // 将嵌套结构扁平化，与 action 响应保持一致
     combatState = {
       ...data,
       monster_name: data.monster?.name || "",
@@ -360,6 +405,7 @@ async function initiateCombat(monsterInstanceId) {
       skills: data.player?.skills || [],
       turn_count: 1,
     };
+    currentTargetIndex = data.target_index || 0;
     combatOpen = true;
     combatMonsterInstanceId = monsterInstanceId;
 
@@ -368,26 +414,120 @@ async function initiateCombat(monsterInstanceId) {
 
     document.getElementById("combat-panel").classList.add("active");
     renderCombat();
-    drawMonsterSprite(data.monster.id);
+    renderMonsterSlots();
   } catch (e) {
     console.error("战斗请求失败:", e);
   }
 }
 
-// 渲染战斗界面
+function selectTarget(index) {
+  if (!combatState || !combatState.monsters) return;
+  const m = combatState.monsters[index];
+  if (!m || !m.alive) return;
+  currentTargetIndex = index;
+  renderMonsterSlots();
+}
+
+function renderMonsterSlots() {
+  const container = document.getElementById("combat-monsters-container");
+  if (!container || !combatState) return;
+
+  const monsters = combatState.monsters || [];
+  container.innerHTML = "";
+
+  monsters.forEach((m, idx) => {
+    const slot = document.createElement("div");
+    slot.className = "combat-monster-slot";
+    if (idx === currentTargetIndex && m.alive) {
+      slot.className += " selected";
+    }
+    if (!m.alive) {
+      slot.className += " defeated";
+    }
+    if (m.is_boss) {
+      slot.className += " boss";
+    }
+    slot.setAttribute("data-index", idx);
+    slot.onclick = () => selectTarget(idx);
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "monster-sprite-canvas";
+    canvas.width = 64;
+    canvas.height = 64;
+    slot.appendChild(canvas);
+
+    const nameDiv = document.createElement("div");
+    nameDiv.className = "combat-monster-name";
+    let nameText = m.name || "";
+    if (m.is_boss && m.phase_name) {
+      nameText += ` [${m.phase_name}]`;
+    }
+    nameDiv.textContent = nameText;
+    slot.appendChild(nameDiv);
+
+    const hpRow = document.createElement("div");
+    hpRow.className = "combat-hp-bar-row";
+    const hpLabel = document.createElement("span");
+    hpLabel.className = "combat-hp-label";
+    hpLabel.textContent = "HP";
+    hpRow.appendChild(hpLabel);
+    const hpBarOuter = document.createElement("div");
+    hpBarOuter.className = "combat-hp-bar";
+    const hpFill = document.createElement("div");
+    hpFill.className = "combat-hp-fill monster-hp";
+    const hpPct = m.max_hp > 0 ? (m.hp / m.max_hp) * 100 : 0;
+    hpFill.style.width = hpPct + "%";
+    if (m.is_boss && hpPct < 30) {
+      hpFill.className += " boss-enraged";
+    }
+    hpBarOuter.appendChild(hpFill);
+    hpRow.appendChild(hpBarOuter);
+    const hpText = document.createElement("span");
+    hpText.className = "combat-hp-text";
+    hpText.textContent = `${m.hp}/${m.max_hp}`;
+    hpRow.appendChild(hpText);
+    slot.appendChild(hpRow);
+
+    if (m.effects && m.effects.length > 0) {
+      const effectsDiv = document.createElement("div");
+      effectsDiv.className = "combat-monster-effects";
+      effectsDiv.innerHTML = m.effects.map(e => {
+        const color = e.type === "poison" ? "#88ff88" : e.type === "burn" ? "#ff8844" : e.type === "stun" ? "#ffff44" : e.type === "freeze" ? "#44ddff" : "#aaaaff";
+        return `<span class="combat-effect" style="color:${color}">${e.type}(${e.duration})</span>`;
+      }).join(" ");
+      slot.appendChild(effectsDiv);
+    }
+
+    if (idx === currentTargetIndex && m.alive) {
+      const targetLabel = document.createElement("div");
+      targetLabel.className = "target-label";
+      targetLabel.textContent = "目标";
+      slot.appendChild(targetLabel);
+    }
+
+    if (!m.alive) {
+      const defeatOverlay = document.createElement("div");
+      defeatOverlay.className = "defeat-overlay";
+      defeatOverlay.textContent = "击败";
+      slot.appendChild(defeatOverlay);
+    }
+
+    container.appendChild(slot);
+
+    drawMonsterSpriteOnCanvas(canvas, m.monster_id, m.is_boss, m.current_phase || 0);
+  });
+
+  const hint = document.getElementById("combat-target-hint");
+  if (hint) {
+    hint.style.display = monsters.filter(m => m.alive).length > 1 ? "block" : "none";
+  }
+}
+
 function renderCombat() {
   if (!combatState) return;
 
-  // 回合信息
   document.getElementById("combat-turn-info").textContent = `第 ${combatState.turn_count || 1} 回合`;
 
-  // 怪物信息
-  document.getElementById("combat-monster-name").textContent = combatState.monster_name || combatState.monster?.name || "";
-  const monsterHpPct = (combatState.monster_hp / combatState.monster_max_hp) * 100;
-  document.getElementById("combat-monster-hp-bar").style.width = monsterHpPct + "%";
-  document.getElementById("combat-monster-hp-text").textContent = `${combatState.monster_hp}/${combatState.monster_max_hp}`;
-
-  // 玩家信息
   const playerHpPct = (combatState.player_hp / combatState.player_max_hp) * 100;
   document.getElementById("combat-player-hp-bar").style.width = playerHpPct + "%";
   document.getElementById("combat-player-hp-text").textContent = `${combatState.player_hp}/${combatState.player_max_hp}`;
@@ -396,11 +536,8 @@ function renderCombat() {
   document.getElementById("combat-player-mp-bar").style.width = playerMpPct + "%";
   document.getElementById("combat-player-mp-text").textContent = `${combatState.player_mp || 0}/${combatState.player_max_mp || 0}`;
 
-  // 状态效果
   renderEffects("combat-player-effects", combatState.player_effects || []);
-  renderEffects("combat-monster-effects", combatState.monster_effects || []);
 
-  // 按钮状态
   const isPlayerTurn = combatState.phase === "player_turn";
   document.getElementById("btn-combat-attack").disabled = !isPlayerTurn;
   document.getElementById("btn-combat-defend").disabled = !isPlayerTurn;
@@ -409,7 +546,6 @@ function renderCombat() {
   document.getElementById("btn-combat-flee").disabled = !isPlayerTurn;
 }
 
-// 渲染状态效果
 function renderEffects(containerId, effects) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -423,12 +559,35 @@ function renderEffects(containerId, effects) {
   }).join(" ");
 }
 
-// 追加战斗日志
+const MAX_LOG_ENTRIES = 50;
+const VISIBLE_LOG_ENTRIES = 15;
+
+let combatLogBuffer = [];
+
 function appendCombatLog(logEntries) {
   const logDiv = document.getElementById("combat-log");
   if (!logDiv) return;
 
   for (const entry of logEntries) {
+    combatLogBuffer.push(entry);
+  }
+
+  while (combatLogBuffer.length > MAX_LOG_ENTRIES) {
+    combatLogBuffer.shift();
+  }
+
+  renderCombatLog();
+}
+
+function renderCombatLog() {
+  const logDiv = document.getElementById("combat-log");
+  if (!logDiv) return;
+
+  const startIdx = Math.max(0, combatLogBuffer.length - VISIBLE_LOG_ENTRIES);
+  const visibleEntries = combatLogBuffer.slice(startIdx);
+
+  const fragment = document.createDocumentFragment();
+  for (const entry of visibleEntries) {
     const div = document.createElement("div");
     div.className = "combat-log-entry";
 
@@ -454,16 +613,19 @@ function appendCombatLog(logEntries) {
       div.className += " log-effect";
     } else if (entry.type === "monster_special") {
       div.className += " log-special";
+    } else if (entry.type === "boss_phase") {
+      div.className += " log-crit";
     }
 
     div.textContent = entry.text || "";
-    logDiv.appendChild(div);
+    fragment.appendChild(div);
   }
 
+  logDiv.innerHTML = "";
+  logDiv.appendChild(fragment);
   logDiv.scrollTop = logDiv.scrollHeight;
 }
 
-// 执行战斗动作
 async function combatAction(action, itemId) {
   if (combatAnimating || !combatOpen) return;
   if (combatState.phase !== "player_turn") return;
@@ -479,7 +641,7 @@ async function combatAction(action, itemId) {
   }
 
   try {
-    const body = { session_id: combatSessionId, action: action };
+    const body = { session_id: combatSessionId, action: action, target_index: currentTargetIndex };
     if (action === "use_item" && itemId) {
       body.item_id = itemId;
     }
@@ -501,16 +663,38 @@ async function combatAction(action, itemId) {
       return;
     }
 
-    // 攻击动画
     if (action === "attack") {
       await playCombatAnimation("player");
     }
 
     combatState = { ...combatState, ...data };
+
+    if (data.target_index !== undefined) {
+      currentTargetIndex = data.target_index;
+    }
+
+    const monsters = data.monsters || [];
+    if (monsters.length > 0) {
+      const currentTarget = monsters[currentTargetIndex];
+      if (!currentTarget || !currentTarget.alive) {
+        const firstAlive = monsters.findIndex(m => m.alive);
+        if (firstAlive >= 0) {
+          currentTargetIndex = firstAlive;
+        }
+      }
+    }
+
     renderCombat();
+    renderMonsterSlots();
     appendCombatLog(data.log || []);
 
-    // 怪物攻击动画
+    showDamageNumbers(data.log || []);
+
+    const hasBossPhase = (data.log || []).some(l => l.type === "boss_phase");
+    if (hasBossPhase) {
+      await playBossPhaseAnimation(data.log.find(l => l.type === "boss_phase"));
+    }
+
     const hasMonsterAttack = (data.log || []).some(l =>
       l.type === "monster_attack" || l.type === "monster_special"
     );
@@ -518,14 +702,12 @@ async function combatAction(action, itemId) {
       await playCombatAnimation("monster");
     }
 
-    // 检查战斗结束
     if (data.phase === "victory") {
       await showCombatResult(data, true);
     } else if (data.phase === "defeat") {
       await showCombatResult(data, false);
     }
 
-    // 同步玩家信息
     if (typeof fetchPlayerInfo === "function") {
       await fetchPlayerInfo();
     }
@@ -543,7 +725,100 @@ async function combatAction(action, itemId) {
   }
 }
 
-// 战斗动画
+function showDamageNumbers(logEntries) {
+  for (const entry of logEntries) {
+    if (entry.type === "player_attack" && entry.damage) {
+      const targetIdx = entry.target_index !== undefined ? entry.target_index : currentTargetIndex;
+      spawnDamageNumber(targetIdx, entry.damage, entry.crit ? "crit" : "player");
+    } else if (entry.type === "monster_attack" && entry.damage) {
+      spawnDamageNumber("player", entry.damage, entry.crit ? "crit" : "monster");
+    } else if (entry.type === "skill" && entry.damage) {
+      if (entry.aoe) {
+        const monsters = combatState.monsters || [];
+        monsters.forEach((m, idx) => {
+          if (m.alive) spawnDamageNumber(idx, entry.damage, "skill");
+        });
+      } else {
+        const targetIdx = entry.target_index !== undefined ? entry.target_index : currentTargetIndex;
+        spawnDamageNumber(targetIdx, entry.damage, "skill");
+      }
+    } else if (entry.type === "effect" && entry.damage) {
+      if (entry.target === "player") {
+        spawnDamageNumber("player", entry.damage, "effect");
+      } else if (entry.target_index !== undefined) {
+        spawnDamageNumber(entry.target_index, entry.damage, "effect");
+      }
+    }
+  }
+}
+
+function spawnDamageNumber(target, value, type) {
+  const panel = document.getElementById("combat-panel");
+  if (!panel) return;
+
+  const numEl = document.createElement("div");
+  numEl.className = "damage-number";
+  if (type === "crit") {
+    numEl.className += " damage-crit";
+    numEl.textContent = `${value}!`;
+  } else if (type === "monster") {
+    numEl.className += " damage-monster";
+    numEl.textContent = `-${value}`;
+  } else if (type === "skill") {
+    numEl.className += " damage-skill";
+    numEl.textContent = `${value}`;
+  } else if (type === "effect") {
+    numEl.className += " damage-effect";
+    numEl.textContent = `-${value}`;
+  } else if (type === "heal") {
+    numEl.className += " damage-heal";
+    numEl.textContent = `+${value}`;
+  } else {
+    numEl.textContent = `-${value}`;
+  }
+
+  let x, y;
+  if (target === "player") {
+    const playerArea = document.getElementById("combat-player-area");
+    if (playerArea) {
+      const rect = playerArea.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      x = rect.left - panelRect.left + rect.width / 2 + (Math.random() - 0.5) * 30;
+      y = rect.top - panelRect.top + 10;
+    }
+  } else {
+    const slot = panel.querySelector(`.combat-monster-slot[data-index="${target}"]`);
+    if (slot) {
+      const rect = slot.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      x = rect.left - panelRect.left + rect.width / 2 + (Math.random() - 0.5) * 30;
+      y = rect.top - panelRect.top + 20;
+    }
+  }
+
+  if (x !== undefined && y !== undefined) {
+    numEl.style.left = x + "px";
+    numEl.style.top = y + "px";
+    panel.appendChild(numEl);
+    setTimeout(() => {
+      if (numEl.parentNode) numEl.parentNode.removeChild(numEl);
+    }, 900);
+  }
+}
+
+function animateEffectApplication(containerId, effectType) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const effectSpans = container.querySelectorAll(".combat-effect");
+  for (const span of effectSpans) {
+    if (span.textContent.startsWith(effectType)) {
+      span.classList.add("effect-apply");
+      setTimeout(() => span.classList.remove("effect-apply"), 600);
+    }
+  }
+}
+
 async function playCombatAnimation(who) {
   const panel = document.getElementById("combat-panel");
   if (!panel) return;
@@ -552,6 +827,7 @@ async function playCombatAnimation(who) {
     const monsterArea = document.getElementById("combat-monster-area");
     monsterArea.classList.add("combat-shake");
     monsterArea.classList.add("combat-flash");
+    if (typeof playPlayerAttackAnim === "function") playPlayerAttackAnim();
     await sleep(300);
     monsterArea.classList.remove("combat-shake");
     monsterArea.classList.remove("combat-flash");
@@ -559,17 +835,26 @@ async function playCombatAnimation(who) {
     const playerArea = document.getElementById("combat-player-area");
     playerArea.classList.add("combat-shake");
     panel.classList.add("combat-hit-flash");
+    if (typeof playPlayerHitAnim === "function") playPlayerHitAnim();
     await sleep(300);
     playerArea.classList.remove("combat-shake");
     panel.classList.remove("combat-hit-flash");
   }
 }
 
+async function playBossPhaseAnimation(phaseLog) {
+  const panel = document.getElementById("combat-panel");
+  if (!panel) return;
+
+  panel.classList.add("boss-phase-flash");
+  await sleep(600);
+  panel.classList.remove("boss-phase-flash");
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// 显示战斗结果
 async function showCombatResult(data, isVictory) {
   const overlay = document.getElementById("combat-result-overlay");
   const content = document.getElementById("combat-result-content");
@@ -611,7 +896,6 @@ async function showCombatResult(data, isVictory) {
   overlay.style.display = "flex";
 }
 
-// 结束战斗
 async function endCombat() {
   const overlay = document.getElementById("combat-result-overlay");
   if (overlay) overlay.style.display = "none";
@@ -626,7 +910,6 @@ async function endCombat() {
     console.error("结束战斗失败:", e);
   }
 
-  // 移除怪物
   if (combatMonsterInstanceId) {
     const monster = mapMonsters.find(m => m.instance_id === combatMonsterInstanceId);
     if (monster) {
@@ -635,19 +918,22 @@ async function endCombat() {
     }
   }
 
-  // 关闭战斗面板
   document.getElementById("combat-panel").classList.remove("active");
   combatOpen = false;
   combatSessionId = null;
   combatState = null;
   combatItemSelectOpen = false;
   combatMonsterInstanceId = null;
+  currentTargetIndex = 0;
 
-  // 清空战斗日志
   const logDiv = document.getElementById("combat-log");
   if (logDiv) logDiv.innerHTML = "";
 
-  // 同步玩家信息
+  combatLogBuffer = [];
+
+  const container = document.getElementById("combat-monsters-container");
+  if (container) container.innerHTML = "";
+
   if (typeof fetchPlayerInfo === "function") {
     await fetchPlayerInfo();
   }
@@ -656,7 +942,6 @@ async function endCombat() {
   }
 }
 
-// 物品选择
 let combatSkillSelectOpen = false;
 
 function openCombatSkillSelect() {
@@ -675,9 +960,10 @@ function openCombatSkillSelect() {
       const div = document.createElement("div");
       const disabled = (skill.cooldown_remaining || 0) > 0 || (combatState.player_mp || 0) < (skill.mp_cost || 0);
       const cdText = (skill.cooldown_remaining || 0) > 0 ? ` [CD:${skill.cooldown_remaining}]` : "";
+      const aoeTag = skill.aoe ? ' <span class="aoe-tag">群体</span>' : "";
       div.className = "combat-skill-row";
       div.innerHTML = `
-        <span class="combat-skill-name">${skill.name}${cdText}</span>
+        <span class="combat-skill-name">${skill.name}${cdText}${aoeTag}</span>
         <span class="combat-skill-cost">${skill.mp_cost}MP</span>
         <button class="btn-combat-use" ${disabled ? "disabled" : ""} onclick="combatAction('skill', '${skill.skill_id}')">使用</button>
       `;
@@ -725,7 +1011,6 @@ function closeCombatItemSelect() {
   document.getElementById("combat-item-panel").classList.remove("active");
 }
 
-// 按钮控制
 function disableCombatButtons() {
   document.getElementById("btn-combat-attack").disabled = true;
   document.getElementById("btn-combat-defend").disabled = true;
@@ -742,7 +1027,6 @@ function enableCombatButtons() {
   document.getElementById("btn-combat-flee").disabled = false;
 }
 
-// 键盘快捷键
 document.addEventListener("keydown", (e) => {
   if (!combatOpen || combatAnimating) return;
 
@@ -766,5 +1050,15 @@ document.addEventListener("keydown", (e) => {
     else if (e.key === "3") openCombatSkillSelect();
     else if (e.key === "4") openCombatItemSelect();
     else if (e.key === "5") combatAction("flee");
+    else if (e.key === "Tab") {
+      e.preventDefault();
+      const monsters = combatState.monsters || [];
+      const aliveIndices = monsters.map((m, i) => m.alive ? i : -1).filter(i => i >= 0);
+      if (aliveIndices.length > 1) {
+        const currentPos = aliveIndices.indexOf(currentTargetIndex);
+        const nextPos = (currentPos + 1) % aliveIndices.length;
+        selectTarget(aliveIndices[nextPos]);
+      }
+    }
   }
 });

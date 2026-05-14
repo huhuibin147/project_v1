@@ -427,10 +427,32 @@ project_v1/
 - ✅ 词条效果集成到战斗引擎（on_attack/on_hit/on_kill/conditional/passive）
 - ✅ API 路由：`GET /api/affixes/types`
 
-### 1.3 多敌人与 BOSS 战
-- `CombatSession` 支持怪物列表（1-3 个怪物）
-- BOSS 阶段转换机制
-- 新怪物：暗影树精（Lv.8，3 阶段）
+### 1.3 多敌人与 BOSS 战 ✅ 已完成
+- ✅ `CombatSession` 支持怪物列表（1-3 个怪物）
+- ✅ BOSS 阶段转换机制（HP 阈值触发，属性提升，AI 变更）
+- ✅ BOSS 免疫机制（普通 BOSS 免疫眩晕/冰冻，精英 BOSS 额外免疫中毒）
+- ✅ 群体技能（AOE）支持，伤害递减
+- ✅ 多怪物回合流程（按速度排序，逐个行动）
+- ✅ 目标选择系统（点击切换 / Tab 键切换）
+- ✅ 地图怪物组配置（`monster_groups`）
+- ✅ 新怪物：暗影树精（Lv.8，3 阶段 BOSS）
+- ✅ 新怪物组：狼群（2 只野狼）、蜘蛛巢穴（2 只森林蜘蛛）、森林伏击（2 只哥布林）
+- ✅ 前端多怪物渲染（精灵画布、HP 条、状态效果、目标标记、击败遮罩）
+- ✅ BOSS 阶段转换动画（全屏闪烁）
+- ✅ BOSS 狂暴状态（HP < 30% 时 HP 条脉冲动画）
+- ✅ API 支持：`POST /api/combat/start` 支持 `monster_group_id` 参数
+- ✅ 后端：`backend/combat/session.py`（多怪物战斗会话）
+- ✅ 后端：`backend/combat/monster_ai.py`（BOSS 阶段 AI、免疫检查）
+- ✅ 后端：`backend/combat/turn.py`（多怪物回合流程、目标选择）
+- ✅ 后端：`backend/combat/skills.py`（AOE 技能、伤害递减）
+- ✅ 后端：`backend/combat/effects.py`（BOSS 免疫检查）
+- ✅ 后端：`backend/routes/combat.py`（多怪物 API）
+- ✅ 后端：`backend/routes/models.py`（`target_index`、`monster_group_id` 字段）
+- ✅ 配置：`config/monsters.json`（暗影树精配置）
+- ✅ 配置：`config/maps/forest.json`（怪物组配置）
+- ✅ 前端：`frontend/js/combat.js`（多怪物渲染、目标选择、Tab 切换）
+- ✅ 前端：`frontend/index.html`（多怪物容器、目标提示）
+- ✅ 前端：`frontend/css/style.css`（怪物卡片、BOSS 动画、AOE 标签）
 
 ## Phase 2：世界扩展（优先级：中）
 

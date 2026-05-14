@@ -1,33 +1,99 @@
-"""Monster AI decision and execution module."""
+"""Monster AI decision and execution module with BOSS phase support."""
 
 import random
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .session import CombatSession, StatusEffect
+    from .session import CombatSession, MonsterInstance, StatusEffect
     from .effects import StatusEffect, add_effect, _recalculate_player_buffs, EFFECT_NAMES, STAT_BUFF_MAP
     from .damage import calc_damage, apply_shield
 
 
-def decide_action(session: "CombatSession") -> str:
-    ai = session.monster_config.get("ai", {})
+def check_boss_phase(monster: "MonsterInstance") -> dict | None:
+    if not monster.is_boss:
+        return None
+    phases = monster.config.get("phases", [])
+    if not phases:
+        return None
+
+    triggered_phase = None
+    for i, phase in enumerate(phases):
+        if i <= monster.current_phase:
+            continue
+        if monster.hp_ratio <= phase["hp_threshold"]:
+            monster.current_phase = i
+            monster.phase_changed = True
+            triggered_phase = phase
+            stat_boost = phase.get("stat_boost", {})
+            if "attack" in stat_boost:
+                monster.config["stats"]["attack"] = int(
+                    monster.base_attack * stat_boost["attack"]
+                )
+            if "defense" in stat_boost:
+                monster.config["stats"]["defense"] = int(
+                    monster.base_defense * stat_boost["defense"]
+                )
+            if "speed" in stat_boost:
+                monster.config["stats"]["speed"] = int(
+                    monster.base_speed * stat_boost["speed"]
+                )
+
+    return triggered_phase
+
+
+def decide_action(session: "CombatSession", monster: "MonsterInstance" = None) -> str:
+    if monster is None:
+        monster = session.monsters[0] if session.monsters else None
+        if monster is None:
+            return "attack"
+
+    ai = monster.config.get("ai", {})
     behavior = ai.get("behavior", "aggressive")
+
+    if monster.is_boss:
+        phases = monster.config.get("phases", [])
+        if phases and 0 <= monster.current_phase < len(phases):
+            phase_ai = phases[monster.current_phase].get("ai")
+            if phase_ai:
+                attack_w = int(phase_ai.get("attack", 0.5) * 100)
+                defend_w = int(phase_ai.get("defend", 0.3) * 100)
+                special_w = int(phase_ai.get("special", 0.2) * 100)
+
+                special = monster.get_current_special()
+                if special is None:
+                    attack_w += special_w
+                    special_w = 0
+
+                total = attack_w + defend_w + special_w
+                if total == 0:
+                    return "attack"
+                roll = random.randint(1, total)
+
+                if roll <= attack_w:
+                    return "attack"
+                elif roll <= attack_w + defend_w:
+                    return "defend"
+                else:
+                    return "special"
+
     attack_w = ai.get("attack_weight", 70)
     defend_w = ai.get("defend_weight", 20)
     special_w = ai.get("special_weight", 10)
 
     if behavior == "cautious":
-        hp_ratio = session.monster_hp / session.monster_max_hp
+        hp_ratio = monster.hp / monster.max_hp
         if hp_ratio < 0.3:
             defend_w += 30
             attack_w = max(10, attack_w - 20)
 
-    special = ai.get("special")
+    special = monster.get_current_special() if monster.is_boss else ai.get("special")
     if special is None:
         attack_w += special_w
         special_w = 0
 
     total = attack_w + defend_w + special_w
+    if total == 0:
+        return "attack"
     roll = random.randint(1, total)
 
     if roll <= attack_w:
@@ -38,19 +104,25 @@ def decide_action(session: "CombatSession") -> str:
         return "special"
 
 
-def execute_action(session: "CombatSession", action: str) -> list[dict]:
-    from .session import StatusEffect
+def execute_action(session: "CombatSession", action: str,
+                   monster: "MonsterInstance" = None) -> list[dict]:
+    from .session import StatusEffect, is_immune_to_effect
     from .effects import add_effect, _recalculate_player_buffs, EFFECT_NAMES, STAT_BUFF_MAP
     from .damage import calc_damage, apply_shield, apply_reflect, apply_lifesteal
 
-    monster_name = session.monster_config["name"]
+    if monster is None:
+        monster = session.monsters[0] if session.monsters else None
+        if monster is None:
+            return []
+
+    monster_name = monster.config["name"]
     logs = []
 
     if action == "attack":
         result = calc_damage(
-            session.monster_config["stats"]["attack"],
+            monster.attack,
             session.player_defense,
-            session.monster_config["stats"]["speed"],
+            monster.speed,
             session.player_speed,
             session.player_defending
         )
@@ -63,7 +135,7 @@ def execute_action(session: "CombatSession", action: str) -> list[dict]:
             actual_dmg
         )
         if reflect_dmg > 0:
-            session.monster_hp = max(0, session.monster_hp - reflect_dmg)
+            monster.hp = max(0, monster.hp - reflect_dmg)
 
         lifesteal_heal = apply_lifesteal(
             next((e.value for e in session.player_effects if e.effect_type == "lifesteal"), 0),
@@ -73,7 +145,8 @@ def execute_action(session: "CombatSession", action: str) -> list[dict]:
             session.player_hp = min(session.player_max_hp, session.player_hp + lifesteal_heal)
 
         entry = {"type": "monster_attack", "damage": actual_dmg,
-                 "crit": result["is_crit"], "defended": result["defended"]}
+                 "crit": result["is_crit"], "defended": result["defended"],
+                 "monster_index": monster.index}
         if shield_absorbed > 0:
             entry["shield_absorbed"] = shield_absorbed
         if result["is_crit"]:
@@ -90,25 +163,31 @@ def execute_action(session: "CombatSession", action: str) -> list[dict]:
         return logs
 
     elif action == "defend":
-        session.monster_defending = True
-        return [{"type": "monster_defend", "text": f"{monster_name}摆出了防御姿态。"}]
+        monster.defending = True
+        return [{"type": "monster_defend", "text": f"{monster_name}摆出了防御姿态。",
+                 "monster_index": monster.index}]
 
     elif action == "special":
-        special = session.monster_config.get("ai", {}).get("special")
+        special = monster.get_current_special() if monster.is_boss else monster.config.get("ai", {}).get("special")
         if special and special.get("type") == "apply_effect":
+            effect_type = special["effect"]
+            if is_immune_to_effect(monster.config, effect_type):
+                return execute_action(session, "attack", monster)
+
             if random.random() < special.get("chance", 0.3):
-                effect_type = special["effect"]
                 duration = special.get("duration", 3)
-                new_eff = StatusEffect(effect_type, duration, source="monster")
+                value = special.get("value", 0)
+                new_eff = StatusEffect(effect_type, duration, value=value, source="monster")
                 session.player_effects = add_effect(session.player_effects, new_eff)
                 if effect_type in STAT_BUFF_MAP:
                     _recalculate_player_buffs(session)
-                return [{"type": "monster_special", "text": special.get("message", f"{monster_name}使用了特殊技能！")}]
+                return [{"type": "monster_special", "text": special.get("message", f"{monster_name}使用了特殊技能！"),
+                         "monster_index": monster.index}]
             else:
                 result = calc_damage(
-                    session.monster_config["stats"]["attack"],
+                    monster.attack,
                     session.player_defense,
-                    session.monster_config["stats"]["speed"],
+                    monster.speed,
                     session.player_speed,
                     session.player_defending
                 )
@@ -117,8 +196,10 @@ def execute_action(session: "CombatSession", action: str) -> list[dict]:
                 session.player_hp = max(0, session.player_hp - actual_dmg)
                 return [{"type": "monster_attack", "damage": actual_dmg,
                         "crit": result["is_crit"], "defended": result["defended"],
+                        "monster_index": monster.index,
                         "text": f"{monster_name}攻击了你，造成 {actual_dmg} 点伤害。"}]
         else:
-            return execute_action(session, "attack")
+            return execute_action(session, "attack", monster)
 
-    return [{"type": "monster_idle", "text": f"{monster_name}在观望。"}]
+    return [{"type": "monster_idle", "text": f"{monster_name}在观望。",
+             "monster_index": monster.index}]

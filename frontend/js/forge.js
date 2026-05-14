@@ -2,6 +2,8 @@ let forgePanelOpen = false;
 let forgeNpcId = null;
 let forgeRecipes = [];
 let forgeFilter = "all";
+let forgeSearchQuery = "";
+let forgeAnimating = false;
 const forgePage = { current: 1 };
 const FORGE_PER_PAGE = 6;
 
@@ -25,6 +27,9 @@ function openForgePanel(npcId) {
   forgeNpcId = npcId || "blacksmith";
   forgePage.current = 1;
   forgeFilter = "all";
+  forgeSearchQuery = "";
+  const searchInput = document.getElementById("forge-search");
+  if (searchInput) searchInput.value = "";
   fetchForgeRecipes().then(() => renderForgePanel());
   document.getElementById("forge-panel").classList.add("active");
   document.getElementById("player-gold-forge").textContent = inventoryState.gold || 0;
@@ -57,9 +62,26 @@ function filterForgeRecipes(filter) {
   renderForgePanel();
 }
 
+function searchForgeRecipes(query) {
+  forgeSearchQuery = query.trim().toLowerCase();
+  forgePage.current = 1;
+  renderForgePanel();
+}
+
 function getFilteredForgeRecipes() {
-  if (forgeFilter === "all") return forgeRecipes;
-  return forgeRecipes.filter(r => r.category === forgeFilter);
+  let result = forgeRecipes;
+  if (forgeFilter !== "all") {
+    result = result.filter(r => r.category === forgeFilter);
+  }
+  if (forgeSearchQuery) {
+    result = result.filter(r => {
+      const nameMatch = r.name.toLowerCase().includes(forgeSearchQuery);
+      const outputMatch = r.output?.name?.toLowerCase().includes(forgeSearchQuery);
+      const matMatch = r.materials?.some(m => m.name.toLowerCase().includes(forgeSearchQuery));
+      return nameMatch || outputMatch || matMatch;
+    });
+  }
+  return result;
 }
 
 function renderForgePanel() {
@@ -139,14 +161,24 @@ function renderForgePanel() {
 }
 
 async function doForge(recipeId) {
-  if (!forgeNpcId) return;
+  if (!forgeNpcId || forgeAnimating) return;
+  forgeAnimating = true;
+
+  const btn = document.querySelector(`.btn-forge[onclick="doForge('${recipeId}')"]`);
+  const card = btn?.closest(".forge-recipe-card");
+  const progressOverlay = card ? createForgeProgress(card) : null;
+
   try {
+    await animateForgeProgress(progressOverlay);
+
     const resp = await fetch("/api/forge/craft", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ recipe_id: recipeId, npc_id: forgeNpcId }),
     });
     const data = await resp.json();
+
+    removeForgeProgress(progressOverlay);
 
     showForgeMessage(data.message, data.forged);
 
@@ -166,8 +198,64 @@ async function doForge(recipeId) {
       }
     }
   } catch (e) {
+    removeForgeProgress(progressOverlay);
     showForgeMessage("锻造请求失败，请重试", false);
     console.error("锻造请求失败:", e);
+  } finally {
+    forgeAnimating = false;
+  }
+}
+
+function createForgeProgress(card) {
+  const overlay = document.createElement("div");
+  overlay.className = "forge-progress-overlay";
+  overlay.innerHTML = `
+    <div class="forge-progress-bar">
+      <div class="forge-progress-fill"></div>
+    </div>
+    <div class="forge-progress-text">锻造中...</div>
+    <div class="forge-progress-sparks"></div>
+  `;
+  card.style.position = "relative";
+  card.appendChild(overlay);
+  return overlay;
+}
+
+function animateForgeProgress(overlay) {
+  return new Promise(resolve => {
+    if (!overlay) { resolve(); return; }
+    const fill = overlay.querySelector(".forge-progress-fill");
+    const sparks = overlay.querySelector(".forge-progress-sparks");
+    const duration = 1500;
+    const startTime = Date.now();
+
+    function tick() {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      if (fill) fill.style.width = `${progress * 100}%`;
+
+      if (progress < 1 && Math.random() > 0.6) {
+        const spark = document.createElement("span");
+        spark.className = "forge-spark";
+        spark.style.left = `${20 + Math.random() * 60}%`;
+        spark.style.animationDuration = `${0.3 + Math.random() * 0.4}s`;
+        if (sparks) sparks.appendChild(spark);
+        setTimeout(() => spark.remove(), 700);
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        resolve();
+      }
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+function removeForgeProgress(overlay) {
+  if (overlay && overlay.parentNode) {
+    overlay.parentNode.removeChild(overlay);
   }
 }
 

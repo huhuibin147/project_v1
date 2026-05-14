@@ -285,5 +285,55 @@ describe('玩家模块 (player.js)', () => {
     it('应有 color 属性', () => {
       expect(player.color).toBeTruthy();
     });
+
+    it('应有 animState 属性', () => {
+      expect(player.animState).toBeDefined();
+    });
+
+    it('应有 animTimer 属性', () => {
+      expect(typeof player.animTimer).toBe('number');
+    });
+
+    it('应有 hitFlash 属性', () => {
+      expect(typeof player.hitFlash).toBe('number');
+    });
+  });
+
+  describe('PLY-13~15: 攻击与受击动画', () => {
+    beforeEach(() => {
+      player.animState = 'idle';
+      player.animTimer = 0;
+      player.hitFlash = 0;
+    });
+
+    it('PLY-13: playPlayerAttackAnim 应设置攻击状态', () => {
+      playPlayerAttackAnim();
+      expect(player.animState).toBe('attack');
+      expect(player.animTimer).toBe(12);
+    });
+
+    it('PLY-14: playPlayerHitAnim 应设置受击闪烁', () => {
+      playPlayerHitAnim();
+      expect(player.hitFlash).toBe(10);
+    });
+
+    it('PLY-15: 攻击动画应随帧递减并回到 idle', () => {
+      playPlayerAttackAnim();
+      expect(player.animState).toBe('attack');
+      for (var i = 0; i < 12; i++) {
+        updatePlayer();
+      }
+      expect(player.animState).toBe('idle');
+      expect(player.animTimer).toBe(0);
+    });
+
+    it('受击闪烁应随帧递减', () => {
+      playPlayerHitAnim();
+      expect(player.hitFlash).toBe(10);
+      for (var i = 0; i < 10; i++) {
+        updatePlayer();
+      }
+      expect(player.hitFlash).toBe(0);
+    });
   });
 });
