@@ -452,66 +452,86 @@
     <!-- 战斗面板 -->
     <div id="combat-panel">
       <div id="combat-header">
-        <span id="combat-title">战斗</span>
+        <span id="combat-title">⚔ 战斗</span>
         <span id="combat-turn-info">第 1 回合</span>
+        <span id="combat-monster-count"></span>
       </div>
       <div id="combat-body">
         <div id="combat-monster-area">
           <div id="combat-monsters-container"></div>
         </div>
 
-        <div id="combat-log"></div>
+        <div id="combat-info-row">
+          <div id="combat-player-area">
+            <div id="combat-player-header">
+              <canvas id="combat-player-avatar" width="48" height="48"></canvas>
+              <div id="combat-player-identity">
+                <span id="combat-player-name">勇者</span>
+                <span id="combat-player-level">Lv.1</span>
+              </div>
+            </div>
+            <div class="combat-bar-row">
+              <span class="combat-bar-label hp-label">HP</span>
+              <div class="combat-bar">
+                <div class="combat-bar-fill hp-fill" id="combat-player-hp-bar"></div>
+              </div>
+              <span class="combat-bar-text" id="combat-player-hp-text">120/120</span>
+            </div>
+            <div class="combat-bar-row">
+              <span class="combat-bar-label mp-label">MP</span>
+              <div class="combat-bar">
+                <div class="combat-bar-fill mp-fill" id="combat-player-mp-bar"></div>
+              </div>
+              <span class="combat-bar-text" id="combat-player-mp-text">30/30</span>
+            </div>
+            <div class="combat-bar-row" id="combat-shield-row" style="display:none">
+              <span class="combat-bar-label shield-label">🛡</span>
+              <div class="combat-bar">
+                <div class="combat-bar-fill shield-fill" id="combat-player-shield-bar"></div>
+              </div>
+              <span class="combat-bar-text" id="combat-player-shield-text">0</span>
+            </div>
+            <div id="combat-player-effects"></div>
+          </div>
 
-        <div id="combat-player-area">
-          <div class="combat-hp-bar-row">
-            <span class="combat-hp-label">HP</span>
-            <div class="combat-hp-bar">
-              <div class="combat-hp-fill player-hp" id="combat-player-hp-bar"></div>
-            </div>
-            <span class="combat-hp-text" id="combat-player-hp-text">120/120</span>
+          <div id="combat-log-area">
+            <div id="combat-log"></div>
           </div>
-          <div class="combat-hp-bar-row">
-            <span class="combat-hp-label">MP</span>
-            <div class="combat-hp-bar">
-              <div class="combat-hp-fill player-mp" id="combat-player-mp-bar"></div>
-            </div>
-            <span class="combat-hp-text" id="combat-player-mp-text">30/30</span>
-          </div>
-          <div id="combat-player-effects"></div>
         </div>
       </div>
 
       <div id="combat-actions">
-        <div id="combat-target-hint">Tab 切换目标</div>
-        <button class="btn-combat" id="btn-combat-attack" onclick="combatAction('attack')">
-          攻击 (1)
-        </button>
-        <button class="btn-combat" id="btn-combat-defend" onclick="combatAction('defend')">
-          防御 (2)
-        </button>
-        <button class="btn-combat" id="btn-combat-skill" onclick="openCombatSkillSelect()">
-          技能 (3)
-        </button>
-        <button class="btn-combat" id="btn-combat-item" onclick="openCombatItemSelect()">
-          物品 (4)
-        </button>
-        <button class="btn-combat btn-flee" id="btn-combat-flee" onclick="combatAction('flee')">
-          逃跑 (5)
+        <div id="combat-action-main">
+          <button class="btn-combat" id="btn-combat-attack" onclick="combatAction('attack')" title="快捷键: 1">
+            ⚔ 攻击
+          </button>
+          <button class="btn-combat" id="btn-combat-defend" onclick="combatAction('defend')" title="快捷键: 2">
+            🛡 防御
+          </button>
+          <button class="btn-combat" id="btn-combat-skill" onclick="openCombatSkillSelect()" title="快捷键: 3">
+            ✨ 技能
+          </button>
+          <button class="btn-combat" id="btn-combat-item" onclick="openCombatItemSelect()" title="快捷键: 4">
+            🎒 物品
+          </button>
+        </div>
+        <button class="btn-combat btn-flee" id="btn-combat-flee" onclick="combatAction('flee')" title="快捷键: 5">
+          🏃 逃跑
         </button>
       </div>
 
       <div id="combat-skill-panel">
         <div class="panel-header">
-          <span class="panel-title">选择技能</span>
-          <button class="panel-close" onclick="closeCombatSkillSelect()">×</button>
+          <span class="panel-title">✨ 选择技能</span>
+          <button class="panel-close" onclick="closeCombatSkillSelect()">✕</button>
         </div>
         <div id="combat-skills"></div>
       </div>
 
       <div id="combat-item-panel">
         <div class="panel-header">
-          <span class="panel-title">选择物品</span>
-          <button class="panel-close" onclick="closeCombatItemSelect()">×</button>
+          <span class="panel-title">🎒 选择物品</span>
+          <button class="panel-close" onclick="closeCombatItemSelect()">✕</button>
         </div>
         <div id="combat-items"></div>
       </div>

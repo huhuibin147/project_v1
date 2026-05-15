@@ -106,7 +106,11 @@ async def combat_start(req: CombatStartRequest):
     formatted_skills = [format_skill_for_frontend(s) for s in session.player_skills]
     formatted_skills = [s for s in formatted_skills if s is not None]
 
-    monsters_data = [m.to_dict() for m in session.monsters]
+    from combat.monster_ai import decide_action
+    monsters_data = []
+    for m in session.monsters:
+        next_action = decide_action(session, m) if m.alive else ""
+        monsters_data.append(m.to_dict(next_action=next_action))
 
     return {
         "session_id": session.session_id,

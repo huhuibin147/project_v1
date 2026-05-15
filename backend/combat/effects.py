@@ -20,7 +20,9 @@ EFFECT_NAMES = {
     "silence": "沉默", "speed_down": "减速", "bleed": "流血",
     "shield": "护盾", "regen": "再生", "reflect": "反伤", "lifesteal": "吸血",
     "attack_up": "攻击增强", "defense_up": "防御增强", "speed_up": "速度增强",
-    "defense_down": "防御降低",
+    "defense_down": "防御降低", "attack_down": "攻击降低",
+    "evasion_up": "闪避提升", "damage_reduction": "伤害减免",
+    "fear": "恐惧",
 }
 
 STACKABLE_EFFECTS = {"bleed"}
@@ -111,6 +113,8 @@ class StatBuffHandler(EffectHandler):
             session.player_speed = session.base_player_speed + effect.value
         elif effect.effect_type == "defense_down":
             session.player_defense = max(0, session.base_player_defense - effect.value)
+        elif effect.effect_type == "attack_down":
+            session.player_attack = max(1, session.base_player_attack - effect.value)
         elif effect.effect_type == "speed_down":
             session.player_speed = max(1, int(session.base_player_speed * 0.7))
 
@@ -135,9 +139,14 @@ EFFECT_HANDLERS: dict[str, EffectHandler] = {
     "stun": BlockActionHandler("无法行动！"),
     "silence": BlockActionHandler("无法使用技能！"),
     "freeze": BlockActionHandler("无法行动！"),
+    "fear": BlockActionHandler("因恐惧无法行动！"),
     "speed_down": StatBuffHandler(),
     "attack_up": StatBuffHandler(),
     "defense_up": StatBuffHandler(),
+    "attack_down": StatBuffHandler(),
+    "defense_down": StatBuffHandler(),
+    "evasion_up": PassiveEffectHandler(),
+    "damage_reduction": PassiveEffectHandler(),
     "shield": PassiveEffectHandler(),
     "reflect": PassiveEffectHandler(),
     "lifesteal": PassiveEffectHandler(),
@@ -241,7 +250,7 @@ def has_effect(effects: list["StatusEffect"], effect_type: str) -> bool:
 
 
 def is_blocked_by_effect(effects: list["StatusEffect"]) -> bool:
-    return has_effect(effects, "stun") or has_effect(effects, "freeze")
+    return has_effect(effects, "stun") or has_effect(effects, "freeze") or has_effect(effects, "fear")
 
 
 def is_silenced(effects: list["StatusEffect"]) -> bool:

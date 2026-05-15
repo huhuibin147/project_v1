@@ -331,6 +331,39 @@ class TestMonsterGroupConfig(unittest.TestCase):
         self.assertIsNotNone(boss_group)
         self.assertEqual(boss_group["monsters"][0]["monster_id"], "shadow_tree_spirit")
 
+    def test_no_overlapping_monsters_and_groups(self):
+        forest = load_forest_map()
+        group_positions = set()
+        for g in forest.get("monster_groups", []):
+            group_positions.add((g.get("x"), g.get("y")))
+        for m in forest.get("monsters", []):
+            pos = (m.get("x"), m.get("y"))
+            self.assertNotIn(pos, group_positions,
+                             f"怪物 {m.get('monster_id')} 在 ({pos[0]},{pos[1]}) 与怪物组位置重叠")
+
+    def test_monster_group_combat_creates_correct_count(self):
+        from combat.session import create_combat_session
+        forest = load_forest_map()
+        wolf_pack = next((g for g in forest["monster_groups"]
+                          if g["group_id"] == "wolf_pack"), None)
+        self.assertIsNotNone(wolf_pack)
+        monster_configs = []
+        for entry in wolf_pack["monsters"]:
+            mid = entry["monster_id"]
+            count = entry.get("count", 1)
+            for i in range(count):
+                mc = {"id": mid, "name": f"野狼 {chr(65 + i)}",
+                      "type": "normal", "level": 2,
+                      "stats": {"hp": 45, "attack": 12, "defense": 4, "speed": 12},
+                      "drops": [], "gold_reward": [20, 30]}
+                monster_configs.append(mc)
+        player = {"hp": 100, "max_hp": 100, "mp": 30, "max_mp": 30,
+                  "attack": 20, "defense": 10, "speed": 10,
+                  "skills": [], "talent_passives": {}}
+        session = create_combat_session(monster_configs, player)
+        self.assertEqual(len(session.monsters), 2)
+        self.assertTrue(all(m.alive for m in session.monsters))
+
 
 class TestCombatSessionAPI(unittest.TestCase):
     """战斗会话 API 测试"""

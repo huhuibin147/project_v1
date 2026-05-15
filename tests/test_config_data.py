@@ -262,6 +262,47 @@ class TestConfigData(unittest.TestCase):
                         self.assertIn(ref_id, monsters,
                                       f"地图 {map_id} 引用怪物 '{ref_id}' 不存在")
 
+    def test_cfg_aoe_skill_scrolls_exist(self):
+        items = self.configs.get("items", {})
+        skills = self.configs.get("skills", {})
+        aoe_skill_ids = ["whirlwind", "war_cry", "poison_mist", "shadow_raid",
+                         "flame_storm", "blizzard", "holy_prayer"]
+        for sid in aoe_skill_ids:
+            scroll_id = f"scroll_{sid}"
+            with self.subTest(scroll=scroll_id):
+                self.assertIn(scroll_id, items, f"缺少群体技能书: {scroll_id}")
+                scroll = items[scroll_id]
+                self.assertEqual(scroll.get("type"), "skill_book")
+                effect = scroll.get("effect", {})
+                self.assertEqual(effect.get("type"), "learn_skill")
+                self.assertEqual(effect.get("skill_id"), sid)
+                self.assertIn(sid, skills, f"技能 '{sid}' 在 skills.json 中不存在")
+
+    def test_cfg_skill_master_has_aoe_scrolls(self):
+        npcs = self.configs.get("npcs", {})
+        skill_master = npcs.get("skill_master")
+        self.assertIsNotNone(skill_master, "缺少 skill_master NPC")
+        inventory = skill_master.get("shop", {}).get("inventory", [])
+        scroll_ids = [item["item_id"] for item in inventory]
+        aoe_scrolls = ["scroll_whirlwind", "scroll_war_cry", "scroll_poison_mist",
+                       "scroll_shadow_raid", "scroll_flame_storm", "scroll_blizzard",
+                       "scroll_holy_prayer"]
+        for sid in aoe_scrolls:
+            self.assertIn(sid, scroll_ids,
+                          f"skill_master 缺少群体技能书: {sid}")
+
+    def test_cfg_forest_no_overlapping_monsters_and_groups(self):
+        forest = self.maps.get("forest")
+        if not forest:
+            self.skipTest("forest 地图不存在")
+        group_positions = set()
+        for g in forest.get("monster_groups", []):
+            group_positions.add((g.get("x"), g.get("y")))
+        for m in forest.get("monsters", []):
+            pos = (m.get("x"), m.get("y"))
+            self.assertNotIn(pos, group_positions,
+                             f"怪物 {m.get('monster_id')} 在 ({pos[0]},{pos[1]}) 与怪物组位置重叠")
+
 
 if __name__ == "__main__":
     unittest.main()

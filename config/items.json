@@ -1700,6 +1700,111 @@
       "skill_id": "thunder_strike"
     }
   },
+  "scroll_whirlwind": {
+    "id": "scroll_whirlwind",
+    "name": "技能书：旋风斩",
+    "type": "skill_book",
+    "category": "skill_book",
+    "description": "学习战士群体技能「旋风斩」。对所有敌人造成物理伤害。仅限战士使用，需要等级4。",
+    "buy_price": 250,
+    "sell_price": 60,
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "whirlwind"
+    },
+    "required_class": "warrior"
+  },
+  "scroll_war_cry": {
+    "id": "scroll_war_cry",
+    "name": "技能书：战吼",
+    "type": "skill_book",
+    "category": "skill_book",
+    "description": "学习战士群体技能「战吼」。2回合内攻击+20%，防御+15%。仅限战士使用，需要等级7。",
+    "buy_price": 350,
+    "sell_price": 85,
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "war_cry"
+    },
+    "required_class": "warrior"
+  },
+  "scroll_poison_mist": {
+    "id": "scroll_poison_mist",
+    "name": "技能书：毒雾",
+    "type": "skill_book",
+    "category": "skill_book",
+    "description": "学习盗贼群体技能「毒雾」。对所有敌人造成伤害，60%概率中毒。仅限盗贼使用，需要等级4。",
+    "buy_price": 250,
+    "sell_price": 60,
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "poison_mist"
+    },
+    "required_class": "rogue"
+  },
+  "scroll_shadow_raid": {
+    "id": "scroll_shadow_raid",
+    "name": "技能书：影袭",
+    "type": "skill_book",
+    "category": "skill_book",
+    "description": "学习盗贼群体技能「影袭」。对所有敌人造成伤害，20%概率眩晕。仅限盗贼使用，需要等级7。",
+    "buy_price": 350,
+    "sell_price": 85,
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "shadow_raid"
+    },
+    "required_class": "rogue"
+  },
+  "scroll_flame_storm": {
+    "id": "scroll_flame_storm",
+    "name": "技能书：烈焰风暴",
+    "type": "skill_book",
+    "category": "skill_book",
+    "description": "学习法师群体技能「烈焰风暴」。对所有敌人造成魔法伤害，40%概率灼烧。仅限法师使用，需要等级4。",
+    "buy_price": 250,
+    "sell_price": 60,
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "flame_storm"
+    },
+    "required_class": "mage"
+  },
+  "scroll_blizzard": {
+    "id": "scroll_blizzard",
+    "name": "技能书：暴风雪",
+    "type": "skill_book",
+    "category": "skill_book",
+    "description": "学习法师群体技能「暴风雪」。对所有敌人造成魔法伤害，35%概率冻结。仅限法师使用，需要等级6。",
+    "buy_price": 350,
+    "sell_price": 85,
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "blizzard"
+    },
+    "required_class": "mage"
+  },
+  "scroll_holy_prayer": {
+    "id": "scroll_holy_prayer",
+    "name": "技能书：神圣祈祷",
+    "type": "skill_book",
+    "category": "skill_book",
+    "description": "学习法师群体技能「神圣祈祷」。恢复大量生命值。仅限法师使用，需要等级8。",
+    "buy_price": 500,
+    "sell_price": 125,
+    "stackable": false,
+    "effect": {
+      "type": "learn_skill",
+      "skill_id": "holy_prayer"
+    },
+    "required_class": "mage"
+  },
   "cave_mushroom": {
     "id": "cave_mushroom",
     "name": "洞穴蘑菇",

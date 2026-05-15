@@ -3121,25 +3121,6 @@
     },
     {
       "monster_id": "wild_wolf",
-      "x": 41,
-      "y": 20,
-      "patrol": [
-        {
-          "x": 38,
-          "y": 20
-        },
-        {
-          "x": 42,
-          "y": 20
-        },
-        {
-          "x": 42,
-          "y": 24
-        }
-      ]
-    },
-    {
-      "monster_id": "wild_wolf",
       "x": 11,
       "y": 35,
       "patrol": [
@@ -3154,19 +3135,9 @@
       ]
     },
     {
-      "monster_id": "forest_spider",
-      "x": 48,
-      "y": 30
-    },
-    {
-      "monster_id": "goblin",
-      "x": 35,
-      "y": 40
-    },
-    {
       "monster_id": "dark_bear",
-      "x": 50,
-      "y": 15
+      "x": 45,
+      "y": 10
     }
   ],
   "monster_groups": [

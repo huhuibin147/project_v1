@@ -370,9 +370,12 @@
       }
     },
     "phases": [
-      {"name": "正常", "hp_threshold": 1.0, "ai": {"attack": 0.5, "defend": 0.3, "special": 0.2}},
-      {"name": "愤怒", "hp_threshold": 0.5, "ai": {"attack": 0.6, "defend": 0.15, "special": 0.25}, "stat_boost": {"attack": 1.3}},
-      {"name": "狂暴", "hp_threshold": 0.25, "ai": {"attack": 0.7, "defend": 0.0, "special": 0.3}, "stat_boost": {"attack": 1.6}}
+      {"name": "正常", "hp_threshold": 1.0, "ai": {"attack": 0.5, "defend": 0.3, "special": 0.2},
+       "special": {"type": "apply_effect", "effect": "fear", "chance": 0.3, "duration": 2, "value": 0, "message": "骷髅王释放死亡恐惧！"}},
+      {"name": "愤怒", "hp_threshold": 0.5, "ai": {"attack": 0.5, "defend": 0.1, "special": 0.4}, "stat_boost": {"attack": 1.3},
+       "special": {"type": "aoe_attack", "damage_multiplier": 0.9, "effect": "fear", "chance": 0.25, "duration": 1, "message": "骷髅王释放亡灵风暴！"}},
+      {"name": "狂暴", "hp_threshold": 0.25, "ai": {"attack": 0.5, "defend": 0.0, "special": 0.5}, "stat_boost": {"attack": 1.6},
+       "special": {"type": "aoe_attack", "damage_multiplier": 1.2, "effect": "fear", "chance": 0.35, "duration": 2, "message": "骷髅王发动毁灭之怒！"}}
     ],
     "level": 12,
     "tags": ["undead", "cave", "boss", "legendary"]
@@ -639,24 +642,25 @@
       {
         "name": "觉醒",
         "hp_threshold": 0.6,
-        "ai": {"attack": 0.5, "defend": 0.15, "special": 0.35},
+        "ai": {"attack": 0.4, "defend": 0.15, "special": 0.45},
         "stat_boost": {"attack": 1.3},
         "special": {
-          "type": "apply_effect",
+          "type": "aoe_attack",
+          "damage_multiplier": 0.8,
           "effect": "burn",
           "chance": 0.35,
           "duration": 2,
-          "value": 5,
-          "message": "暗影树精点燃暗焰！"
+          "message": "暗影树精点燃暗焰风暴！"
         }
       },
       {
         "name": "狂暴",
         "hp_threshold": 0.25,
-        "ai": {"attack": 0.65, "defend": 0.0, "special": 0.35},
+        "ai": {"attack": 0.5, "defend": 0.0, "special": 0.5},
         "stat_boost": {"attack": 1.6, "defense": 0.8},
         "special": {
-          "type": "apply_effect",
+          "type": "aoe_attack",
+          "damage_multiplier": 1.0,
           "effect": "stun",
           "chance": 0.25,
           "duration": 1,

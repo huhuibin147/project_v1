@@ -600,6 +600,34 @@
         {
           "item_id": "scroll_thunder_strike",
           "quantity": 1
+        },
+        {
+          "item_id": "scroll_whirlwind",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_war_cry",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_poison_mist",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_shadow_raid",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_flame_storm",
+          "quantity": 3
+        },
+        {
+          "item_id": "scroll_blizzard",
+          "quantity": 2
+        },
+        {
+          "item_id": "scroll_holy_prayer",
+          "quantity": 1
         }
       ]
     },

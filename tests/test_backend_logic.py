@@ -287,6 +287,42 @@ class TestSkillSystem(unittest.TestCase):
                 self.assertFalse(can)
                 self.assertIn("已学会", reason)
 
+    def test_bke_22_aoe_skills_exist_and_have_aoe_flag(self):
+        aoe_skill_ids = ["whirlwind", "war_cry", "poison_mist", "shadow_raid",
+                         "flame_storm", "blizzard", "holy_prayer"]
+        for sid in aoe_skill_ids:
+            skill = self.get_skill(sid)
+            with self.subTest(skill=sid):
+                self.assertIsNotNone(skill, f"群体技能 '{sid}' 不存在")
+                self.assertTrue(skill.get("aoe"), f"技能 '{sid}' 缺少 aoe 标记")
+
+    def test_bke_23_aoe_skills_can_be_learned(self):
+        aoe_skills = {
+            "whirlwind": ("warrior", 4),
+            "war_cry": ("warrior", 7),
+            "poison_mist": ("rogue", 4),
+            "shadow_raid": ("rogue", 7),
+            "flame_storm": ("mage", 4),
+            "blizzard": ("mage", 6),
+            "holy_prayer": ("mage", 8),
+        }
+        for sid, (cls, level) in aoe_skills.items():
+            can, reason = self.can_learn_skill(sid, cls, level, [])
+            with self.subTest(skill=sid, cls=cls, level=level):
+                self.assertTrue(can, f"应可学习 '{sid}' 但被拒绝: {reason}")
+
+    def test_bke_24_aoe_skills_rejected_wrong_class(self):
+        aoe_skills = {
+            "whirlwind": "mage",
+            "poison_mist": "warrior",
+            "flame_storm": "rogue",
+        }
+        for sid, wrong_cls in aoe_skills.items():
+            level = self.SKILLS_DB[sid].get("level_requirement", 1)
+            can, reason = self.can_learn_skill(sid, wrong_cls, level, [])
+            with self.subTest(skill=sid, cls=wrong_cls):
+                self.assertFalse(can, f"职业不符应拒绝 '{sid}'")
+
 
 class TestTalentSystem(unittest.TestCase):
     """天赋系统测试"""

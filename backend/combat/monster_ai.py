@@ -169,7 +169,46 @@ def execute_action(session: "CombatSession", action: str,
 
     elif action == "special":
         special = monster.get_current_special() if monster.is_boss else monster.config.get("ai", {}).get("special")
-        if special and special.get("type") == "apply_effect":
+        if not special:
+            return execute_action(session, "attack", monster)
+
+        special_type = special.get("type", "apply_effect")
+
+        if special_type == "aoe_attack":
+            dmg_mult = special.get("damage_multiplier", 0.8)
+            raw_dmg = int(monster.attack * dmg_mult)
+            actual_dmg, shield_absorbed = apply_shield(session.player_shield, raw_dmg)
+            session.player_shield -= shield_absorbed
+            session.player_hp = max(0, session.player_hp - actual_dmg)
+            entry = {"type": "monster_special", "damage": actual_dmg,
+                     "aoe": True, "monster_index": monster.index,
+                     "text": special.get("message", f"{monster_name}发动了群体攻击！造成 {actual_dmg} 点伤害。")}
+            if shield_absorbed > 0:
+                entry["text"] += f"（护盾吸收 {shield_absorbed}）"
+
+            effect_type = special.get("effect")
+            if effect_type and random.random() < special.get("chance", 0.3):
+                if not is_immune_to_effect(monster.config, effect_type):
+                    duration = special.get("duration", 2)
+                    value = special.get("value", 0)
+                    new_eff = StatusEffect(effect_type, duration, value=value, source="monster")
+                    session.player_effects = add_effect(session.player_effects, new_eff)
+                    if effect_type in STAT_BUFF_MAP:
+                        _recalculate_player_buffs(session)
+                    eff_name = EFFECT_NAMES.get(effect_type, effect_type)
+                    entry["text"] += f" 你被{eff_name}了！"
+            logs.append(entry)
+            return logs
+
+        elif special_type == "self_heal":
+            heal_pct = special.get("heal_percent", 0.15)
+            heal_amount = int(monster.max_hp * heal_pct)
+            monster.hp = min(monster.max_hp, monster.hp + heal_amount)
+            return [{"type": "monster_special",
+                     "text": special.get("message", f"{monster_name}恢复了 {heal_amount} 点生命！"),
+                     "monster_index": monster.index, "heal": heal_amount}]
+
+        elif special_type == "apply_effect":
             effect_type = special["effect"]
             if is_immune_to_effect(monster.config, effect_type):
                 return execute_action(session, "attack", monster)

@@ -102,7 +102,7 @@ class MonsterInstance:
                     return phase_special
         return self.config.get("ai", {}).get("special")
 
-    def to_dict(self) -> dict:
+    def to_dict(self, next_action: str = "") -> dict:
         return {
             "index": self.index,
             "monster_id": self.monster_id,
@@ -117,6 +117,9 @@ class MonsterInstance:
             "phase_name": self.get_phase_name(),
             "sprite_color": self.config.get("sprite_color", "#888"),
             "sprite_accent": self.config.get("sprite_accent", "#555"),
+            "level": self.config.get("level", 1),
+            "monster_type": self.config.get("type", "normal"),
+            "next_action": next_action,
         }
 
 

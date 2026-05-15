@@ -92,6 +92,15 @@ def _use_item_in_combat(session: "CombatSession", item_id: str) -> dict:
 
 def _build_state(session: "CombatSession", log_entries: list[dict], fled: bool = False) -> dict:
     from skill_system import format_skill_for_frontend
+    from .monster_ai import decide_action
+
+    monsters_data = []
+    for m in session.monsters:
+        next_action = ""
+        if m.alive and session.phase.value == "player_turn":
+            next_action = decide_action(session, m)
+        monsters_data.append(m.to_dict(next_action=next_action))
+
     state = {
         "session_id": session.session_id,
         "phase": session.phase.value,
@@ -100,7 +109,7 @@ def _build_state(session: "CombatSession", log_entries: list[dict], fled: bool =
         "player_max_hp": session.player_max_hp,
         "player_mp": session.player_mp,
         "player_max_mp": session.player_max_mp,
-        "monsters": [m.to_dict() for m in session.monsters],
+        "monsters": monsters_data,
         "target_index": session.target_index,
         "log": log_entries,
         "player_effects": [e.to_dict() for e in session.player_effects],

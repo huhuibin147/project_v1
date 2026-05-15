@@ -1,5 +1,31 @@
 # 更新日志
 
+## 2026-05-15 — 战斗系统优化修复 + 群体技能 NPC 学习
+
+- **修复**：战斗面板文字颜色问题
+  - `#combat-panel` 添加默认 `color: #ccc`，解决未指定颜色的文字在深色背景下显示为黑色的问题
+  - `.combat-log-entry` 添加默认 `color: #ccc`
+  - 怪物槽位 `.combat-bar-text` 和 `.combat-bar-label` 添加颜色
+  - `renderCombatLog` 新增 reflect/lifesteal/affix/talent/effect_end/monster_idle 日志类型 class 分配
+  - 修改文件：`frontend/css/style.css`、`frontend/js/combat.js`
+- **修复**：地图怪物组触碰后连续触发战斗
+  - 移除森林地图中与怪物组位置重叠的单独怪物（野狼在 wolf_pack 位置、毒蛛在 spider_nest 位置、哥布林在 forest_ambush 位置）
+  - 暗熊从 (50,15) 移至 (45,10)，避免与 shadow_tree_boss 重叠
+  - 修改文件：`config/maps/forest.json`
+- **新增**：群体技能 NPC 学习支持
+  - 新增 7 本 AOE 技能书到 `config/items.json`：旋风斩(250金)、战吼(350金)、毒雾(250金)、影袭(350金)、烈焰风暴(250金)、暴风雪(350金)、神圣祈祷(500金)
+  - 导师艾尔文商店库存新增全部 7 本群体技能书
+  - 修改文件：`config/items.json`、`config/npcs.json`
+- **新增**：测试用例补充
+  - 配置测试：AOE 技能书存在性校验、skill_master 库存校验、森林地图怪物组位置重叠校验
+  - 后端逻辑测试：AOE 技能 aoe 标记校验、AOE 技能学习条件校验、职业不符拒绝校验
+  - 多敌人测试：怪物组战斗创建正确数量校验
+  - 修改文件：`tests/test_config_data.py`、`tests/test_backend_logic.py`、`tests/test_multi_enemy_boss.py`
+- **更新**：文档
+  - `optimization_analysis.md`：combat.js 已完成优化列表新增 3 条修复记录
+  - `combat_system.md`：技能书表格新增 7 本 AOE 技能书
+  - `changelog.md`：本条目
+
 ## 2026-05-13 — 前端自动化测试
 
 - **新增**：前端 JS 自动化测试体系

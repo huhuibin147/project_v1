@@ -1,5 +1,49 @@
 // 战斗系统 - 多敌人支持
 
+const EFFECT_MAP = {
+  poison:      { name: "中毒",   icon: "☠️",  color: "#88ff88" },
+  burn:        { name: "灼烧",   icon: "🔥",  color: "#ff8844" },
+  freeze:      { name: "冻结",   icon: "❄️",  color: "#44ddff" },
+  stun:        { name: "眩晕",   icon: "💫",  color: "#ffff44" },
+  silence:     { name: "沉默",   icon: "🤐",  color: "#aaaaff" },
+  bleed:       { name: "流血",   icon: "🩸",  color: "#ff4444" },
+  speed_down:  { name: "减速",   icon: "🐌",  color: "#cc88ff" },
+  shield:      { name: "护盾",   icon: "🛡️",  color: "#ffcc00" },
+  regen:       { name: "再生",   icon: "💚",  color: "#44ff88" },
+  reflect:     { name: "反伤",   icon: "🔄",  color: "#ff88ff" },
+  lifesteal:   { name: "吸血",   icon: "🧛",  color: "#cc44ff" },
+  attack_up:   { name: "攻击↑", icon: "⚔️",  color: "#ff6644" },
+  defense_up:  { name: "防御↑", icon: "🛡️",  color: "#4488ff" },
+  speed_up:    { name: "速度↑", icon: "💨",  color: "#44ffcc" },
+  defense_down:{ name: "防御↓", icon: "💔",  color: "#ff4488" },
+  fear:        { name: "恐惧",   icon: "👻",  color: "#aa44ff" },
+};
+
+const INTENT_ICONS = {
+  attack: "⚔️",
+  defend: "🛡️",
+  special: "✨",
+};
+
+function getEffectDisplay(effectType) {
+  return EFFECT_MAP[effectType] || { name: effectType, icon: "❓", color: "#aaaaff" };
+}
+
+function getIntentIcon(intent) {
+  return INTENT_ICONS[intent] || "⚔️";
+}
+
+function guessMonsterIntent(m) {
+  if (!m.alive) return "";
+  if (m.defending) return "defend";
+  const config = monstersConfig[m.monster_id];
+  if (!config) return "attack";
+  const ai = config.ai || {};
+  const special = ai.special;
+  if (special && m.effects && m.effects.length > 0) return "special";
+  return "attack";
+}
+
 let combatOpen = false;
 let combatSessionId = null;
 let combatState = null;
@@ -413,6 +457,9 @@ async function initiateCombat(monsterInstanceId) {
       player_max_hp: data.player?.max_hp || 0,
       player_mp: data.player?.mp || 0,
       player_max_mp: data.player?.max_mp || 0,
+      player_shield: data.player_shield || 0,
+      player_name: (typeof playerInfo !== "undefined" && playerInfo.name) || "冒险者",
+      player_level: (typeof playerInfo !== "undefined" && playerInfo.level) || 1,
       skills: data.player?.skills || [],
       turn_count: 1,
     };
@@ -446,6 +493,12 @@ function renderMonsterSlots() {
   const monsters = combatState.monsters || [];
   container.innerHTML = "";
 
+  const monsterCountEl = document.getElementById("combat-monster-count");
+  if (monsterCountEl) {
+    const aliveCount = monsters.filter(m => m.alive).length;
+    monsterCountEl.textContent = aliveCount > 1 ? `存活: ${aliveCount}/${monsters.length}` : "";
+  }
+
   monsters.forEach((m, idx) => {
     const slot = document.createElement("div");
     slot.className = "combat-monster-slot";
@@ -461,12 +514,6 @@ function renderMonsterSlots() {
     slot.setAttribute("data-index", idx);
     slot.onclick = () => selectTarget(idx);
 
-    const canvas = document.createElement("canvas");
-    canvas.className = "monster-sprite-canvas";
-    canvas.width = 64;
-    canvas.height = 64;
-    slot.appendChild(canvas);
-
     const nameDiv = document.createElement("div");
     nameDiv.className = "combat-monster-name";
     let nameText = m.name || "";
@@ -476,16 +523,40 @@ function renderMonsterSlots() {
     nameDiv.textContent = nameText;
     slot.appendChild(nameDiv);
 
+    const metaDiv = document.createElement("div");
+    metaDiv.className = "combat-monster-meta";
+    const config = monstersConfig[m.monster_id];
+    const level = m.level || (config && config.level) || "?";
+    const monsterType = m.monster_type || (config && config.type) || "normal";
+    let metaHtml = `<span class="monster-level">Lv.${level}</span>`;
+    if (monsterType === "boss") {
+      metaHtml += `<span class="monster-type-badge boss-badge">BOSS</span>`;
+    } else if (monsterType === "elite") {
+      metaHtml += `<span class="monster-type-badge elite-badge">精英</span>`;
+    }
+    if (m.alive) {
+      const intent = m.next_action || guessMonsterIntent(m);
+      metaHtml += `<span class="monster-intent">${getIntentIcon(intent)}</span>`;
+    }
+    metaDiv.innerHTML = metaHtml;
+    slot.appendChild(metaDiv);
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "monster-sprite-canvas";
+    canvas.width = 64;
+    canvas.height = 64;
+    slot.appendChild(canvas);
+
     const hpRow = document.createElement("div");
-    hpRow.className = "combat-hp-bar-row";
+    hpRow.className = "combat-bar-row";
     const hpLabel = document.createElement("span");
-    hpLabel.className = "combat-hp-label";
+    hpLabel.className = "combat-bar-label hp-label";
     hpLabel.textContent = "HP";
     hpRow.appendChild(hpLabel);
     const hpBarOuter = document.createElement("div");
-    hpBarOuter.className = "combat-hp-bar";
+    hpBarOuter.className = "combat-bar";
     const hpFill = document.createElement("div");
-    hpFill.className = "combat-hp-fill monster-hp";
+    hpFill.className = "combat-bar-fill monster-hp";
     const hpPct = m.max_hp > 0 ? (m.hp / m.max_hp) * 100 : 0;
     hpFill.style.width = hpPct + "%";
     if (m.is_boss && hpPct < 30) {
@@ -494,7 +565,7 @@ function renderMonsterSlots() {
     hpBarOuter.appendChild(hpFill);
     hpRow.appendChild(hpBarOuter);
     const hpText = document.createElement("span");
-    hpText.className = "combat-hp-text";
+    hpText.className = "combat-bar-text";
     hpText.textContent = `${m.hp}/${m.max_hp}`;
     hpRow.appendChild(hpText);
     slot.appendChild(hpRow);
@@ -503,16 +574,17 @@ function renderMonsterSlots() {
       const effectsDiv = document.createElement("div");
       effectsDiv.className = "combat-monster-effects";
       effectsDiv.innerHTML = m.effects.map(e => {
-        const color = e.type === "poison" ? "#88ff88" : e.type === "burn" ? "#ff8844" : e.type === "stun" ? "#ffff44" : e.type === "freeze" ? "#44ddff" : "#aaaaff";
-        return `<span class="combat-effect" style="color:${color}">${e.type}(${e.duration})</span>`;
+        const display = getEffectDisplay(e.type);
+        const stackText = e.stack > 1 ? `x${e.stack}` : "";
+        return `<span class="combat-effect" style="color:${display.color}">${display.icon}${display.name}${stackText}(${e.duration})</span>`;
       }).join(" ");
       slot.appendChild(effectsDiv);
     }
 
     if (idx === currentTargetIndex && m.alive) {
       const targetLabel = document.createElement("div");
-      targetLabel.className = "target-label";
-      targetLabel.textContent = "目标";
+      targetLabel.className = "target-indicator";
+      targetLabel.textContent = "▶ 目标";
       slot.appendChild(targetLabel);
     }
 
@@ -527,11 +599,6 @@ function renderMonsterSlots() {
 
     drawMonsterSpriteOnCanvas(canvas, m.monster_id, m.is_boss, m.current_phase || 0);
   });
-
-  const hint = document.getElementById("combat-target-hint");
-  if (hint) {
-    hint.style.display = monsters.filter(m => m.alive).length > 1 ? "block" : "none";
-  }
 }
 
 function renderCombat() {
@@ -539,15 +606,47 @@ function renderCombat() {
 
   document.getElementById("combat-turn-info").textContent = `第 ${combatState.turn_count || 1} 回合`;
 
+  const playerNameEl = document.getElementById("combat-player-name");
+  if (playerNameEl && combatState.player_name) {
+    playerNameEl.textContent = combatState.player_name;
+  }
+
+  const playerLevelEl = document.getElementById("combat-player-level");
+  if (playerLevelEl && combatState.player_level) {
+    playerLevelEl.textContent = `Lv.${combatState.player_level}`;
+  }
+
   const playerHpPct = (combatState.player_hp / combatState.player_max_hp) * 100;
-  document.getElementById("combat-player-hp-bar").style.width = playerHpPct + "%";
+  const hpBar = document.getElementById("combat-player-hp-bar");
+  hpBar.style.width = playerHpPct + "%";
+  hpBar.classList.remove("hp-low", "hp-mid");
+  if (playerHpPct < 25) {
+    hpBar.classList.add("hp-low");
+  } else if (playerHpPct < 50) {
+    hpBar.classList.add("hp-mid");
+  }
   document.getElementById("combat-player-hp-text").textContent = `${combatState.player_hp}/${combatState.player_max_hp}`;
 
   const playerMpPct = ((combatState.player_mp || 0) / (combatState.player_max_mp || 1)) * 100;
   document.getElementById("combat-player-mp-bar").style.width = playerMpPct + "%";
   document.getElementById("combat-player-mp-text").textContent = `${combatState.player_mp || 0}/${combatState.player_max_mp || 0}`;
 
+  const shieldRow = document.getElementById("combat-shield-row");
+  const shieldBar = document.getElementById("combat-player-shield-bar");
+  const shieldText = document.getElementById("combat-player-shield-text");
+  const playerShield = combatState.player_shield || 0;
+  if (playerShield > 0) {
+    shieldRow.style.display = "flex";
+    const shieldPct = Math.min(100, (playerShield / combatState.player_max_hp) * 100);
+    shieldBar.style.width = shieldPct + "%";
+    shieldText.textContent = `${playerShield}`;
+  } else {
+    shieldRow.style.display = "none";
+  }
+
   renderEffects("combat-player-effects", combatState.player_effects || []);
+
+  drawPlayerAvatar();
 
   const isPlayerTurn = combatState.phase === "player_turn";
   document.getElementById("btn-combat-attack").disabled = !isPlayerTurn;
@@ -555,6 +654,54 @@ function renderCombat() {
   document.getElementById("btn-combat-skill").disabled = !isPlayerTurn;
   document.getElementById("btn-combat-item").disabled = !isPlayerTurn;
   document.getElementById("btn-combat-flee").disabled = !isPlayerTurn;
+}
+
+function drawPlayerAvatar() {
+  const canvas = document.getElementById("combat-player-avatar");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, 48, 48);
+
+  const s = 48;
+  const p = s / 8;
+
+  ctx.fillStyle = "rgba(0,100,255,0.1)";
+  ctx.fillRect(0, 0, s, s);
+
+  ctx.fillStyle = "#4488cc";
+  ctx.fillRect(p * 2, p * 1, p * 4, p * 3);
+  ctx.fillRect(p * 1, p * 4, p * 6, p * 3);
+
+  ctx.fillStyle = "#336699";
+  ctx.fillRect(p * 3, p * 1, p * 2, p * 2);
+
+  ctx.fillStyle = "#ffcc88";
+  ctx.fillRect(p * 3, p * 3, p * 2, p * 1);
+
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(p * 3.5, p * 3.5, p * 0.5, p * 0.5);
+  ctx.fillRect(p * 5, p * 3.5, p * 0.5, p * 0.5);
+
+  ctx.fillStyle = "#555";
+  ctx.fillRect(p * 1, p * 7, p * 2, p);
+  ctx.fillRect(p * 5, p * 7, p * 2, p);
+
+  const cls = (typeof playerInfo !== "undefined" && playerInfo.class_id) || "warrior";
+  if (cls === "mage") {
+    ctx.fillStyle = "#8844cc";
+    ctx.fillRect(p * 1, p * 0, p * 1, p * 4);
+    ctx.fillStyle = "#aa66ff";
+    ctx.fillRect(p * 0.5, p * 0, p * 2, p * 1);
+  } else if (cls === "ranger") {
+    ctx.fillStyle = "#44aa44";
+    ctx.fillRect(p * 6, p * 2, p * 1.5, p * 0.5);
+    ctx.fillRect(p * 7, p * 1.5, p * 0.5, p * 1.5);
+  } else {
+    ctx.fillStyle = "#aaa";
+    ctx.fillRect(p * 0, p * 2, p * 1, p * 4);
+    ctx.fillStyle = "#888";
+    ctx.fillRect(p * 0.5, p * 1.5, p * 0.5, p * 1);
+  }
 }
 
 function renderEffects(containerId, effects) {
@@ -565,8 +712,9 @@ function renderEffects(containerId, effects) {
     return;
   }
   container.innerHTML = effects.map(e => {
-    const color = e.type === "poison" ? "#88ff88" : e.type === "burn" ? "#ff8844" : "#aaaaff";
-    return `<span class="combat-effect" style="color:${color}">${e.type}(${e.duration})</span>`;
+    const display = getEffectDisplay(e.type);
+    const stackText = e.stack > 1 ? `x${e.stack}` : "";
+    return `<span class="combat-effect" style="color:${display.color}">${display.icon}${display.name}${stackText}(${e.duration})</span>`;
   }).join(" ");
 }
 
@@ -589,6 +737,25 @@ function appendCombatLog(logEntries) {
 
   renderCombatLog();
 }
+
+const LOG_ICONS = {
+  player_attack: "⚔️",
+  monster_attack: "🗡️",
+  player_defend: "🛡️",
+  monster_defend: "🛡️",
+  victory: "🏆",
+  defeat: "💀",
+  flee: "🏃",
+  use_item: "🧪",
+  skill: "✨",
+  effect: "☠️",
+  monster_special: "⚡",
+  boss_phase: "🔥",
+  reflect: "🔄",
+  lifesteal: "🧛",
+  talent: "⭐",
+  affix: "💎",
+};
 
 function renderCombatLog() {
   const logDiv = document.getElementById("combat-log");
@@ -626,9 +793,22 @@ function renderCombatLog() {
       div.className += " log-special";
     } else if (entry.type === "boss_phase") {
       div.className += " log-crit";
+    } else if (entry.type === "reflect") {
+      div.className += " log-reflect";
+    } else if (entry.type === "lifesteal") {
+      div.className += " log-lifesteal";
+    } else if (entry.type === "affix") {
+      div.className += " log-affix";
+    } else if (entry.type === "talent") {
+      div.className += " log-talent";
+    } else if (entry.type === "effect_end") {
+      div.className += " log-effect";
+    } else if (entry.type === "monster_idle") {
+      div.className += " log-monster";
     }
 
-    div.textContent = entry.text || "";
+    const icon = LOG_ICONS[entry.type] || "";
+    div.textContent = icon ? `${icon} ${entry.text || ""}` : (entry.text || "");
     fragment.appendChild(div);
   }
 
@@ -676,6 +856,13 @@ async function combatAction(action, itemId) {
 
     if (action === "attack") {
       await playCombatAnimation("player");
+    } else if (action === "skill") {
+      const skillData = combatState.skills?.find(s => s.skill_id === itemId);
+      if (skillData?.aoe) {
+        await playAoeAnimation();
+      } else {
+        await playCombatAnimation("player");
+      }
     }
 
     combatState = { ...combatState, ...data };
@@ -743,15 +930,21 @@ function showDamageNumbers(logEntries) {
       spawnDamageNumber(targetIdx, entry.damage, entry.crit ? "crit" : "player");
     } else if (entry.type === "monster_attack" && entry.damage) {
       spawnDamageNumber("player", entry.damage, entry.crit ? "crit" : "monster");
-    } else if (entry.type === "skill" && entry.damage) {
-      if (entry.aoe) {
+    } else if (entry.type === "monster_special" && entry.damage) {
+      spawnDamageNumber("player", entry.damage, entry.aoe ? "crit" : "monster");
+    } else if (entry.type === "skill" && (entry.damage || entry.aoe)) {
+      if (entry.aoe && entry.targets) {
+        for (const t of entry.targets) {
+          spawnDamageNumber(t.monster_index, t.damage, t.crit ? "crit" : "skill");
+        }
+      } else if (entry.aoe) {
         const monsters = combatState.monsters || [];
         monsters.forEach((m, idx) => {
           if (m.alive) spawnDamageNumber(idx, entry.damage, "skill");
         });
       } else {
         const targetIdx = entry.target_index !== undefined ? entry.target_index : currentTargetIndex;
-        spawnDamageNumber(targetIdx, entry.damage, "skill");
+        spawnDamageNumber(targetIdx, entry.damage, entry.crit ? "crit" : "skill");
       }
     } else if (entry.type === "effect" && entry.damage) {
       if (entry.target === "player") {
@@ -853,6 +1046,18 @@ async function playCombatAnimation(who) {
   }
 }
 
+async function playAoeAnimation() {
+  const monsterSlots = document.querySelectorAll(".combat-monster-slot");
+  monsterSlots.forEach(slot => {
+    slot.classList.add("aoe-hit-flash");
+  });
+  if (typeof playPlayerAttackAnim === "function") playPlayerAttackAnim();
+  await sleep(400);
+  monsterSlots.forEach(slot => {
+    slot.classList.remove("aoe-hit-flash");
+  });
+}
+
 async function playBossPhaseAnimation(phaseLog) {
   const panel = document.getElementById("combat-panel");
   if (!panel) return;
@@ -871,29 +1076,57 @@ async function showCombatResult(data, isVictory) {
   const content = document.getElementById("combat-result-content");
   if (!overlay || !content) return;
 
+  const totalTurns = combatState.turn_count || 1;
+  const totalDamage = combatLogBuffer.reduce((sum, e) => {
+    if (e.type === "player_attack" || (e.type === "skill" && e.damage)) return sum + (e.damage || 0);
+    return sum;
+  }, 0);
+  const critCount = combatLogBuffer.filter(e => e.crit).length;
+  const maxHit = combatLogBuffer.reduce((max, e) => {
+    if ((e.type === "player_attack" || e.type === "skill") && e.damage) return Math.max(max, e.damage);
+    return max;
+  }, 0);
+
   if (isVictory) {
-    let html = `<div class="result-title victory-title">战斗胜利！</div>`;
-    html += `<div class="result-rewards">`;
-    html += `<div class="result-line">经验值: +${data.exp_reward || 0}</div>`;
-    html += `<div class="result-line">金币: +${data.gold_reward || 0}</div>`;
+    let html = `<div class="result-title victory-title">🏆 战斗胜利！</div>`;
+
+    html += `<div class="result-section">`;
+    html += `<div class="result-section-title">── 战斗统计 ──</div>`;
+    html += `<div class="result-stat"><span>总回合数</span><span class="result-stat-value">${totalTurns}</span></div>`;
+    if (totalDamage > 0) {
+      html += `<div class="result-stat"><span>总伤害</span><span class="result-stat-value">${totalDamage}</span></div>`;
+    }
+    if (maxHit > 0) {
+      html += `<div class="result-stat"><span>最大单次伤害</span><span class="result-stat-value">${maxHit}${critCount > 0 ? ' (暴击)' : ''}</span></div>`;
+    }
+    if (critCount > 0) {
+      html += `<div class="result-stat"><span>暴击次数</span><span class="result-stat-value">${critCount}</span></div>`;
+    }
+    html += `</div>`;
+
+    html += `<div class="result-section">`;
+    html += `<div class="result-section-title">── 获得奖励 ──</div>`;
+    html += `<div class="result-line">✨ 经验值: +${data.exp_reward || 0}</div>`;
+    html += `<div class="result-line">💰 金币: +${data.gold_reward || 0}</div>`;
     if (data.drops && data.drops.length > 0) {
-      html += `<div class="result-line">掉落物品:</div>`;
+      html += `<div class="result-line">📦 掉落:</div>`;
       for (const drop of data.drops) {
         const name = drop.name || drop.item_id;
         html += `<div class="result-drop">- ${name} x${drop.quantity}</div>`;
       }
     }
+    html += `</div>`;
+
     if (data.level_up && (data.level_up.leveled === true || data.level_up === true)) {
-      html += `<div class="result-levelup">等级提升！</div>`;
+      html += `<div class="result-levelup">🎉 等级提升！</div>`;
     }
     if (data.fled) {
-      html = `<div class="result-title flee-title">逃跑成功！</div>`;
+      html = `<div class="result-title flee-title">🏃 逃跑成功！</div>`;
     }
-    html += `</div>`;
     html += `<button class="btn-result-continue" onclick="endCombat()">继续</button>`;
     content.innerHTML = html;
   } else {
-    let html = `<div class="result-title defeat-title">战斗失败</div>`;
+    let html = `<div class="result-title defeat-title">💀 战斗失败</div>`;
     html += `<div class="result-rewards">`;
     html += `<div class="result-line">你倒下了...</div>`;
     if (data.gold_lost > 0) {

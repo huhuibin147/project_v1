@@ -176,6 +176,7 @@ def _execute_aoe_damage_skill(session, skill, power, effects):
             break
 
     total_text_parts = []
+    targets_data = []
     for monster in alive_monsters:
         monster_defense = monster.defense
         if defense_ignore > 0:
@@ -195,6 +196,7 @@ def _execute_aoe_damage_skill(session, skill, power, effects):
         if result["is_crit"]:
             part += "(暴击)"
 
+        target_eff_names = []
         for eff in effects:
             if eff.get("type") in ("defense_ignore",):
                 continue
@@ -206,12 +208,19 @@ def _execute_aoe_damage_skill(session, skill, power, effects):
                 monster.effects = add_effect(monster.effects, new_eff, monster_config=monster.config)
                 eff_name_cn = effect_type_names.get(eff_type, eff_type)
                 part += f" [{eff_name_cn}]"
+                target_eff_names.append(eff_name_cn)
 
         total_text_parts.append(part)
+        targets_data.append({
+            "monster_index": monster.index,
+            "damage": result["damage"],
+            "crit": result["is_crit"],
+            "effects": target_eff_names,
+        })
 
     text = f"使用 {skill['name']}！群体{damage_type_cn}攻击！ " + " | ".join(total_text_parts)
     return {"type": "skill", "skill_id": skill["skill_id"], "success": True,
-            "aoe": True, "text": text}
+            "aoe": True, "targets": targets_data, "text": text}
 
 
 def _execute_heal_skill(session, skill, power):
