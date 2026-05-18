@@ -10,6 +10,7 @@ from unittest.mock import patch, MagicMock
 
 ROOT_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT_DIR / "backend"))
+sys.path.insert(0, str(ROOT_DIR / "backend" / "combat"))
 CONFIG_DIR = ROOT_DIR / "config"
 
 
@@ -433,6 +434,157 @@ class TestPlayerProfile(unittest.TestCase):
                 self.assertIn("base_attack", cls_data)
                 self.assertIn("base_defense", cls_data)
                 self.assertIn("base_speed", cls_data)
+
+
+class TestElementalCombat(unittest.TestCase):
+    """属性克制系统测试"""
+
+    def setUp(self):
+        from combat.damage import calc_damage, calc_element_multiplier, Element
+        self.calc_damage = calc_damage
+        self.calc_element_multiplier = calc_element_multiplier
+        self.Element = Element
+
+        from combat.session import CombatSession, MonsterInstance
+        self.CombatSession = CombatSession
+        self.MonsterInstance = MonsterInstance
+
+        self.monster_config = {
+            "id": "test_slime",
+            "name": "测试史莱姆",
+            "type": "normal",
+            "level": 1,
+            "element": "grass",
+            "stats": {"hp": 50, "attack": 10, "defense": 5, "speed": 5},
+            "drops": [],
+            "gold_reward": [5, 15],
+        }
+        self.player_snapshot = {
+            "hp": 100, "max_hp": 100,
+            "mp": 30, "max_mp": 30,
+            "attack": 20, "defense": 10, "speed": 10,
+            "skills": [],
+            "talent_passives": {},
+            "element": "fire",
+        }
+
+    def test_element_counter_chain(self):
+        self.assertEqual(self.calc_element_multiplier("fire", "grass"), 1.5)
+        self.assertEqual(self.calc_element_multiplier("grass", "water"), 1.5)
+        self.assertEqual(self.calc_element_multiplier("water", "fire"), 1.5)
+
+    def test_element_disadvantage(self):
+        self.assertAlmostEqual(self.calc_element_multiplier("fire", "water"), 0.67, places=2)
+        self.assertAlmostEqual(self.calc_element_multiplier("grass", "fire"), 0.67, places=2)
+        self.assertAlmostEqual(self.calc_element_multiplier("water", "grass"), 0.67, places=2)
+
+    def test_element_neutral(self):
+        self.assertEqual(self.calc_element_multiplier("none", "fire"), 1.0)
+        self.assertEqual(self.calc_element_multiplier("fire", "none"), 1.0)
+        self.assertEqual(self.calc_element_multiplier("fire", "fire"), 1.0)
+        self.assertEqual(self.calc_element_multiplier("none", "none"), 1.0)
+
+    def test_calc_damage_with_element_advantage(self):
+        normal_results = []
+        advantage_results = []
+        for _ in range(200):
+            normal = self.calc_damage(100, 50, 10, 10, False)
+            advantage = self.calc_damage(100, 50, 10, 10, False,
+                                         attacker_element="fire", defender_element="grass")
+            normal_results.append(normal["damage"])
+            advantage_results.append(advantage["damage"])
+        avg_normal = sum(normal_results) / len(normal_results)
+        avg_advantage = sum(advantage_results) / len(advantage_results)
+        self.assertGreater(avg_advantage, avg_normal * 1.3)
+
+    def test_calc_damage_with_element_disadvantage(self):
+        normal_results = []
+        disadvantage_results = []
+        for _ in range(200):
+            normal = self.calc_damage(100, 50, 10, 10, False)
+            disadvantage = self.calc_damage(100, 50, 10, 10, False,
+                                            attacker_element="fire", defender_element="water")
+            normal_results.append(normal["damage"])
+            disadvantage_results.append(disadvantage["damage"])
+        avg_normal = sum(normal_results) / len(normal_results)
+        avg_disadvantage = sum(disadvantage_results) / len(disadvantage_results)
+        self.assertLess(avg_disadvantage, avg_normal * 0.8)
+
+    def test_calc_damage_returns_element_multiplier(self):
+        result = self.calc_damage(100, 50, 10, 10, False,
+                                  attacker_element="fire", defender_element="grass")
+        self.assertIn("element_multiplier", result)
+        self.assertEqual(result["element_multiplier"], 1.5)
+
+    def test_resolve_turn_passes_element(self):
+        from combat.session import create_combat_session
+        from combat.turn import resolve_turn
+        session = create_combat_session([self.monster_config], self.player_snapshot)
+        state = resolve_turn(session, "attack")
+        self.assertIsNotNone(state)
+        attack_logs = [l for l in state.get("log", [])
+                       if l.get("type") == "player_attack"]
+        self.assertTrue(len(attack_logs) > 0, "应有玩家攻击日志")
+
+    def test_resolve_turn_element_advantage_log(self):
+        from combat.session import create_combat_session
+        from combat.turn import resolve_turn
+        session = create_combat_session([self.monster_config], self.player_snapshot)
+        state = resolve_turn(session, "attack")
+        element_logs = [l for l in state.get("log", [])
+                        if l.get("type") in ("element_advantage", "element_disadvantage")]
+        self.assertTrue(len(element_logs) > 0, "火攻草应有克制日志")
+
+    def test_monster_attack_passes_element(self):
+        from combat.session import create_combat_session
+        from combat.turn import resolve_turn
+        grass_monster = dict(self.monster_config, element="grass")
+        fire_player = dict(self.player_snapshot, element="fire")
+        session = create_combat_session([grass_monster], fire_player)
+        state = resolve_turn(session, "defend")
+        monster_atk_logs = [l for l in state.get("log", [])
+                            if l.get("type") == "monster_attack"]
+        self.assertTrue(len(monster_atk_logs) > 0, "怪物应攻击玩家")
+
+    def test_monster_to_dict_includes_element(self):
+        monster = self.MonsterInstance(0, "test_slime", self.monster_config)
+        data = monster.to_dict()
+        self.assertIn("element", data)
+        self.assertEqual(data["element"], "grass")
+
+    def test_player_element_in_snapshot(self):
+        session = self.CombatSession("test", [self.monster_config], self.player_snapshot)
+        self.assertEqual(session.player_element, "fire")
+
+    def test_combat_session_default_element(self):
+        snapshot = dict(self.player_snapshot)
+        snapshot.pop("element", None)
+        session = self.CombatSession("test", [self.monster_config], snapshot)
+        self.assertEqual(session.player_element, "none")
+
+
+class TestElementalConfig(unittest.TestCase):
+    """属性克制配置测试"""
+
+    def test_monsters_have_element_field(self):
+        with open(CONFIG_DIR / "monsters.json", "r", encoding="utf-8") as f:
+            monsters = json.load(f)
+        valid_elements = {"none", "fire", "water", "grass"}
+        for mid, monster in monsters.items():
+            with self.subTest(monster=mid):
+                self.assertIn("element", monster, f"怪物 {mid} 缺少 element 字段")
+                self.assertIn(monster["element"], valid_elements,
+                              f"怪物 {mid} 的 element 值无效: {monster['element']}")
+
+    def test_skills_element_valid(self):
+        with open(CONFIG_DIR / "skills.json", "r", encoding="utf-8") as f:
+            skills = json.load(f)
+        valid_elements = {"none", "fire", "water", "grass"}
+        for sid, skill in skills.items():
+            if "element" in skill:
+                with self.subTest(skill=sid):
+                    self.assertIn(skill["element"], valid_elements,
+                                  f"技能 {sid} 的 element 值无效: {skill['element']}")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@
     "name": "史莱姆",
     "description": "森林中最常见的低级怪物，身体软弹弹的",
     "type": "normal",
+    "element": "grass",
     "sprite_color": "#44cc44",
     "sprite_accent": "#228822",
     "stats": {
@@ -33,6 +34,7 @@
     "name": "野狼",
     "description": "凶猛的野狼，速度很快",
     "type": "normal",
+    "element": "none",
     "sprite_color": "#888888",
     "sprite_accent": "#555555",
     "stats": {
@@ -63,6 +65,7 @@
     "name": "毒蛛",
     "description": "带有剧毒的蜘蛛，被咬到会中毒",
     "type": "normal",
+    "element": "grass",
     "sprite_color": "#663399",
     "sprite_accent": "#331166",
     "stats": {
@@ -100,6 +103,7 @@
     "name": "哥布林",
     "description": "狡猾的小型人形怪物，受伤时会更加谨慎",
     "type": "normal",
+    "element": "none",
     "sprite_color": "#88aa33",
     "sprite_accent": "#557722",
     "stats": {
@@ -130,6 +134,7 @@
     "name": "暗熊",
     "description": "森林深处的凶暴巨熊，极其危险",
     "type": "elite",
+    "element": "none",
     "sprite_color": "#443322",
     "sprite_accent": "#221100",
     "stats": {
@@ -161,6 +166,7 @@
     "name": "洞穴蝙蝠",
     "description": "成群出没的吸血蝙蝠，速度极快",
     "type": "normal",
+    "element": "none",
     "sprite_color": "#554466",
     "sprite_accent": "#332244",
     "stats": {
@@ -197,6 +203,7 @@
     "name": "洞穴蜘蛛",
     "description": "比森林毒蛛更大更毒的洞穴品种，网住猎物后慢慢享用",
     "type": "normal",
+    "element": "grass",
     "sprite_color": "#4a2a6a",
     "sprite_accent": "#2a1a4a",
     "stats": {
@@ -234,6 +241,7 @@
     "name": "骷髅兵",
     "description": "被黑暗力量复活的亡灵战士，挥舞生锈的武器不知疲倦地攻击",
     "type": "normal",
+    "element": "none",
     "sprite_color": "#ccccaa",
     "sprite_accent": "#999977",
     "stats": {
@@ -264,6 +272,7 @@
     "name": "腐尸",
     "description": "行动迟缓但力大无穷的亡灵，散发着令人作呕的恶臭",
     "type": "normal",
+    "element": "none",
     "sprite_color": "#557744",
     "sprite_accent": "#335522",
     "stats": {
@@ -301,6 +310,7 @@
     "name": "黑暗骑士",
     "description": "被诅咒的古代骑士，全身笼罩在黑暗铠甲中，攻守兼备",
     "type": "elite",
+    "element": "none",
     "sprite_color": "#333344",
     "sprite_accent": "#111122",
     "stats": {
@@ -339,6 +349,7 @@
     "name": "骷髅王",
     "description": "洞穴最深处的亡灵霸主，手持王权之杖统御万千骸骨",
     "type": "boss",
+    "element": "none",
     "sprite_color": "#ddcc44",
     "sprite_accent": "#aa9922",
     "stats": {
@@ -385,6 +396,7 @@
     "name": "沙漠蝎",
     "description": "沙漠中常见的毒蝎，尾针含有剧毒",
     "type": "normal",
+    "element": "grass",
     "sprite_color": "#aa8844",
     "sprite_accent": "#886622",
     "stats": {
@@ -422,6 +434,7 @@
     "name": "沙虫",
     "description": "潜伏在沙地下的巨大蠕虫，突然钻出吞噬猎物",
     "type": "normal",
+    "element": "grass",
     "sprite_color": "#bbaa77",
     "sprite_accent": "#998855",
     "stats": {
@@ -452,6 +465,7 @@
     "name": "木乃伊",
     "description": "沙漠古墓中苏醒的亡灵，裹着腐朽的绷带缓慢行走",
     "type": "normal",
+    "element": "none",
     "sprite_color": "#ccbb88",
     "sprite_accent": "#aa9966",
     "stats": {
@@ -489,6 +503,7 @@
     "name": "沙漠蛇蜥",
     "description": "传说中能石化猎物的远古蜥蜴，目光令人毛骨悚然",
     "type": "elite",
+    "element": "fire",
     "sprite_color": "#887744",
     "sprite_accent": "#665522",
     "stats": {
@@ -527,6 +542,7 @@
     "name": "叛变卫兵",
     "description": "王城内叛变的卫兵，装备精良但战斗意志薄弱",
     "type": "normal",
+    "element": "none",
     "sprite_color": "#667788",
     "sprite_accent": "#445566",
     "stats": {
@@ -557,6 +573,7 @@
     "name": "暗影法师",
     "description": "潜伏在王城暗处的邪恶法师，操纵暗影魔法攻击路人",
     "type": "elite",
+    "element": "fire",
     "sprite_color": "#443366",
     "sprite_accent": "#221144",
     "stats": {
@@ -595,6 +612,7 @@
     "name": "暗影树精",
     "description": "沉睡在幽暗森林深处的远古树精，被暗影侵蚀后化为恐怖的存在",
     "type": "boss",
+    "element": "grass",
     "sprite_color": "#2a4a2a",
     "sprite_accent": "#1a3a1a",
     "stats": {

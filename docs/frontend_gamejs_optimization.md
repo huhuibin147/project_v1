@@ -430,4 +430,4 @@ const RenderManager = (() => {
 - [`frontend/js/managers/LoadingManager.js`](file:///Users/huhuibin/code/aiproj/project_v1/frontend/js/managers/LoadingManager.js)
 | `docs/skill_and_talent_system.md` | 新增群体技能系统设计章节 |
 | `docs/combat_system.md` | 新增群体技能系统/怪物特殊技能扩展章节，更新AOE递减数据 |
-| `docs/optimization_analysis.md` | combat.js 已完成优化列表新增群体技能相关条目 |
+| `docs/game_design.md` | combat.js 已完成优化列表新增群体技能相关条目 |

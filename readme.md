@@ -157,12 +157,7 @@ project_v1/
 │           ├── RenderManager.js  # 渲染管理器
 │           └── LoadingManager.js # 加载管理器
 ├── docs/                       # 设计文档
-│   ├── game_design.md          #   游戏设计文档（系统总览）
-│   ├── items_equipment.md      #   物品与装备系统
-│   ├── combat_system.md        #   战斗系统设计
-│   ├── forge_and_affix_system.md # 锻造与词条系统
-│   ├── optimization_analysis.md  # 优化分析文档
-│   └── ...                     #   其他专项文档
+│   ├── game_design.md          #   游戏设计与优化方向总览
 └── tools/                      # 工具脚本（物品/NPC/怪物/任务生成器）
 ```
 
@@ -198,7 +193,7 @@ project_v1/
 - [多敌人与 BOSS 战设计](docs/multi_enemy_boss_design.md)
 - [物品生成器](docs/item_generator.md)
 - [地图生成器](docs/map_generator.md)
-- [优化分析](docs/optimization_analysis.md)
+- [游戏设计与优化方向](docs/game_design.md)
 
 ## 更新日志
 

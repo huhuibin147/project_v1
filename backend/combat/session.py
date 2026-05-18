@@ -119,6 +119,7 @@ class MonsterInstance:
             "sprite_accent": self.config.get("sprite_accent", "#555"),
             "level": self.config.get("level", 1),
             "monster_type": self.config.get("type", "normal"),
+            "element": self.config.get("element", "none"),
             "next_action": next_action,
         }
 
@@ -152,6 +153,7 @@ class CombatSession:
         self.skill_cooldowns: dict[str, int] = {}
         self.talent_passives: dict = player_snapshot.get("talent_passives", {})
         self.equipment_affixes: list[dict] = player_snapshot.get("equipment_affixes", [])
+        self.player_element: str = player_snapshot.get("element", "none")
 
         self.phase = CombatPhase.PLAYER_TURN
         self.turn_count = 0

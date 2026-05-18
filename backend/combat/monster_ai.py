@@ -124,7 +124,9 @@ def execute_action(session: "CombatSession", action: str,
             session.player_defense,
             monster.speed,
             session.player_speed,
-            session.player_defending
+            session.player_defending,
+            attacker_element=monster.config.get("element", "none"),
+            defender_element=session.player_element,
         )
         raw_dmg = result["damage"]
         actual_dmg, shield_absorbed = apply_shield(session.player_shield, raw_dmg)
@@ -155,6 +157,16 @@ def execute_action(session: "CombatSession", action: str,
             entry["text"] = f"{monster_name}攻击了你，造成 {actual_dmg} 点伤害。"
         if shield_absorbed > 0:
             entry["text"] += f"（护盾吸收 {shield_absorbed}）"
+        if result.get("element_multiplier", 1.0) > 1.0:
+            entry["text"] += " [属性克制！]"
+            logs.append({"type": "element_advantage",
+                         "text": f"{monster_name}属性克制你！伤害提升！",
+                         "multiplier": result["element_multiplier"]})
+        elif result.get("element_multiplier", 1.0) < 1.0:
+            entry["text"] += " [属性被克制！]"
+            logs.append({"type": "element_disadvantage",
+                         "text": f"{monster_name}属性被你克制！伤害降低！",
+                         "multiplier": result["element_multiplier"]})
         logs.append(entry)
         if reflect_dmg > 0:
             logs.append({"type": "reflect", "text": f"反伤！{monster_name}受到 {reflect_dmg} 点反弹伤害！"})
@@ -228,7 +240,9 @@ def execute_action(session: "CombatSession", action: str,
                     session.player_defense,
                     monster.speed,
                     session.player_speed,
-                    session.player_defending
+                    session.player_defending,
+                    attacker_element=monster.config.get("element", "none"),
+                    defender_element=session.player_element,
                 )
                 actual_dmg, shield_absorbed = apply_shield(session.player_shield, result["damage"])
                 session.player_shield -= shield_absorbed

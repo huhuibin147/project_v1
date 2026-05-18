@@ -99,6 +99,7 @@ async def combat_start(req: CombatStartRequest):
         "skills": getattr(player_profile, "skills", []),
         "talent_passives": player_profile.get_talent_passives() if hasattr(player_profile, "get_talent_passives") else {},
         "equipment_affixes": player_profile.get_equipment_affixes() if hasattr(player_profile, "get_equipment_affixes") else [],
+        "element": player_profile.element if hasattr(player_profile, "element") else "none",
     }
 
     session = create_combat_session(monster_configs, player_snapshot)

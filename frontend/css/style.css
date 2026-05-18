@@ -2040,6 +2040,9 @@ body {
 .log-talent { color: #44ffcc; }
 .log-reflect { color: #cc88ff; }
 .log-lifesteal { color: #ff44aa; }
+.log-element-advantage { color: #ff6644; font-weight: bold; }
+.log-element-disadvantage { color: #44aaff; font-style: italic; }
+.monster-element { font-size: 11px; margin-left: 4px; }
 
 #combat-actions {
   display: flex;

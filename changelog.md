@@ -22,7 +22,7 @@
   - 多敌人测试：怪物组战斗创建正确数量校验
   - 修改文件：`tests/test_config_data.py`、`tests/test_backend_logic.py`、`tests/test_multi_enemy_boss.py`
 - **更新**：文档
-  - `optimization_analysis.md`：combat.js 已完成优化列表新增 3 条修复记录
+  - `game_design.md`：combat.js 已完成优化列表新增 3 条修复记录
   - `combat_system.md`：技能书表格新增 7 本 AOE 技能书
   - `changelog.md`：本条目
 

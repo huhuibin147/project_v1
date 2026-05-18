@@ -702,6 +702,11 @@ class PlayerProfile:
         from talent_system import get_talent_passives
         return get_talent_passives(self.class_id, self.talents)
 
+    @property
+    def element(self) -> str:
+        class_elements = {"mage": "fire", "rogue": "grass", "warrior": "water"}
+        return class_elements.get(self.class_id, "none")
+
     # ===== 统一背包与金币操作 =====
 
     def get_inventory(self) -> list[dict]:

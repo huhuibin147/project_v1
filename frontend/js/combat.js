@@ -19,6 +19,13 @@ const EFFECT_MAP = {
   fear:        { name: "恐惧",   icon: "👻",  color: "#aa44ff" },
 };
 
+const ELEMENT_MAP = {
+  fire:  { name: "火", icon: "🔥", color: "#ff6644" },
+  water: { name: "水", icon: "💧", color: "#44aaff" },
+  grass: { name: "草", icon: "🌿", color: "#44cc44" },
+  none:  { name: "",   icon: "",   color: "#aaaaaa" },
+};
+
 const INTENT_ICONS = {
   attack: "⚔️",
   defend: "🛡️",
@@ -529,6 +536,11 @@ function renderMonsterSlots() {
     const level = m.level || (config && config.level) || "?";
     const monsterType = m.monster_type || (config && config.type) || "normal";
     let metaHtml = `<span class="monster-level">Lv.${level}</span>`;
+    const elementKey = m.element || (config && config.element) || "none";
+    const elemInfo = ELEMENT_MAP[elementKey];
+    if (elemInfo && elemInfo.icon) {
+      metaHtml += `<span class="monster-element" style="color:${elemInfo.color}">${elemInfo.icon}${elemInfo.name}</span>`;
+    }
     if (monsterType === "boss") {
       metaHtml += `<span class="monster-type-badge boss-badge">BOSS</span>`;
     } else if (monsterType === "elite") {
@@ -755,6 +767,8 @@ const LOG_ICONS = {
   lifesteal: "🧛",
   talent: "⭐",
   affix: "💎",
+  element_advantage: "🔥",
+  element_disadvantage: "💧",
 };
 
 function renderCombatLog() {
@@ -805,6 +819,10 @@ function renderCombatLog() {
       div.className += " log-effect";
     } else if (entry.type === "monster_idle") {
       div.className += " log-monster";
+    } else if (entry.type === "element_advantage") {
+      div.className += " log-element-advantage";
+    } else if (entry.type === "element_disadvantage") {
+      div.className += " log-element-disadvantage";
     }
 
     const icon = LOG_ICONS[entry.type] || "";

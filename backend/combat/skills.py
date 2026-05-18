@@ -117,7 +117,9 @@ def _execute_damage_skill(session, skill, power, effects, monster):
         monster_defense,
         session.player_speed,
         monster.speed,
-        monster.defending
+        monster.defending,
+        attacker_element=skill.get("element", session.player_element),
+        defender_element=monster.config.get("element", "none"),
     )
     monster.hp = max(0, monster.hp - result["damage"])
 
@@ -126,6 +128,10 @@ def _execute_damage_skill(session, skill, power, effects, monster):
              "damage": result["damage"], "crit": result["is_crit"],
              "monster_index": monster.index,
              "text": f"使用 {skill['name']}！对{monster_name}造成 {result['damage']} 点{damage_type_cn}伤害。"}
+    if result.get("element_multiplier", 1.0) > 1.0:
+        entry["text"] += " [属性克制！]"
+    elif result.get("element_multiplier", 1.0) < 1.0:
+        entry["text"] += " [属性被克制！]"
     if defense_ignore > 0:
         entry["text"] += f" (无视 {defense_ignore}% 防御)"
 
@@ -187,7 +193,9 @@ def _execute_aoe_damage_skill(session, skill, power, effects):
             monster_defense,
             session.player_speed,
             monster.speed,
-            monster.defending
+            monster.defending,
+            attacker_element=skill.get("element", session.player_element),
+            defender_element=monster.config.get("element", "none"),
         )
         monster.hp = max(0, monster.hp - result["damage"])
 

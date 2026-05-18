@@ -304,10 +304,20 @@ def resolve_turn(session: "CombatSession", action: str,
                 target.defense,
                 session.player_speed,
                 target.speed,
-                target.defending
+                target.defending,
+                attacker_element=session.player_element,
+                defender_element=target.config.get("element", "none"),
             )
             _apply_damage_to_monster(session, target, result["damage"], log_entries,
                                      is_crit=result["is_crit"], defended=result["defended"])
+            if result.get("element_multiplier", 1.0) > 1.0:
+                log_entries.append({"type": "element_advantage",
+                                    "text": "属性克制！伤害提升！",
+                                    "multiplier": result["element_multiplier"]})
+            elif result.get("element_multiplier", 1.0) < 1.0:
+                log_entries.append({"type": "element_disadvantage",
+                                    "text": "属性被克制！伤害降低！",
+                                    "multiplier": result["element_multiplier"]})
 
     elif action == "defend":
         defend_reduction = 0.5
