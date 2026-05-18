@@ -181,3 +181,22 @@ def reset_daily_quests(self):
    - 跨时区重置时间点正确
    - 每日任务进度正确重置
    - 不会重复重置
+
+---
+
+## 完成状态
+
+> 更新日期：2026-05-18
+> 状态：✅ 全部完成
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| 自动进度触发 | ✅ 完成 | 战斗结束/NPC 对话/地图传送/物品拾取时自动更新任务进度 |
+| 任务链系统 | ✅ 完成 | `quests.json` 新增 `chain`/`chain_order`/`next_in_chain` 字段，完成后自动接取下一个 |
+| 跨时区每日重置 | ✅ 完成 | UTC 时间 + 固定重置时间点 |
+| API 路由 | ✅ 完成 | `/api/quests/chain/{quest_id}` 获取任务链，`/api/quests/daily/reset` 重置每日任务 |
+
+**涉及修改**：
+- `quests.json` — 铁匠任务线添加任务链信息
+- `quest_manager.py` — `on_kill`/`on_collect`/`on_talk`/`on_explore` 自动触发，任务链自动接续
+- `routes/combat.py` / `routes/npc.py` / `routes/map.py` — 关键事件后自动更新任务进度

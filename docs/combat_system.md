@@ -695,3 +695,34 @@ class StatusEffect:
 | 暗影树精 | 沉睡 | apply_effect (毒雾) | - | 40%中毒3回合 |
 | 暗影树精 | 觉醒 | aoe_attack (暗焰风暴) | 0.8× | 35%灼烧2回合 |
 | 暗影树精 | 狂暴 | aoe_attack (暗影震击) | 1.0× | 25%眩晕1回合 |
+
+---
+
+## 已完成优化记录
+
+> 更新日期：2026-05-18
+
+| 优化项 | 说明 | 涉及模块 |
+|--------|------|----------|
+| 多敌人战斗 | 1-3 个怪物 + BOSS 战，前端支持多槽位点击/Tab 切换目标 | `CombatSession`, `combat.js` |
+| BOSS 阶段转换 | HP 阈值触发阶段切换，改变 AI 行为和属性，前端红色闪烁动画 | `MonsterInstance`, `combat.js` |
+| BOSS 免疫机制 | BOSS 免疫眩晕/冻结，精英 BOSS 额外免疫中毒 | `effects.py` |
+| AOE 技能（玩家） | 7 个群体技能，伤害按目标数递减（1→100%, 2→80%, 3→65%） | `skills.py`, `skills.json` |
+| AOE 技能（怪物） | BOSS 支持 `aoe_attack` 类型，前端所有怪物同时闪烁动画 | `monster_ai.py`, `combat.js` |
+| 怪物意图系统 | 后端预计算 `next_action`，前端显示意图图标（⚔️/🛡️/✨） | `monster_ai.py`, `combat.js` |
+| 状态效果系统 | 16 种效果 + 中文化 + 图标 + 颜色，灼烧/冻结互斥，流血可叠加 3 层 | `effects.py`, `combat.js` |
+| 战斗 UI 重构 | 怪物卡片增强（等级/类型/意图）、玩家状态栏（头像/护盾/HP 渐变）、战斗日志优化 | `combat.js`, `style.css` |
+| 伤害数字浮动 | 攻击/技能/状态效果分别显示浮动数字，暴击放大显示，AOE 按目标分别显示 | `combat.js` |
+| 动画系统 | HP 条平滑过渡、状态效果脉冲、日志淡入、BOSS 阶段闪烁、AOE 全屏闪烁 | `combat.js`, `style.css` |
+| 战斗物品面板 | 战斗中可使用消耗品/食物 | `combat.js` |
+| 战斗结果统计 | 总回合数、总伤害、暴击次数、最大单次伤害 | `combat.js` |
+| 怪物 self_heal | 怪物 AI 支持 `self_heal` 类型特殊技能 | `monster_ai.py` |
+
+**当前模块结构**：
+- 后端：`backend/combat/` 8 文件（session/damage/effects/events/monster_ai/skills/turn/engine）
+- 前端：[`combat.js`](file:///Users/huhuibin/code/aiproj/project_v1/frontend/js/combat.js) — 战斗 UI 完整实现
+
+**剩余未完成**：
+- 属性克制未接入战斗流程（P0）
+- 怪物精灵硬编码（P0）
+- 技能施法动画 / 战斗背景主题 / 怪物待机动画 / 战斗速度调节（P1）

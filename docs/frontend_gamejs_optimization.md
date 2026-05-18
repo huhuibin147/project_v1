@@ -407,6 +407,27 @@ const RenderManager = (() => {
 | `backend/combat/effects.py` | 新增 fear/attack_down/evasion_up/damage_reduction 效果处理器和中文名 |
 | `frontend/js/combat.js` | AOE 伤害数字精确显示、AOE 动画、怪物特殊技能伤害数字 |
 | `frontend/css/style.css` | 新增 .aoe-hit-flash 和 @keyframes aoeFlash 样式 |
+
+---
+
+## 附录 C：完成状态总结
+
+> 更新日期：2026-05-18
+> 状态：✅ 全部完成
+
+| 优化项 | 状态 | 涉及文件 |
+|--------|------|----------|
+| 模块化管理器 | ✅ 完成 | `GameManager.js` — 游戏主循环、状态管理、菜单控制 |
+| 输入管理器 | ✅ 完成 | `InputManager.js` — 键盘事件统一处理，支持注册/注销处理器 |
+| 渲染管理器 | ✅ 完成 | `RenderManager.js` — 脏矩形优化，状态变化时才重绘 |
+| 加载管理器 | ✅ 完成 | `LoadingManager.js` — Loading 遮罩层 + 进度反馈 |
+| 代码精简 | ✅ 完成 | `game.js` 363 行 → 32 行，所有逻辑迁移到管理器模块 |
+
+**新增文件**：
+- [`frontend/js/managers/GameManager.js`](file:///Users/huhuibin/code/aiproj/project_v1/frontend/js/managers/GameManager.js)
+- [`frontend/js/managers/InputManager.js`](file:///Users/huhuibin/code/aiproj/project_v1/frontend/js/managers/InputManager.js)
+- [`frontend/js/managers/RenderManager.js`](file:///Users/huhuibin/code/aiproj/project_v1/frontend/js/managers/RenderManager.js)
+- [`frontend/js/managers/LoadingManager.js`](file:///Users/huhuibin/code/aiproj/project_v1/frontend/js/managers/LoadingManager.js)
 | `docs/skill_and_talent_system.md` | 新增群体技能系统设计章节 |
 | `docs/combat_system.md` | 新增群体技能系统/怪物特殊技能扩展章节，更新AOE递减数据 |
 | `docs/optimization_analysis.md` | combat.js 已完成优化列表新增群体技能相关条目 |

@@ -246,3 +246,24 @@ def _get_dynamic_weight(affix: dict, player_level: int) -> float:
 | 词条调整 | 无法修改已生成词条 | 消耗金币洗练 | 装备利用率提升 |
 | 词条分布 | 固定权重 | 动态权重 | 各等级词条更合理 |
 | 玩家目标 | 缺少长期追求 | 洗练+保底进度 | 游戏粘性提升 |
+
+---
+
+## 七、完成状态
+
+> 更新日期：2026-05-18
+> 状态：✅ 已完成（除配方解锁外）
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| 锻造保底机制 | ✅ 完成 | `FORGE_PITY_THRESHOLD=5`，连续失败每次 +10% 成功率，5 次失败后保底成功 |
+| 词条洗练功能 | ✅ 完成 | API `/api/forge/reroll`，消耗金币随机替换装备词条，费用按稀有度递增（50→1000） |
+| 词条权重动态 | ✅ 完成 | `level_weight_multipliers` 配置，`_get_dynamic_weight()` / `_level_in_range()` |
+| 存档字段扩展 | ✅ 完成 | 玩家存档新增 `forge_streaks` 字段记录各配方连续失败次数 |
+| 配方解锁机制 | ❌ 未实现 | 所有配方一开始就可见（P2 低优先级） |
+
+**新增类/方法/配置**：
+- `FORGE_PITY_THRESHOLD` / `FORGE_PITY_BONUS_PER_FAIL`：保底参数
+- `REROLL_COSTS`：洗练费用配置
+- `execute_forge()` 新增 `forge_streaks` 参数
+- `reroll_single_affix()`：词条洗练函数

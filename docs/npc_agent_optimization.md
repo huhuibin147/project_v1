@@ -236,3 +236,21 @@ npc_agent.py
 | 响应时间 | 1-3 秒 | <0.5 秒（缓存命中） | 提升 60%+ |
 | 记忆持久性 | 10 条对话 | 50 条事件 + 摘要 | 提升 5 倍 |
 | 好感度影响 | 仅 mood 字段 | 折扣/奖励/风格 | 深度影响 |
+
+---
+
+## 六、完成状态
+
+> 更新日期：2026-05-18
+> 状态：✅ 已完成（除记忆摘要和好感度任务奖励）
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| 本地意图分类器 | ✅ 完成 | `IntentClassifier` 支持 trade/quest/chat/unknown 四种意图，交易意图完全本地处理 |
+| 分层记忆系统 | ✅ 完成 | `MemoryManager`：短期记忆（最近 10 条对话）+ 长期记忆（关键事件，最多 50 条） |
+| 好感度深度影响 | ✅ 部分 | `AffinitySystem`：5 个等级（敌对→亲密），影响商店折扣（+20%→-20%）和对话风格 |
+| 常见问题缓存 | ✅ 完成 | `ResponseCache`：TTL 1 小时，最大 100 条，相同好感度等级下返回缓存 |
+| 记忆摘要生成 | ❌ 未实现 | 长期记忆较多时缺少自动摘要（P2） |
+| 好感度影响任务奖励 | ❌ 未实现 | 当前仅影响商店价格（P2） |
+
+**新增模块**：[`intent_classifier.py`](file:///Users/huhuibin/code/aiproj/project_v1/backend/intent_classifier.py)、[`npc_memory.py`](file:///Users/huhuibin/code/aiproj/project_v1/backend/npc_memory.py)、[`npc_affinity.py`](file:///Users/huhuibin/code/aiproj/project_v1/backend/npc_affinity.py)、[`npc_cache.py`](file:///Users/huhuibin/code/aiproj/project_v1/backend/npc_cache.py)

@@ -213,3 +213,19 @@ item_system.py
 | 物品分类 | 无 | 6 大分类 | 支持按类别查询 |
 | 堆叠逻辑 | 简单按 ID | 区分可堆叠/不可堆叠 | 装备独立实例化 |
 | 配置维护性 | 低（需改代码） | 高（仅改 JSON） | 维护成本降低 80% |
+
+---
+
+## 六、完成状态
+
+> 更新日期：2026-05-18
+> 状态：✅ 全部完成
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| 物品效果配置化 | ✅ 完成 | `ITEM_EFFECTS` 移至 `items.json` 的 `effect` 字段，新增 `get_item_effect()` 辅助函数 |
+| 物品分类系统 | ✅ 完成 | 添加 `category` 字段（consumable/food/skill_book/material/equipment/quest_item），支持 `get_items_by_category()` |
+| 堆叠逻辑优化 | ✅ 完成 | `Inventory.add_item()` 区分可堆叠/不可堆叠物品，装备类不堆叠独立实例化 |
+| 代码兼容 | ✅ 完成 | 更新 `combat_engine.py`、`player_profile.py`、`combat/turn.py`、`test_backend_logic.py` 中的引用 |
+
+**新增文件**：无（仅在 `items.json` 和 `item_system.py` 中修改）

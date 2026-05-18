@@ -260,3 +260,27 @@ python3 -m unittest tests.test_backend_logic tests.test_config_data tests.test_m
 - 暴击判定正常 ✅
 - 防御减伤正常 ✅
 - 属性克制系数已加入返回结果 ✅
+
+---
+
+## 五、完成状态
+
+> 更新日期：2026-05-18
+> 状态：✅ 已完成
+
+| 优化项 | 状态 | 说明 |
+|--------|------|------|
+| 模块化拆分 | ✅ 完成 | `backend/combat/` 8 文件：session/damage/effects/events/monster_ai/skills/turn/engine |
+| 多敌人战斗 | ✅ 完成 | `CombatSession` 支持 `monsters: list[MonsterInstance]`，1-3 个怪物 + BOSS |
+| BOSS 阶段系统 | ✅ 完成 | `MonsterInstance.phases`，HP 阈值触发阶段切换，改变 AI 行为和属性 |
+| BOSS 免疫机制 | ✅ 完成 | BOSS 免疫眩晕/冻结，精英 BOSS 额外免疫中毒 |
+| 策略模式效果系统 | ✅ 完成 | 每种效果类型注册为独立 `EffectHandler` |
+| 事件驱动系统 | ✅ 完成 | `EventDispatcher` + `CombatEvent`，词条/天赋通过事件触发 |
+| 伤害公式升级 | ✅ 完成 | 加入属性克制系数（火>草>水>火，克制 1.5x，被克制 0.67x） |
+| AOE 技能系统 | ✅ 完成 | `execute_skill` 支持 `aoe` 属性，伤害按目标数量递减 |
+| 怪物 AI 模块化 | ✅ 完成 | `decide_action` / `execute_action`，支持 aggressive/defensive/cautious 三种行为 |
+| 兼容层 | ✅ 完成 | `engine.py` 对外暴露统一接口，`routes/combat.py` 使用新模块 |
+
+**剩余问题**：
+- 属性克制参数已实现在 `calc_damage` 中，但 `resolve_turn` / `execute_skill` / `execute_action` 未传入元素属性 → P0 待处理
+- 事件系统每次回合重建 `EventDispatcher` → P1 待处理
