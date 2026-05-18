@@ -102,27 +102,39 @@ class BlockActionHandler(EffectHandler):
 
 class StatBuffHandler(EffectHandler):
     def tick(self, session, target_is_player, effect, monster=None):
-        if not target_is_player:
-            return []
-
-        if effect.effect_type == "attack_up":
-            session.player_attack = session.base_player_attack + effect.value
-        elif effect.effect_type == "defense_up":
-            session.player_defense = session.base_player_defense + effect.value
-        elif effect.effect_type == "speed_up":
-            session.player_speed = session.base_player_speed + effect.value
-        elif effect.effect_type == "defense_down":
-            session.player_defense = max(0, session.base_player_defense - effect.value)
-        elif effect.effect_type == "attack_down":
-            session.player_attack = max(1, session.base_player_attack - effect.value)
-        elif effect.effect_type == "speed_down":
-            session.player_speed = max(1, int(session.base_player_speed * 0.7))
-
+        if target_is_player:
+            if effect.effect_type == "attack_up":
+                session.player_attack = session.base_player_attack + effect.value
+            elif effect.effect_type == "defense_up":
+                session.player_defense = session.base_player_defense + effect.value
+            elif effect.effect_type == "speed_up":
+                session.player_speed = session.base_player_speed + effect.value
+            elif effect.effect_type == "defense_down":
+                session.player_defense = max(0, session.base_player_defense - effect.value)
+            elif effect.effect_type == "attack_down":
+                session.player_attack = max(1, session.base_player_attack - effect.value)
+            elif effect.effect_type == "speed_down":
+                session.player_speed = max(1, int(session.base_player_speed * 0.7))
+        elif monster is not None:
+            if effect.effect_type == "attack_up":
+                monster.config["stats"]["attack"] = monster.base_attack + effect.value
+            elif effect.effect_type == "defense_up":
+                monster.config["stats"]["defense"] = monster.base_defense + effect.value
+            elif effect.effect_type == "speed_up":
+                monster.config["stats"]["speed"] = monster.base_speed + effect.value
+            elif effect.effect_type == "attack_down":
+                monster.config["stats"]["attack"] = max(1, monster.base_attack - effect.value)
+            elif effect.effect_type == "defense_down":
+                monster.config["stats"]["defense"] = max(0, monster.base_defense - effect.value)
+            elif effect.effect_type == "speed_down":
+                monster.config["stats"]["speed"] = max(1, int(monster.base_speed * 0.7))
         return []
 
     def on_expire(self, session, target_is_player, effect, monster=None):
         if target_is_player:
             _recalculate_player_buffs(session)
+        elif monster is not None:
+            _recalculate_monster_buffs(monster)
         return super().on_expire(session, target_is_player, effect, monster)
 
 
@@ -203,6 +215,17 @@ def _recalculate_player_buffs(session: "CombatSession") -> None:
                 handler.tick(session, target_is_player=True, effect=eff)
 
 
+def _recalculate_monster_buffs(monster: "MonsterInstance") -> None:
+    monster.config["stats"]["attack"] = monster.base_attack
+    monster.config["stats"]["defense"] = monster.base_defense
+    monster.config["stats"]["speed"] = monster.base_speed
+    for eff in monster.effects:
+        if eff.effect_type in STAT_BUFF_MAP:
+            handler = EFFECT_HANDLERS.get(eff.effect_type)
+            if handler:
+                handler.tick(session=None, target_is_player=False, effect=eff, monster=monster)
+
+
 def process_effects(session: "CombatSession", is_player: bool,
                     monster: "MonsterInstance" = None) -> list[dict]:
     if is_player:
@@ -241,6 +264,8 @@ def process_effects(session: "CombatSession", is_player: bool,
     else:
         if monster is not None:
             monster.effects = remaining
+            if expired_buffs:
+                _recalculate_monster_buffs(monster)
 
     return logs
 

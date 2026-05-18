@@ -169,6 +169,13 @@
           <button class="filter-btn" data-filter="consumable" onclick="filterInventory('consumable')">消耗</button>
           <button class="filter-btn" data-filter="material" onclick="filterInventory('material')">材料</button>
         </div>
+        <select class="inventory-sort" id="inventory-sort" onchange="sortInventory(this.value)">
+          <option value="default">默认排序</option>
+          <option value="rarity">稀有度</option>
+          <option value="price_asc">售价↑</option>
+          <option value="price_desc">售价↓</option>
+          <option value="name">名称</option>
+        </select>
       </div>
       <div id="inventory-items" class="items-grid"></div>
       <div id="inventory-pagination" class="pagination-bar" style="display:none"></div>
@@ -208,7 +215,7 @@
       <div class="skill-learn-list" id="skill-learn-list"></div>
     </div>
 
-    <!-- 商店面板 -->
+    <!-- 商店面板（双栏：左商店+右背包） -->
     <div id="shop-panel">
       <div class="panel-header">
         <span id="shop-title" class="panel-title">商店</span>
@@ -219,8 +226,58 @@
         <button class="panel-close" onclick="closeShop()">×</button>
       </div>
       <div id="trade-message" class="trade-message" style="display:none"></div>
-      <div id="shop-items" class="items-grid"></div>
-      <div id="shop-pagination" class="pagination-bar" style="display:none"></div>
+      <div class="shop-dual-columns">
+        <div class="shop-column shop-left">
+          <div class="shop-column-header">
+            <span class="shop-column-title">🏪 商店</span>
+          </div>
+          <div class="shop-toolbar">
+            <input type="text" class="shop-search" id="shop-search" placeholder="搜索物品..." oninput="searchShop(this.value)">
+            <div class="filter-tabs shop-filters">
+              <button class="filter-btn active" data-shop-filter="all" onclick="filterShop('all')">全部</button>
+              <button class="filter-btn" data-shop-filter="weapon" onclick="filterShop('weapon')">武器</button>
+              <button class="filter-btn" data-shop-filter="armor" onclick="filterShop('armor')">防具</button>
+              <button class="filter-btn" data-shop-filter="consumable" onclick="filterShop('consumable')">消耗</button>
+              <button class="filter-btn" data-shop-filter="material" onclick="filterShop('material')">材料</button>
+            </div>
+            <select class="shop-sort" id="shop-sort" onchange="sortShop(this.value)">
+              <option value="default">默认排序</option>
+              <option value="rarity">稀有度</option>
+              <option value="price_asc">价格↑</option>
+              <option value="price_desc">价格↓</option>
+              <option value="name">名称</option>
+            </select>
+          </div>
+          <div id="shop-items" class="items-grid shop-items-list"></div>
+          <div id="shop-pagination" class="pagination-bar" style="display:none"></div>
+        </div>
+        <div class="shop-column-divider"></div>
+        <div class="shop-column shop-right">
+          <div class="shop-column-header">
+            <span class="shop-column-title">🎒 背包</span>
+            <span class="shop-column-gold">金币: <span id="inventory-gold-shop">0</span></span>
+          </div>
+          <div class="shop-toolbar">
+            <input type="text" class="shop-search" id="shop-inventory-search" placeholder="搜索背包..." oninput="searchShopInventory(this.value)">
+            <div class="filter-tabs shop-filters">
+              <button class="filter-btn active" data-shop-inv-filter="all" onclick="filterShopInventory('all')">全部</button>
+              <button class="filter-btn" data-shop-inv-filter="weapon" onclick="filterShopInventory('weapon')">武器</button>
+              <button class="filter-btn" data-shop-inv-filter="armor" onclick="filterShopInventory('armor')">防具</button>
+              <button class="filter-btn" data-shop-inv-filter="consumable" onclick="filterShopInventory('consumable')">消耗</button>
+              <button class="filter-btn" data-shop-inv-filter="material" onclick="filterShopInventory('material')">材料</button>
+            </div>
+            <select class="shop-sort" id="shop-inventory-sort" onchange="sortShopInventory(this.value)">
+              <option value="default">默认排序</option>
+              <option value="rarity">稀有度</option>
+              <option value="price_asc">售价↑</option>
+              <option value="price_desc">售价↓</option>
+              <option value="name">名称</option>
+            </select>
+          </div>
+          <div id="shop-inventory-items" class="items-grid shop-items-list"></div>
+          <div id="shop-inventory-pagination" class="pagination-bar" style="display:none"></div>
+        </div>
+      </div>
     </div>
 
     <!-- 玩家信息面板 -->

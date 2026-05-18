@@ -1,10 +1,13 @@
 let inventoryOpen = false;
 let shopOpen = false;
 let shopNpcId = null;
+let ctxMenuEl = null;
 
 const ITEMS_PER_PAGE = 8;
+const SHOP_ITEMS_PER_PAGE = 10;
 const inventoryPage = { current: 1 };
 const shopPage = { current: 1 };
+const shopInvPage = { current: 1 };
 
 const inventoryState = {
   items: [],
@@ -15,6 +18,7 @@ const inventoryDisplay = {
   view: "list",
   filter: "all",
   search: "",
+  sort: "default",
 };
 
 const shopState = {
@@ -22,6 +26,20 @@ const shopState = {
   items: [],
   gold: 0,
 };
+
+const shopDisplay = {
+  filter: "all",
+  search: "",
+  sort: "default",
+};
+
+const shopInvDisplay = {
+  filter: "all",
+  search: "",
+  sort: "default",
+};
+
+const RARITY_ORDER = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
 
 const STAT_LABELS_INV = {
   attack: "攻",
@@ -99,6 +117,49 @@ function buildCompareHtml(item) {
   return `<div class="item-compare">对比${current.name}: ${parts.join(" ")}</div>`;
 }
 
+function buildCompareBarHtml(item) {
+  if (!item.equip_slot) return "";
+  const equipped = playerInfo.equipment || {};
+  const current = equipped[item.equip_slot];
+  if (!current || !current.stats) return "";
+
+  const statKeys = ["attack", "defense", "speed", "max_hp", "max_mp"];
+  const statMaxValues = { attack: 100, defense: 80, speed: 30, max_hp: 200, max_mp: 100 };
+  let rows = "";
+
+  for (const key of statKeys) {
+    const newVal = (item.stats && item.stats[key]) || 0;
+    const oldVal = (current.stats && current.stats[key]) || 0;
+    if (newVal === 0 && oldVal === 0) continue;
+
+    const label = STAT_LABELS_INV[key] || key;
+    const maxVal = statMaxValues[key] || 100;
+    const newPct = Math.min(100, Math.max(0, (newVal / maxVal) * 100));
+    const oldPct = Math.min(100, Math.max(0, (oldVal / maxVal) * 100));
+    const diff = newVal - oldVal;
+    const diffCls = diff > 0 ? "bar-diff-up" : diff < 0 ? "bar-diff-down" : "";
+    const diffText = diff !== 0 ? `${diff > 0 ? "+" : ""}${diff}` : "";
+
+    rows += `
+      <div class="compare-row">
+        <span class="compare-label">${label}</span>
+        <div class="compare-bar-track">
+          <div class="compare-bar-old" style="width:${oldPct}%"></div>
+          <div class="compare-bar-new" style="width:${newPct}%"></div>
+        </div>
+        <span class="compare-val">${newVal}</span>
+        <span class="compare-diff ${diffCls}">${diffText}</span>
+      </div>`;
+  }
+
+  if (!rows) return "";
+
+  return `<div class="compare-bar-section">
+    <div class="compare-bar-title">装备对比：${current.name}</div>
+    ${rows}
+  </div>`;
+}
+
 async function fetchInventory() {
   try {
     const resp = await fetch("/api/inventory");
@@ -127,6 +188,9 @@ function openInventory() {
   if (dialogueOpen || GameManager.isMenuOpen() || combatOpen) return;
   inventoryOpen = true;
   inventoryPage.current = 1;
+  inventoryDisplay.sort = "default";
+  const sortEl = document.getElementById("inventory-sort");
+  if (sortEl) sortEl.value = "default";
   fetchInventory().then(() => {
     renderInventory();
     setupEquipSlotDropTargets();
@@ -141,27 +205,9 @@ function closeInventory() {
 
 function getFilteredItems() {
   let items = inventoryState.items;
-  const filter = inventoryDisplay.filter;
-  if (filter !== "all") {
-    if (filter === "armor") {
-      items = items.filter(it => it.type === "armor" || (it.equip_slot && it.equip_slot !== "weapon" && it.equip_slot !== "accessory"));
-    } else if (filter === "weapon") {
-      items = items.filter(it => it.type === "weapon" || it.equip_slot === "weapon");
-    } else {
-      items = items.filter(it => it.type === filter);
-    }
-  }
-  if (inventoryDisplay.search) {
-    const q = inventoryDisplay.search.toLowerCase();
-    items = items.filter(it =>
-      (it.name && it.name.toLowerCase().includes(q)) ||
-      (it.description && it.description.toLowerCase().includes(q)) ||
-      (it.affixes && it.affixes.some(a => {
-        const name = typeof a === "object" ? a.name : a;
-        return name && name.toLowerCase().includes(q);
-      }))
-    );
-  }
+  items = applyItemFilter(items, inventoryDisplay.filter);
+  items = applyItemSearch(items, inventoryDisplay.search);
+  items = applyItemSort(items, inventoryDisplay.sort, "sell_price");
   return items;
 }
 
@@ -182,6 +228,111 @@ function filterInventory(filter) {
   });
   inventoryPage.current = 1;
   renderInventory();
+}
+
+function sortInventory(sort) {
+  inventoryDisplay.sort = sort;
+  inventoryPage.current = 1;
+  renderInventory();
+}
+
+function applyItemFilter(items, filter) {
+  if (filter === "all") return items;
+  if (filter === "armor") {
+    return items.filter(it => it.type === "armor" || (it.equip_slot && it.equip_slot !== "weapon" && it.equip_slot !== "accessory"));
+  } else if (filter === "weapon") {
+    return items.filter(it => it.type === "weapon" || it.equip_slot === "weapon");
+  } else {
+    return items.filter(it => it.type === filter);
+  }
+}
+
+function applyItemSearch(items, query) {
+  if (!query) return items;
+  const q = query.toLowerCase();
+  return items.filter(it =>
+    (it.name && it.name.toLowerCase().includes(q)) ||
+    (it.description && it.description.toLowerCase().includes(q)) ||
+    (it.affixes && it.affixes.some(a => {
+      const name = typeof a === "object" ? a.name : a;
+      return name && name.toLowerCase().includes(q);
+    }))
+  );
+}
+
+function applyItemSort(items, sort, priceKey) {
+  if (sort === "default") return items;
+  const sorted = [...items];
+  if (sort === "rarity") {
+    sorted.sort((a, b) => (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0));
+  } else if (sort === "price_asc") {
+    sorted.sort((a, b) => (a[priceKey] || 0) - (b[priceKey] || 0));
+  } else if (sort === "price_desc") {
+    sorted.sort((a, b) => (b[priceKey] || 0) - (a[priceKey] || 0));
+  } else if (sort === "name") {
+    sorted.sort((a, b) => (a.name || "").localeCompare(b.name || "", "zh"));
+  }
+  return sorted;
+}
+
+function searchShop(query) {
+  shopDisplay.search = query.trim();
+  shopPage.current = 1;
+  renderShop();
+}
+
+function filterShop(filter) {
+  shopDisplay.filter = filter;
+  document.querySelectorAll("[data-shop-filter]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.shopFilter === filter);
+  });
+  shopPage.current = 1;
+  renderShop();
+}
+
+function sortShop(sort) {
+  shopDisplay.sort = sort;
+  shopPage.current = 1;
+  renderShop();
+}
+
+function searchShopInventory(query) {
+  shopInvDisplay.search = query.trim();
+  shopInvPage.current = 1;
+  renderShop();
+}
+
+function filterShopInventory(filter) {
+  shopInvDisplay.filter = filter;
+  document.querySelectorAll("[data-shop-inv-filter]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.shopInvFilter === filter);
+  });
+  shopInvPage.current = 1;
+  renderShop();
+}
+
+function sortShopInventory(sort) {
+  shopInvDisplay.sort = sort;
+  shopInvPage.current = 1;
+  renderShop();
+}
+
+function adjustQty(prefix, itemId, delta) {
+  const input = document.getElementById(`${prefix}_${itemId}`);
+  if (!input) return;
+  let val = parseInt(input.value) || 1;
+  val = Math.max(1, Math.min(parseInt(input.max) || 99, val + delta));
+  input.value = val;
+}
+
+function getQty(prefix, itemId) {
+  const input = document.getElementById(`${prefix}_${itemId}`);
+  return input ? (parseInt(input.value) || 1) : 1;
+}
+
+function setMaxQty(prefix, itemId) {
+  const input = document.getElementById(`${prefix}_${itemId}`);
+  if (input) input.value = input.max;
 }
 
 function searchInventory(query) {
@@ -306,6 +457,29 @@ function renderInventoryList(container, pageItems) {
         ${equipBtnHtml}
       </div>
     `;
+
+    div.addEventListener("dblclick", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      if (canEquip && !isEquipped && canPlayerEquipItem(item)) {
+        doEquip(item.item_id);
+      } else if ((item.type === "consumable" || item.type === "food") && !isEquipped) {
+        doUseItem(item.item_id);
+      }
+    });
+
+    div.addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      if (e.shiftKey && shopOpen && item.sell_price && item.sell_price > 0 && !isEquipped) {
+        e.preventDefault();
+        doTrade("sell", item.item_id, item.quantity);
+      }
+    });
+
+    div.addEventListener("contextmenu", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      showItemCtxMenu(e, item, "inventory");
+    });
+
     container.appendChild(div);
   }
 }
@@ -367,6 +541,11 @@ function renderInventoryGrid(container, pageItems) {
       showItemTooltip(item, div);
     });
 
+    div.addEventListener("contextmenu", (e) => {
+      if (e.target.tagName === "BUTTON") return;
+      showItemCtxMenu(e, item, "inventory");
+    });
+
     container.appendChild(div);
   }
 }
@@ -385,6 +564,81 @@ function getTypeIcon(type) {
 }
 
 let tooltipEl = null;
+
+const ITEM_SOURCE_MAP = {};
+
+async function buildItemSourceMap() {
+  for (const key of Object.keys(ITEM_SOURCE_MAP)) {
+    delete ITEM_SOURCE_MAP[key];
+  }
+
+  try {
+    const [npcResp, monsterResp] = await Promise.all([
+      fetch("/api/npcs").catch(() => null),
+      fetch("/api/monsters").catch(() => null)
+    ]);
+
+    if (npcResp && npcResp.ok) {
+      const npcList = await npcResp.json();
+      const npcs = Array.isArray(npcList) ? npcList : [];
+      for (const npc of npcs) {
+        if (npc.inventory && Array.isArray(npc.inventory)) {
+          for (const entry of npc.inventory) {
+            const itemId = typeof entry === "string" ? entry : entry.item_id;
+            if (!itemId) continue;
+            if (!ITEM_SOURCE_MAP[itemId]) ITEM_SOURCE_MAP[itemId] = [];
+            const shopName = npc.name || npc.npc_id || "";
+            if (shopName && !ITEM_SOURCE_MAP[itemId].includes(shopName)) {
+              ITEM_SOURCE_MAP[itemId].push(shopName);
+            }
+          }
+        }
+      }
+    }
+
+    if (monsterResp && monsterResp.ok) {
+      const monsterData = await monsterResp.json();
+      const monsters = monsterData.monsters || monsterData;
+      const monsterMap = Array.isArray(monsters) ? {} : monsters;
+      if (Array.isArray(monsters)) {
+        for (const m of monsters) {
+          if (m.drops && Array.isArray(m.drops)) {
+            for (const drop of m.drops) {
+              const itemId = typeof drop === "string" ? drop : drop.item_id;
+              if (!itemId) continue;
+              if (!ITEM_SOURCE_MAP[itemId]) ITEM_SOURCE_MAP[itemId] = [];
+              if (!ITEM_SOURCE_MAP[itemId].includes("怪物掉落")) {
+                ITEM_SOURCE_MAP[itemId].push("怪物掉落");
+              }
+            }
+          }
+        }
+      } else {
+        for (const [mId, monster] of Object.entries(monsterMap)) {
+          if (monster.drops && Array.isArray(monster.drops)) {
+            for (const drop of monster.drops) {
+              const itemId = typeof drop === "string" ? drop : drop.item_id;
+              if (!itemId) continue;
+              if (!ITEM_SOURCE_MAP[itemId]) ITEM_SOURCE_MAP[itemId] = [];
+              if (!ITEM_SOURCE_MAP[itemId].includes("怪物掉落")) {
+                ITEM_SOURCE_MAP[itemId].push("怪物掉落");
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("构建物品来源映射失败:", e);
+  }
+}
+
+function getItemSourceHtml(itemId) {
+  const sources = ITEM_SOURCE_MAP[itemId];
+  if (!sources || sources.length === 0) return "";
+  const tags = sources.map(s => `<span class="tt-source-tag">${s}</span>`).join("");
+  return `<div class="tt-source">来源: ${tags}</div>`;
+}
 
 function showItemTooltip(item, anchorEl) {
   if (tooltipEl) {
@@ -414,7 +668,18 @@ function showItemTooltip(item, anchorEl) {
   }
 
   let compareHtml = canEquip && !isEquipped ? buildCompareHtml(item) : "";
+  const compareBarHtml = canEquip && !isEquipped ? buildCompareBarHtml(item) : "";
   const classRestrictionHtml = getClassRestrictionHtml(item);
+
+  let affixesFullHtml = "";
+  if (item.affixes && item.affixes.length > 0) {
+    affixesFullHtml = `<div class="tt-affixes">${item.affixes.map(a => {
+      if (typeof a === "object" && a.name) {
+        return `<div class="tt-affix"><span class="tt-affix-name">${a.name}</span>${a.description ? `<span class="tt-affix-desc">${a.description}</span>` : ""}</div>`;
+      }
+      return `<div class="tt-affix"><span class="tt-affix-name">${a}</span></div>`;
+    }).join("")}</div>`;
+  }
 
   const tt = document.createElement("div");
   tt.className = "item-tooltip";
@@ -427,8 +692,11 @@ function showItemTooltip(item, anchorEl) {
     ${statsHtml}
     ${healHtml}
     ${mpHtml}
+    ${affixesFullHtml}
     ${compareHtml}
+    ${compareBarHtml}
     <div class="tt-desc">${item.description}</div>
+    ${getItemSourceHtml(item.item_id)}
     <div class="tt-price">出售价: ${item.sell_price} 金</div>
   `;
 
@@ -439,8 +707,8 @@ function showItemTooltip(item, anchorEl) {
   const panelRect = document.getElementById("inventory-panel").getBoundingClientRect();
   let left = rect.right + 8;
   let top = rect.top;
-  if (left + 220 > window.innerWidth) {
-    left = rect.left - 228;
+  if (left + 268 > window.innerWidth) {
+    left = rect.left - 276;
   }
   if (top + 200 > window.innerHeight) {
     top = window.innerHeight - 200;
@@ -484,6 +752,27 @@ function openShop(npcId) {
   shopOpen = true;
   shopNpcId = npcId || activeNpcId || "blacksmith";
   shopPage.current = 1;
+  shopInvPage.current = 1;
+  shopDisplay.filter = "all";
+  shopDisplay.search = "";
+  shopDisplay.sort = "default";
+  shopInvDisplay.filter = "all";
+  shopInvDisplay.search = "";
+  shopInvDisplay.sort = "default";
+  const shopSearchEl = document.getElementById("shop-search");
+  if (shopSearchEl) shopSearchEl.value = "";
+  const shopInvSearchEl = document.getElementById("shop-inventory-search");
+  if (shopInvSearchEl) shopInvSearchEl.value = "";
+  const shopSortEl = document.getElementById("shop-sort");
+  if (shopSortEl) shopSortEl.value = "default";
+  const shopInvSortEl = document.getElementById("shop-inventory-sort");
+  if (shopInvSortEl) shopInvSortEl.value = "default";
+  document.querySelectorAll("[data-shop-filter]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.shopFilter === "all");
+  });
+  document.querySelectorAll("[data-shop-inv-filter]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.shopInvFilter === "all");
+  });
   fetchShop(shopNpcId).then(() => {
     fetchInventory().then(() => renderShop());
   });
@@ -500,30 +789,56 @@ function renderShop() {
   document.getElementById("shop-title").textContent = shopState.name;
   document.getElementById("shop-gold").textContent = shopState.gold;
   document.getElementById("player-gold-shop").textContent = inventoryState.gold;
+  document.getElementById("inventory-gold-shop").textContent = inventoryState.gold;
 
+  renderShopLeft();
+  renderShopRight();
+}
+
+function getFilteredShopItems() {
+  let items = shopState.items;
+  items = applyItemFilter(items, shopDisplay.filter);
+  items = applyItemSearch(items, shopDisplay.search);
+  items = applyItemSort(items, shopDisplay.sort, "buy_price");
+  return items;
+}
+
+function getFilteredShopInvItems() {
+  let items = inventoryState.items;
+  items = applyItemFilter(items, shopInvDisplay.filter);
+  items = applyItemSearch(items, shopInvDisplay.search);
+  items = applyItemSort(items, shopInvDisplay.sort, "sell_price");
+  return items;
+}
+
+function renderShopLeft() {
   const container = document.getElementById("shop-items");
   container.innerHTML = "";
 
-  if (shopState.items.length === 0) {
-    container.innerHTML = '<div class="empty-hint">商店暂无货物</div>';
+  const filteredItems = getFilteredShopItems();
+
+  if (filteredItems.length === 0) {
+    container.innerHTML = '<div class="empty-hint">没有找到物品</div>';
     renderPagination("shop-pagination", 0, shopPage);
     return;
   }
 
-  const total = shopState.items.length;
-  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  const total = filteredItems.length;
+  const totalPages = Math.ceil(total / SHOP_ITEMS_PER_PAGE);
   if (shopPage.current > totalPages) shopPage.current = totalPages;
-  const start = (shopPage.current - 1) * ITEMS_PER_PAGE;
-  const pageItems = shopState.items.slice(start, start + ITEMS_PER_PAGE);
+  const start = (shopPage.current - 1) * SHOP_ITEMS_PER_PAGE;
+  const pageItems = filteredItems.slice(start, start + SHOP_ITEMS_PER_PAGE);
 
   for (const item of pageItems) {
-    const playerQty = getPlayerItemQty(item.item_id);
     const canEquip = item.equip_slot && item.stats;
     const rarityCls = item.rarity || "common";
     const rarityColor = getRarityColor(rarityCls);
     const rarityName = getRarityName(rarityCls);
     const tierName = item.tier ? getTierName(item.tier) : "";
     const levelText = getLevelRangeText(item);
+    const canBuy = item.buy_price && item.buy_price > 0;
+    const canBuyEquip = canEquip ? canPlayerEquipItem(item) : true;
+    const maxBuy = canBuy ? Math.min(item.quantity, Math.floor(inventoryState.gold / item.buy_price)) : 0;
 
     let statsHtml = "";
     if (canEquip && item.stats) {
@@ -539,25 +854,38 @@ function renderShop() {
       mpHtml = `<div class="item-heal-value">回复 <span class="heal-num">${item.mp_value}</span> MP</div>`;
     }
 
-    const compareHtml = canEquip ? buildCompareHtml(item) : "";
-
     let affixesHtml = "";
     if (item.affixes && item.affixes.length > 0) {
       affixesHtml = `<div class="item-affixes">${item.affixes.map(a => {
         if (typeof a === "object" && a.name) {
-          const shortDesc = a.description ? a.description.substring(0, 12) : "";
-          return `<span class="affix-tag" title="${a.description || ""}">${a.name}${shortDesc ? `<span class="affix-desc">${shortDesc}</span>` : ""}</span>`;
+          return `<span class="affix-tag" title="${a.description || ""}">${a.name}</span>`;
         }
         return `<span class="affix-tag">${a}</span>`;
       }).join("")}</div>`;
     }
 
     const classRestrictionHtml = getClassRestrictionHtml(item);
-    const canBuy = item.buy_price && item.buy_price > 0;
-    const canBuyEquip = canEquip ? canPlayerEquipItem(item) : true;
+    const compareHtml = canEquip ? buildCompareHtml(item) : "";
+
+    let buyActionHtml = "";
+    if (canBuy && canBuyEquip && maxBuy > 0) {
+      buyActionHtml = `
+        <div class="qty-selector">
+          <button class="qty-btn" onclick="adjustQty('buy', '${item.item_id}', -1)">−</button>
+          <input class="qty-input" type="number" value="1" min="1" max="${maxBuy}" id="buy_${item.item_id}">
+          <button class="qty-btn" onclick="adjustQty('buy', '${item.item_id}', 1)">+</button>
+          <button class="btn-buy" onclick="doTrade('buy', '${item.item_id}', getQty('buy', '${item.item_id}'))">购买</button>
+        </div>`;
+    } else if (canBuy && !canBuyEquip) {
+      buyActionHtml = `<span style="color:#ff6b6b;font-size:11px;">${getClassLabel(item.required_class)}专属</span>`;
+    } else if (canBuy && maxBuy <= 0) {
+      buyActionHtml = `<span style="color:#ff6b6b;font-size:11px;">金币不足</span>`;
+    } else {
+      buyActionHtml = `<span style="color:#888;font-size:11px;">不出售</span>`;
+    }
 
     const div = document.createElement("div");
-    div.className = `item-card shop-item ${item.type} rarity-${rarityCls}`;
+    div.className = `item-card shop-item-compact ${item.type} rarity-${rarityCls}`;
     div.innerHTML = `
       <div class="item-header">
         <span class="item-name" style="color:${rarityColor}">${item.name}</span>
@@ -569,17 +897,172 @@ function renderShop() {
       ${mpHtml}
       ${affixesHtml}
       ${compareHtml}
-      <div class="item-desc">${item.description}</div>
       <div class="item-actions">
         <span class="item-price">售价: ${item.buy_price || "—"} 金</span>
-        ${canBuy && canBuyEquip ? `<button class="btn-buy" onclick="doTrade('buy', '${item.item_id}')">购买</button>` : (canBuy && !canBuyEquip ? `<span style="color:#ff6b6b;font-size:11px;">${getClassLabel(item.required_class)}专属</span>` : (canBuy ? "" : `<span style="color:#888;font-size:11px;">不出售</span>`))}
-        ${playerQty > 0 ? `<button class="btn-sell" onclick="doTrade('sell', '${item.item_id}')">出售 (${playerQty})</button>` : ""}
+        ${buyActionHtml}
       </div>
     `;
+
+    div.addEventListener("dblclick", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      if (canBuy && canBuyEquip && maxBuy > 0) {
+        doTrade("buy", item.item_id, 1);
+      }
+    });
+
+    div.addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      if (e.shiftKey && canBuy && canBuyEquip && maxBuy > 0) {
+        e.preventDefault();
+        doTrade("buy", item.item_id, maxBuy);
+      }
+    });
+
+    div.addEventListener("contextmenu", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      showItemCtxMenu(e, item, "shop");
+    });
+
     container.appendChild(div);
   }
 
   renderPagination("shop-pagination", totalPages, shopPage);
+}
+
+function renderShopRight() {
+  const container = document.getElementById("shop-inventory-items");
+  container.innerHTML = "";
+
+  const filteredItems = getFilteredShopInvItems();
+
+  if (filteredItems.length === 0) {
+    container.innerHTML = '<div class="empty-hint">背包空空如也...</div>';
+    renderPagination("shop-inventory-pagination", 0, shopInvPage);
+    return;
+  }
+
+  const total = filteredItems.length;
+  const totalPages = Math.ceil(total / SHOP_ITEMS_PER_PAGE);
+  if (shopInvPage.current > totalPages) shopInvPage.current = totalPages;
+  const start = (shopInvPage.current - 1) * SHOP_ITEMS_PER_PAGE;
+  const pageItems = filteredItems.slice(start, start + SHOP_ITEMS_PER_PAGE);
+
+  for (const item of pageItems) {
+    const canEquip = item.equip_slot && item.stats;
+    const isEquipped = isItemEquipped(item.item_id);
+    const rarityCls = item.rarity || "common";
+    const rarityColor = getRarityColor(rarityCls);
+    const rarityName = getRarityName(rarityCls);
+    const canSell = item.sell_price && item.sell_price > 0;
+    const maxSell = canSell ? item.quantity : 0;
+
+    let statsHtml = "";
+    if (canEquip && item.stats) {
+      statsHtml = `<div class="item-stats-line">${formatItemStats(item.stats)}</div>`;
+    }
+
+    let healHtml = "";
+    if (item.heal_value && item.heal_value > 0) {
+      healHtml = `<div class="item-heal-value">回复 <span class="heal-num">${item.heal_value}</span> HP</div>`;
+    }
+    let mpHtml = "";
+    if (item.mp_value && item.mp_value > 0) {
+      mpHtml = `<div class="item-heal-value">回复 <span class="heal-num">${item.mp_value}</span> MP</div>`;
+    }
+
+    let affixesHtml = "";
+    if (item.affixes && item.affixes.length > 0) {
+      affixesHtml = `<div class="item-affixes">${item.affixes.map(a => {
+        if (typeof a === "object" && a.name) {
+          return `<span class="affix-tag" title="${a.description || ""}">${a.name}</span>`;
+        }
+        return `<span class="affix-tag">${a}</span>`;
+      }).join("")}</div>`;
+    }
+
+    const classRestrictionHtml = getClassRestrictionHtml(item);
+    const compareHtml = canEquip && !isEquipped ? buildCompareHtml(item) : "";
+
+    let actionHtml = "";
+    if (isEquipped) {
+      actionHtml = `<span style="color:#6bafff;font-size:11px;font-weight:bold;">已装备</span>`;
+    } else if (canEquip && !canPlayerEquipItem(item)) {
+      actionHtml = `<span style="color:#ff6b6b;font-size:11px;">${getClassLabel(item.required_class)}专属</span>`;
+    }
+
+    let sellActionHtml = "";
+    if (canSell && !isEquipped) {
+      sellActionHtml = `
+        <div class="qty-selector">
+          <button class="qty-btn" onclick="adjustQty('sell', '${item.item_id}', -1)">−</button>
+          <input class="qty-input" type="number" value="1" min="1" max="${maxSell}" id="sell_${item.item_id}">
+          <button class="qty-btn" onclick="adjustQty('sell', '${item.item_id}', 1)">+</button>
+          <button class="btn-sell" onclick="doTrade('sell', '${item.item_id}', getQty('sell', '${item.item_id}'))">出售</button>
+        </div>`;
+    } else if (!canSell) {
+      sellActionHtml = `<span style="color:#888;font-size:11px;">不可出售</span>`;
+    }
+
+    let equipBtnHtml = "";
+    if (canEquip && !isEquipped && canPlayerEquipItem(item)) {
+      equipBtnHtml = `<button class="btn-equip" onclick="doEquip('${item.item_id}')">装备</button>`;
+    }
+
+    let useBtnHtml = "";
+    if ((item.type === "consumable" || item.type === "food") && !isEquipped) {
+      useBtnHtml = `<button class="btn-use" onclick="doUseItem('${item.item_id}')">使用</button>`;
+    }
+
+    const div = document.createElement("div");
+    div.className = `item-card shop-item-compact ${item.type} rarity-${rarityCls}`;
+    div.innerHTML = `
+      <div class="item-header">
+        <span class="item-name" style="color:${rarityColor}">${item.name}</span>
+        <span class="item-qty">x${item.quantity}</span>
+      </div>
+      <div class="item-type">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span>${classRestrictionHtml}</div>
+      ${statsHtml}
+      ${healHtml}
+      ${mpHtml}
+      ${affixesHtml}
+      ${compareHtml}
+      <div class="item-actions">
+        <span class="item-price">出售价: ${item.sell_price} 金</span>
+        ${actionHtml}
+        ${equipBtnHtml}
+        ${useBtnHtml}
+        ${sellActionHtml}
+      </div>
+    `;
+
+    div.addEventListener("dblclick", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      if (canEquip && !isEquipped && canPlayerEquipItem(item)) {
+        doEquip(item.item_id);
+      } else if ((item.type === "consumable" || item.type === "food") && !isEquipped) {
+        doUseItem(item.item_id);
+      } else if (canSell && !isEquipped) {
+        doTrade("sell", item.item_id, 1);
+      }
+    });
+
+    div.addEventListener("click", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      if (e.shiftKey && canSell && !isEquipped) {
+        e.preventDefault();
+        doTrade("sell", item.item_id, maxSell);
+      }
+    });
+
+    div.addEventListener("contextmenu", (e) => {
+      if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+      showItemCtxMenu(e, item, "inventory");
+    });
+
+    container.appendChild(div);
+  }
+
+  renderPagination("shop-inventory-pagination", totalPages, shopInvPage);
 }
 
 function getPlayerItemQty(itemId) {
@@ -652,6 +1135,7 @@ function renderPagination(containerId, totalPages, pageState) {
 function rerenderByContainer(containerId) {
   if (containerId === "inventory-pagination") renderInventory();
   else if (containerId === "shop-pagination") renderShop();
+  else if (containerId === "shop-inventory-pagination") renderShop();
 }
 
 function getTypeLabel(type) {
@@ -758,6 +1242,12 @@ function setupEquipSlotDropTargets() {
 function updateGoldDisplay() {
   const el = document.getElementById("hud-gold");
   if (el) el.textContent = inventoryState.gold;
+  const invGold = document.getElementById("inventory-gold");
+  if (invGold) invGold.textContent = inventoryState.gold;
+  const shopGold = document.getElementById("player-gold-shop");
+  if (shopGold) shopGold.textContent = inventoryState.gold;
+  const invShopGold = document.getElementById("inventory-gold-shop");
+  if (invShopGold) invShopGold.textContent = inventoryState.gold;
 }
 
 async function doUseItem(itemId) {
@@ -777,6 +1267,7 @@ async function doUseItem(itemId) {
       updatePlayerHUD();
       await fetchInventory();
       renderInventory();
+      if (shopOpen) renderShop();
       showEquipMessage(data.message, true);
     } else {
       showEquipMessage(data.message, false);
@@ -785,6 +1276,96 @@ async function doUseItem(itemId) {
     showEquipMessage("使用失败", false);
     console.error("使用物品失败:", e);
   }
+}
+
+function closeCtxMenu() {
+  if (ctxMenuEl) {
+    ctxMenuEl.remove();
+    ctxMenuEl = null;
+  }
+}
+
+function showItemCtxMenu(e, item, context) {
+  e.preventDefault();
+  closeCtxMenu();
+
+  const canEquip = item.equip_slot && item.stats;
+  const isEquipped = isItemEquipped(item.item_id);
+  const canUse = (item.type === "consumable" || item.type === "food") && !isEquipped;
+  const canSell = item.sell_price && item.sell_price > 0 && !isEquipped;
+  const canBuy = context === "shop";
+
+  const menu = document.createElement("div");
+  menu.className = "item-ctx-menu";
+
+  const items = [];
+
+  if (canBuy) {
+    items.push({ label: "购买 x1", action: () => doTrade("buy", item.item_id, 1) });
+    items.push({ label: "购买最大数量", action: () => {
+      const maxBuy = Math.min(item.quantity || 1, Math.floor(inventoryState.gold / (item.buy_price || 1)));
+      if (maxBuy > 0) doTrade("buy", item.item_id, maxBuy);
+      else showEquipMessage("金币不足", false);
+    }});
+  }
+
+  if (canEquip && !isEquipped && canPlayerEquipItem(item)) {
+    items.push({ label: "装备", action: () => doEquip(item.item_id) });
+  }
+
+  if (canUse) {
+    items.push({ label: "使用 x1", action: () => doUseItem(item.item_id) });
+  }
+
+  if (canSell && shopOpen) {
+    items.push({ label: "出售 x1", action: () => doTrade("sell", item.item_id, 1) });
+    items.push({ label: "出售全部", action: () => doTrade("sell", item.item_id, item.quantity || 1) });
+  }
+
+  if (items.length > 0) {
+    items.push({ separator: true });
+  }
+
+  items.push({ label: "详情", action: () => showItemTooltip(item, e.target.closest(".item-card, .shop-item-compact, .item-grid-cell")) });
+
+  for (const mi of items) {
+    if (mi.separator) {
+      const sep = document.createElement("div");
+      sep.className = "ctx-sep";
+      menu.appendChild(sep);
+      continue;
+    }
+    const btn = document.createElement("div");
+    btn.className = "ctx-item";
+    btn.textContent = mi.label;
+    btn.addEventListener("click", () => {
+      closeCtxMenu();
+      mi.action();
+    });
+    menu.appendChild(btn);
+  }
+
+  document.body.appendChild(menu);
+  ctxMenuEl = menu;
+
+  let left = e.clientX;
+  let top = e.clientY;
+  if (left + 160 > window.innerWidth) left = window.innerWidth - 165;
+  if (top + menu.offsetHeight > window.innerHeight) top = window.innerHeight - menu.offsetHeight - 5;
+  menu.style.left = left + "px";
+  menu.style.top = top + "px";
+
+  const closeOnOutside = (ev) => {
+    if (!menu.contains(ev.target)) {
+      closeCtxMenu();
+      document.removeEventListener("click", closeOnOutside);
+      document.removeEventListener("contextmenu", closeOnOutside);
+    }
+  };
+  setTimeout(() => {
+    document.addEventListener("click", closeOnOutside);
+    document.addEventListener("contextmenu", closeOnOutside);
+  }, 10);
 }
 
 document.addEventListener("keydown", (e) => {

@@ -30,6 +30,14 @@ const INTENT_ICONS = {
   attack: "⚔️",
   defend: "🛡️",
   special: "✨",
+  summon: "👻",
+  shield: "🔰",
+  elemental_attack: "🔥",
+  buff_self: "💪",
+  drain: "🧛",
+  aoe_attack: "💥",
+  self_heal: "💚",
+  apply_effect: "☠️",
 };
 
 function getEffectDisplay(effectType) {
@@ -37,6 +45,12 @@ function getEffectDisplay(effectType) {
 }
 
 function getIntentIcon(intent) {
+  if (typeof intent === "object" && intent !== null) {
+    if (intent.action === "special" && intent.special_type) {
+      return INTENT_ICONS[intent.special_type] || INTENT_ICONS["special"];
+    }
+    return INTENT_ICONS[intent.action] || "⚔️";
+  }
   return INTENT_ICONS[intent] || "⚔️";
 }
 
@@ -47,7 +61,9 @@ function guessMonsterIntent(m) {
   if (!config) return "attack";
   const ai = config.ai || {};
   const special = ai.special;
-  if (special && m.effects && m.effects.length > 0) return "special";
+  if (special) {
+    return {"action": "special", "special_type": special.type || "apply_effect"};
+  }
   return "attack";
 }
 
@@ -875,6 +891,17 @@ const LOG_ICONS = {
   element_disadvantage: "💧",
 };
 
+const SPECIAL_TYPE_ICONS = {
+  summon: "👻",
+  shield: "🔰",
+  elemental_attack: "🔥",
+  buff_self: "💪",
+  drain: "🧛",
+  aoe_attack: "💥",
+  self_heal: "💚",
+  apply_effect: "☠️",
+};
+
 function renderCombatLog() {
   const logDiv = document.getElementById("combat-log");
   if (!logDiv) return;
@@ -929,7 +956,10 @@ function renderCombatLog() {
       div.className += " log-element-disadvantage";
     }
 
-    const icon = LOG_ICONS[entry.type] || "";
+    let icon = LOG_ICONS[entry.type] || "";
+    if (entry.type === "monster_special" && entry.special_type) {
+      icon = SPECIAL_TYPE_ICONS[entry.special_type] || icon;
+    }
     div.textContent = icon ? `${icon} ${entry.text || ""}` : (entry.text || "");
     fragment.appendChild(div);
   }
@@ -1053,7 +1083,11 @@ function showDamageNumbers(logEntries) {
     } else if (entry.type === "monster_attack" && entry.damage) {
       spawnDamageNumber("player", entry.damage, entry.crit ? "crit" : "monster");
     } else if (entry.type === "monster_special" && entry.damage) {
-      spawnDamageNumber("player", entry.damage, entry.aoe ? "crit" : "monster");
+      spawnDamageNumber("player", entry.damage, entry.aoe || entry.special_type === "elemental_attack" ? "crit" : "monster");
+      if (entry.heal) {
+        const monsterIdx = entry.monster_index !== undefined ? entry.monster_index : 0;
+        spawnDamageNumber(monsterIdx, entry.heal, "heal");
+      }
     } else if (entry.type === "skill" && (entry.damage || entry.aoe)) {
       if (entry.aoe && entry.targets) {
         for (const t of entry.targets) {

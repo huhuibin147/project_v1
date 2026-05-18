@@ -587,5 +587,267 @@ class TestElementalConfig(unittest.TestCase):
                                   f"技能 {sid} 的 element 值无效: {skill['element']}")
 
 
+class TestMonsterSkillExpansion(unittest.TestCase):
+    """怪物技能类型扩展测试"""
+
+    def setUp(self):
+        from combat.session import CombatSession, StatusEffect
+        from combat.monster_ai import execute_action, decide_action
+        self.CombatSession = CombatSession
+        self.StatusEffect = StatusEffect
+        self.execute_action = execute_action
+        self.decide_action = decide_action
+
+        self.monster_config = {
+            "id": "test_monster",
+            "name": "测试怪物",
+            "type": "normal",
+            "level": 5,
+            "element": "none",
+            "stats": {"hp": 100, "attack": 20, "defense": 10, "speed": 8},
+            "drops": [],
+            "gold_reward": [5, 15],
+            "ai": {"behavior": "aggressive", "attack_weight": 50, "defend_weight": 20, "special_weight": 30,
+                   "special": None},
+        }
+        self.player_snapshot = {
+            "hp": 200, "max_hp": 200,
+            "mp": 50, "max_mp": 50,
+            "attack": 25, "defense": 12, "speed": 10,
+            "skills": [],
+            "talent_passives": {},
+            "element": "water",
+        }
+
+    def _make_session(self, monster_config=None):
+        from combat.session import create_combat_session
+        mc = monster_config or self.monster_config
+        return create_combat_session([mc], self.player_snapshot)
+
+    def test_monster_shield_skill(self):
+        mc = dict(self.monster_config)
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "shield", "shield_value": 30, "duration": 2, "message": "测试护盾"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        logs = self.execute_action(session, "special", monster)
+        self.assertTrue(any(l.get("special_type") == "shield" for l in logs))
+        self.assertTrue(any(e.effect_type == "shield" for e in monster.effects))
+        shield_eff = next(e for e in monster.effects if e.effect_type == "shield")
+        self.assertEqual(shield_eff.value, 30)
+
+    def test_monster_shield_pct(self):
+        mc = dict(self.monster_config)
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "shield", "shield_pct": 0.3, "duration": 2, "message": "百分比护盾"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        logs = self.execute_action(session, "special", monster)
+        self.assertTrue(any(l.get("special_type") == "shield" for l in logs))
+        shield_eff = next(e for e in monster.effects if e.effect_type == "shield")
+        self.assertEqual(shield_eff.value, 30)
+
+    def test_monster_elemental_attack(self):
+        mc = dict(self.monster_config)
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "elemental_attack", "element": "fire", "damage_multiplier": 1.5,
+                                "message": "火球攻击"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        initial_hp = session.player_hp
+        logs = self.execute_action(session, "special", monster)
+        self.assertTrue(any(l.get("special_type") == "elemental_attack" for l in logs))
+        self.assertLess(session.player_hp, initial_hp)
+        damage_log = next(l for l in logs if l.get("special_type") == "elemental_attack")
+        self.assertEqual(damage_log.get("element"), "fire")
+
+    def test_monster_elemental_attack_with_effect(self):
+        mc = dict(self.monster_config)
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "elemental_attack", "element": "fire", "damage_multiplier": 1.0,
+                                "effect": "burn", "effect_chance": 1.0, "effect_duration": 3,
+                                "message": "灼烧攻击"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        with patch("random.random", return_value=0.0):
+            logs = self.execute_action(session, "special", monster)
+        self.assertTrue(any(e.effect_type == "burn" for e in session.player_effects))
+
+    def test_monster_buff_self(self):
+        mc = dict(self.monster_config)
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "buff_self",
+                                "buffs": [{"effect": "attack_up", "value": 10, "duration": 3}],
+                                "message": "力量提升"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        base_atk = monster.base_attack
+        logs = self.execute_action(session, "special", monster)
+        self.assertTrue(any(l.get("special_type") == "buff_self" for l in logs))
+        self.assertTrue(any(e.effect_type == "attack_up" for e in monster.effects))
+        self.assertEqual(monster.attack, base_atk + 10)
+
+    def test_monster_drain_skill(self):
+        mc = dict(self.monster_config)
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "drain", "damage_multiplier": 0.8, "heal_pct": 0.5,
+                                "message": "吸血攻击"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        monster.hp = 50
+        initial_player_hp = session.player_hp
+        logs = self.execute_action(session, "special", monster)
+        self.assertTrue(any(l.get("special_type") == "drain" for l in logs))
+        self.assertLess(session.player_hp, initial_player_hp)
+        drain_log = next(l for l in logs if l.get("special_type") == "drain")
+        self.assertGreater(drain_log.get("heal", 0), 0)
+        self.assertGreater(monster.hp, 50)
+
+    def test_monster_summon_skill(self):
+        mc = dict(self.monster_config)
+        mc["type"] = "boss"
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "summon", "summon_ids": ["slime"], "summon_count": [1, 1],
+                                "summon_hp_pct": 0.5, "message": "召唤史莱姆"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        self.assertEqual(len(session.monsters), 1)
+        logs = self.execute_action(session, "special", monster)
+        self.assertTrue(any(l.get("special_type") == "summon" for l in logs))
+        self.assertGreater(len(session.monsters), 1)
+
+    def test_monster_summon_limit(self):
+        mc = dict(self.monster_config)
+        mc["type"] = "boss"
+        mc["stats"]["hp"] = 500
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "summon", "summon_ids": ["slime"], "summon_count": [1, 1],
+                                "summon_hp_pct": 0.5, "message": "召唤"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        session.add_summoned_monster("slime", hp_pct=0.5)
+        session.add_summoned_monster("slime", hp_pct=0.5)
+        self.assertEqual(len(session.monsters), 3)
+        logs = self.execute_action(session, "special", monster)
+        self.assertEqual(len(session.monsters), 3)
+
+    def test_monster_buff_expire(self):
+        mc = dict(self.monster_config)
+        mc["ai"] = {"behavior": "aggressive", "attack_weight": 0, "defend_weight": 0, "special_weight": 100,
+                    "special": {"type": "buff_self",
+                                "buffs": [{"effect": "attack_up", "value": 10, "duration": 1}],
+                                "message": "短暂增益"}}
+        session = self._make_session(mc)
+        monster = session.monsters[0]
+        base_atk = monster.base_attack
+        self.execute_action(session, "special", monster)
+        self.assertEqual(monster.attack, base_atk + 10)
+        from combat.effects import process_effects
+        process_effects(session, is_player=False, monster=monster)
+        self.assertEqual(monster.attack, base_atk)
+
+    def test_monsters_have_valid_special_type(self):
+        valid_types = {"apply_effect", "aoe_attack", "self_heal", "summon", "shield",
+                       "elemental_attack", "buff_self", "drain"}
+        with open(CONFIG_DIR / "monsters.json", "r", encoding="utf-8") as f:
+            monsters = json.load(f)
+        for mid, monster in monsters.items():
+            ai = monster.get("ai", {})
+            special = ai.get("special")
+            if special:
+                with self.subTest(monster=mid):
+                    self.assertIn(special.get("type", "apply_effect"), valid_types,
+                                  f"怪物 {mid} 的 special type 无效: {special.get('type')}")
+            for phase in monster.get("phases", []):
+                phase_special = phase.get("special")
+                if phase_special:
+                    with self.subTest(monster=mid, phase=phase.get("name")):
+                        self.assertIn(phase_special.get("type", "apply_effect"), valid_types,
+                                      f"怪物 {mid} 阶段 {phase.get('name')} 的 special type 无效")
+
+
+class TestItemShopOptimization(unittest.TestCase):
+    """物品系统与商店优化测试"""
+
+    def setUp(self):
+        from item_system import Inventory as Inv, buy_item, sell_item
+        with open(CONFIG_DIR / "items.json", "r", encoding="utf-8") as f:
+            self.items_data = json.load(f)
+        self.Inventory = Inv
+        self.buy_item = buy_item
+        self.sell_item = sell_item
+
+    def test_buy_quantity_gt1(self):
+        player_inv = self.Inventory(gold=1000)
+        npc_inv = self.Inventory(gold=500)
+        npc_inv.add_item("health_potion", 10)
+        result = self.buy_item(player_inv, npc_inv, "health_potion", 5)
+        self.assertTrue(result.success)
+        self.assertEqual(player_inv.get_quantity("health_potion"), 5)
+        self.assertEqual(npc_inv.get_quantity("health_potion"), 5)
+
+    def test_buy_quantity_insufficient_stock(self):
+        player_inv = self.Inventory(gold=1000)
+        npc_inv = self.Inventory(gold=500)
+        npc_inv.add_item("health_potion", 3)
+        result = self.buy_item(player_inv, npc_inv, "health_potion", 5)
+        self.assertFalse(result.success)
+
+    def test_buy_quantity_insufficient_gold(self):
+        player_inv = self.Inventory(gold=10)
+        npc_inv = self.Inventory(gold=500)
+        npc_inv.add_item("health_potion", 10)
+        result = self.buy_item(player_inv, npc_inv, "health_potion", 5)
+        self.assertFalse(result.success)
+
+    def test_sell_quantity_gt1(self):
+        player_inv = self.Inventory(gold=0)
+        npc_inv = self.Inventory(gold=500)
+        player_inv.add_item("health_potion", 10)
+        result = self.sell_item(player_inv, npc_inv, "health_potion", 5)
+        self.assertTrue(result.success)
+        self.assertEqual(player_inv.get_quantity("health_potion"), 5)
+        self.assertEqual(npc_inv.get_quantity("health_potion"), 5)
+
+    def test_sell_quantity_insufficient(self):
+        player_inv = self.Inventory(gold=0)
+        npc_inv = self.Inventory(gold=500)
+        player_inv.add_item("health_potion", 3)
+        result = self.sell_item(player_inv, npc_inv, "health_potion", 5)
+        self.assertFalse(result.success)
+
+    def test_items_have_required_fields(self):
+        required = ["id", "name", "type", "buy_price", "sell_price"]
+        for item_id, item in self.items_data.items():
+            for field in required:
+                self.assertIn(field, item, f"Item {item_id} missing field {field}")
+
+    def test_items_rarity_valid(self):
+        valid = {"common", "uncommon", "rare", "epic", "legendary"}
+        for item_id, item in self.items_data.items():
+            self.assertIn(item.get("rarity", "common"), valid,
+                          f"Item {item_id} has invalid rarity: {item.get('rarity')}")
+
+    def test_items_buy_gt_sell(self):
+        for item_id, item in self.items_data.items():
+            if item.get("buy_price") and item.get("sell_price"):
+                self.assertGreaterEqual(item["buy_price"], item["sell_price"],
+                                        f"Item {item_id}: buy_price should >= sell_price")
+
+    def test_npc_shop_config_valid(self):
+        with open(CONFIG_DIR / "npcs.json", "r", encoding="utf-8") as f:
+            npcs_data = json.load(f)
+        for npc in npcs_data:
+            if "shop" in npc:
+                shop = npc["shop"]
+                self.assertIn("name", shop, f"NPC {npc.get('id')} shop missing name")
+                self.assertIn("inventory", shop, f"NPC {npc.get('id')} shop missing inventory")
+                for slot in shop["inventory"]:
+                    self.assertIn("item_id", slot, f"NPC {npc.get('id')} shop slot missing item_id")
+                    self.assertIn("quantity", slot, f"NPC {npc.get('id')} shop slot missing quantity")
+                    self.assertGreater(slot["quantity"], 0,
+                                       f"NPC {npc.get('id')} shop slot {slot.get('item_id')} quantity <= 0")
+
+
 if __name__ == "__main__":
     unittest.main()

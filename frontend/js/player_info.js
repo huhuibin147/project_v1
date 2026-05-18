@@ -283,6 +283,7 @@ async function doEquip(itemId) {
       await fetchEquipmentInfo();
       renderPlayerInfo();
       if (inventoryOpen) renderInventory();
+      if (typeof shopOpen !== "undefined" && shopOpen) renderShop();
       updatePlayerHUD();
     }
   } catch (e) {

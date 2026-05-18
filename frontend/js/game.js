@@ -206,4 +206,5 @@ function initPanelDrag() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initPanelDrag();
+  if (typeof buildItemSourceMap === "function") buildItemSourceMap();
 });

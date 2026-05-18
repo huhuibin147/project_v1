@@ -226,6 +226,29 @@ class CombatSession:
     def all_monsters_dead(self) -> bool:
         return all(not m.alive for m in self.monsters)
 
+    def add_summoned_monster(self, monster_id: str, hp_pct: float = 0.5) -> "MonsterInstance | None":
+        if len(self.monsters) >= 3:
+            return None
+        import json
+        from pathlib import Path
+        config_path = Path(__file__).parent.parent.parent / "config" / "monsters.json"
+        if not config_path.exists():
+            return None
+        with open(config_path, "r", encoding="utf-8") as f:
+            monsters_db = json.load(f)
+        config = monsters_db.get(monster_id)
+        if not config:
+            return None
+        config = copy.deepcopy(config)
+        config["stats"]["hp"] = int(config["stats"]["hp"] * hp_pct)
+        config["type"] = "summoned"
+        idx = len(self.monsters)
+        instance = MonsterInstance(idx, monster_id, config)
+        instance.hp = config["stats"]["hp"]
+        instance.max_hp = config["stats"]["hp"]
+        self.monsters.append(instance)
+        return instance
+
 
 _combat_sessions: dict[str, CombatSession] = {}
 SESSION_TIMEOUT = 600

@@ -194,6 +194,7 @@ def execute_action(session: "CombatSession", action: str,
             session.player_hp = max(0, session.player_hp - actual_dmg)
             entry = {"type": "monster_special", "damage": actual_dmg,
                      "aoe": True, "monster_index": monster.index,
+                     "special_type": "aoe_attack",
                      "text": special.get("message", f"{monster_name}发动了群体攻击！造成 {actual_dmg} 点伤害。")}
             if shield_absorbed > 0:
                 entry["text"] += f"（护盾吸收 {shield_absorbed}）"
@@ -217,6 +218,7 @@ def execute_action(session: "CombatSession", action: str,
             heal_amount = int(monster.max_hp * heal_pct)
             monster.hp = min(monster.max_hp, monster.hp + heal_amount)
             return [{"type": "monster_special",
+                     "special_type": "self_heal",
                      "text": special.get("message", f"{monster_name}恢复了 {heal_amount} 点生命！"),
                      "monster_index": monster.index, "heal": heal_amount}]
 
@@ -232,7 +234,8 @@ def execute_action(session: "CombatSession", action: str,
                 session.player_effects = add_effect(session.player_effects, new_eff)
                 if effect_type in STAT_BUFF_MAP:
                     _recalculate_player_buffs(session)
-                return [{"type": "monster_special", "text": special.get("message", f"{monster_name}使用了特殊技能！"),
+                return [{"type": "monster_special", "special_type": "apply_effect",
+                         "text": special.get("message", f"{monster_name}使用了特殊技能！"),
                          "monster_index": monster.index}]
             else:
                 result = calc_damage(
@@ -251,6 +254,131 @@ def execute_action(session: "CombatSession", action: str,
                         "crit": result["is_crit"], "defended": result["defended"],
                         "monster_index": monster.index,
                         "text": f"{monster_name}攻击了你，造成 {actual_dmg} 点伤害。"}]
+
+        elif special_type == "summon":
+            summon_ids = special.get("summon_ids", [])
+            summon_count_range = special.get("summon_count", [1, 1])
+            if not summon_ids:
+                return execute_action(session, "attack", monster)
+            count = random.randint(summon_count_range[0], summon_count_range[1])
+            summoned = []
+            for _ in range(count):
+                sid = random.choice(summon_ids)
+                inst = session.add_summoned_monster(sid, hp_pct=special.get("summon_hp_pct", 0.5))
+                if inst:
+                    summoned.append(inst.config["name"])
+            if not summoned:
+                return execute_action(session, "attack", monster)
+            names = "、".join(summoned)
+            return [{"type": "monster_special", "special_type": "summon",
+                     "text": special.get("message", f"{monster_name}召唤了{names}！"),
+                     "monster_index": monster.index,
+                     "summoned": [s for s in summoned]}]
+
+        elif special_type == "shield":
+            shield_pct = special.get("shield_pct")
+            if shield_pct:
+                shield_value = int(monster.max_hp * shield_pct)
+            else:
+                shield_value = special.get("shield_value", 20)
+            duration = special.get("duration", 2)
+            new_eff = StatusEffect("shield", duration, value=shield_value, source="monster")
+            monster.effects = add_effect(monster.effects, new_eff, monster_config=monster.config)
+            return [{"type": "monster_special", "special_type": "shield",
+                     "text": special.get("message", f"{monster_name}获得了 {shield_value} 点护盾！"),
+                     "monster_index": monster.index, "shield": shield_value}]
+
+        elif special_type == "elemental_attack":
+            element = special.get("element", monster.config.get("element", "none"))
+            dmg_mult = special.get("damage_multiplier", 1.0)
+            result = calc_damage(
+                int(monster.attack * dmg_mult),
+                session.player_defense,
+                monster.speed,
+                session.player_speed,
+                session.player_defending,
+                attacker_element=element,
+                defender_element=session.player_element,
+            )
+            raw_dmg = result["damage"]
+            actual_dmg, shield_absorbed = apply_shield(session.player_shield, raw_dmg)
+            session.player_shield -= shield_absorbed
+            session.player_hp = max(0, session.player_hp - actual_dmg)
+
+            entry = {"type": "monster_special", "damage": actual_dmg,
+                     "special_type": "elemental_attack",
+                     "monster_index": monster.index,
+                     "element": element,
+                     "text": special.get("message", f"{monster_name}发动了属性攻击！造成 {actual_dmg} 点伤害。")}
+            if shield_absorbed > 0:
+                entry["text"] += f"（护盾吸收 {shield_absorbed}）"
+            if result.get("element_multiplier", 1.0) > 1.0:
+                entry["text"] += " [属性克制！]"
+            elif result.get("element_multiplier", 1.0) < 1.0:
+                entry["text"] += " [属性被克制！]"
+
+            eff_type = special.get("effect")
+            if eff_type and random.random() < special.get("effect_chance", 0.3):
+                if not is_immune_to_effect(monster.config, eff_type):
+                    eff_duration = special.get("effect_duration", 2)
+                    new_eff = StatusEffect(eff_type, eff_duration, value=0, source="monster")
+                    session.player_effects = add_effect(session.player_effects, new_eff)
+                    if eff_type in STAT_BUFF_MAP:
+                        _recalculate_player_buffs(session)
+                    eff_name = EFFECT_NAMES.get(eff_type, eff_type)
+                    entry["text"] += f" 你被{eff_name}了！"
+            logs.append(entry)
+            return logs
+
+        elif special_type == "buff_self":
+            buffs = special.get("buffs", [])
+            if not buffs:
+                return execute_action(session, "attack", monster)
+            buff_names = []
+            for b in buffs:
+                eff_type = b.get("effect", "attack_up")
+                value = b.get("value", 5)
+                duration = b.get("duration", 3)
+                new_eff = StatusEffect(eff_type, duration, value=value, source="monster_buff")
+                monster.effects = add_effect(monster.effects, new_eff, monster_config=monster.config)
+                from .effects import EFFECT_HANDLERS as _EFFECT_HANDLERS
+                handler = _EFFECT_HANDLERS.get(eff_type)
+                if handler:
+                    handler.tick(session, target_is_player=False, effect=new_eff, monster=monster)
+                buff_names.append(EFFECT_NAMES.get(eff_type, eff_type))
+            names_text = "、".join(buff_names)
+            return [{"type": "monster_special", "special_type": "buff_self",
+                     "text": special.get("message", f"{monster_name}获得了{names_text}效果！"),
+                     "monster_index": monster.index}]
+
+        elif special_type == "drain":
+            dmg_mult = special.get("damage_multiplier", 0.8)
+            result = calc_damage(
+                int(monster.attack * dmg_mult),
+                session.player_defense,
+                monster.speed,
+                session.player_speed,
+                session.player_defending,
+                attacker_element=monster.config.get("element", "none"),
+                defender_element=session.player_element,
+            )
+            raw_dmg = result["damage"]
+            actual_dmg, shield_absorbed = apply_shield(session.player_shield, raw_dmg)
+            session.player_shield -= shield_absorbed
+            session.player_hp = max(0, session.player_hp - actual_dmg)
+
+            heal_pct = special.get("heal_pct", 0.5)
+            heal_amount = max(1, int(actual_dmg * heal_pct))
+            monster.hp = min(monster.max_hp, monster.hp + heal_amount)
+
+            entry = {"type": "monster_special", "damage": actual_dmg,
+                     "special_type": "drain",
+                     "monster_index": monster.index, "heal": heal_amount,
+                     "text": special.get("message", f"{monster_name}吸取了你的生命！造成 {actual_dmg} 点伤害，恢复了 {heal_amount} 点生命。")}
+            if shield_absorbed > 0:
+                entry["text"] += f"（护盾吸收 {shield_absorbed}）"
+            return [entry]
+
         else:
             return execute_action(session, "attack", monster)
 

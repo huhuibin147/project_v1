@@ -98,7 +98,13 @@ def _build_state(session: "CombatSession", log_entries: list[dict], fled: bool =
     for m in session.monsters:
         next_action = ""
         if m.alive and session.phase.value == "player_turn":
-            next_action = decide_action(session, m)
+            action = decide_action(session, m)
+            if action == "special":
+                special = m.get_current_special() if m.is_boss else m.config.get("ai", {}).get("special")
+                special_type = special.get("type", "apply_effect") if special else "apply_effect"
+                next_action = {"action": "special", "special_type": special_type}
+            else:
+                next_action = action
         monsters_data.append(m.to_dict(next_action=next_action))
 
     state = {
