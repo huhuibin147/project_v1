@@ -815,29 +815,16 @@ backend/routes/
 - 路由层透传元素参数
 - 前端显示元素图标和克制提示
 
-#### 5.2 怪物精灵配置化
+#### 5.2 怪物精灵配置化 ✅ 已完成
 
-**当前状态**：`drawMonsterSpriteOnCanvas` 中每种怪物用 if-else 硬编码绘制
+**已完成**：
+- 通用渲染器 `drawSprite` + `drawSpritePart`，支持 8 种部件类型
+- 全部 15 种怪物添加 `sprite` 配置，每种都有独特外观
+- `drawMonsterSpriteOnCanvas` 重构为配置驱动，删除全部 if-else
+- BOSS 阶段精灵覆盖（`sprite_phases`），骷髅王/暗影树精各 3 阶段变色
+- 向后兼容：无 sprite 字段时使用 `sprite_color`/`sprite_accent` 生成默认配置
 
-**行动计划**：
-
-| 步骤 | 内容 | 涉及文件 |
-|------|------|----------|
-| ① | 在 `monsters.json` 定义精灵渲染参数（形状、颜色、部件层级） | `monsters.json` |
-| ② | 重构 `drawMonsterSpriteOnCanvas` 为配置驱动通用渲染器 | `combat.js` |
-| ③ | 支持圆形/方形/三角形基础形状 + 眼睛/嘴/装饰部件组合 | `combat.js` |
-| ④ | 迁移现有全部怪物到新配置格式 | `monsters.json` |
-
-**配置示例**：
-```json
-{
-  "sprite": {
-    "body": { "shape": "circle", "color": "#44cc44", "size": 30 },
-    "eyes": { "shape": "ellipse", "color": "#ffffff", "count": 2, "offset_y": -5 },
-    "accent": { "shape": "blob", "color": "#228822", "offset_y": 10 }
-  }
-}
-```
+详见 → [monster_sprite_config_design.md](monster_sprite_config_design.md)
 
 ---
 
@@ -931,7 +918,7 @@ Phase 1（当前立即执行）         Phase 2（1-2 周内）          Phase 3
 ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
 │ ① 属性克制接入战斗 ✅  │  │ ④ 技能施法动画       │  │ ⑦ 全局状态 → DI     │
 │ ② 事件系统会话级缓存   │  │ ⑤ 战斗背景主题       │  │ ⑧ Combo 系统        │
-│ ③ 怪物精灵配置化      │  │ ⑥ 怪物技能多样化     │  │ ⑨ 音效接口          │
+│ ③ 怪物精灵配置化 ✅    │  │ ⑥ 怪物技能多样化     │  │ ⑨ 音效接口          │
 │                     │  │                     │  │ ⑩ 配方解锁          │
 │                     │  │                     │  │ ⑪ 好感度扩展        │
 └─────────────────────┘  └─────────────────────┘  └─────────────────────┘
@@ -950,7 +937,7 @@ Phase 1（当前立即执行）         Phase 2（1-2 周内）          Phase 3
 | 文件存档无备份恢复 | 存档损坏后无法恢复 | 中 | ✅ 已实现备份恢复 |
 | `ITEM_EFFECTS` 硬编码 | 新增物品需改代码 | 低 | ✅ 已移至配置 |
 | 词条效果部分未实现 | 配置与代码不一致 | 低 | ✅ 已补全 |
-| 怪物精灵硬编码 | `drawMonsterSpriteOnCanvas` 中 if-else 分支随怪物数量线性增长 | 中 | ❌ P0 待处理 |
+| 怪物精灵硬编码 | `drawMonsterSpriteOnCanvas` 中 if-else 分支随怪物数量线性增长 | 中 | ✅ 已配置化，通用渲染器 + JSON 配置驱动 |
 | 事件系统每次重建 | `EventDispatcher` 每回合 clear + register，浪费 CPU | 低 | ❌ P1 待处理 |
 | 怪物技能类型单一 | 仅支持 apply_effect / aoe_attack / self_heal | 中 | ❌ P1 待处理 |
 | 战斗精灵无待机动画 | 静态展示，缺少呼吸/浮动效果 | 低 | ❌ P1 待处理 |

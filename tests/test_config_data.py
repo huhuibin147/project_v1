@@ -303,6 +303,66 @@ class TestConfigData(unittest.TestCase):
             self.assertNotIn(pos, group_positions,
                              f"怪物 {m.get('monster_id')} 在 ({pos[0]},{pos[1]}) 与怪物组位置重叠")
 
+    def test_cfg_monsters_sprite_config_exists(self):
+        monsters = self.configs.get("monsters")
+        if not monsters:
+            self.skipTest("monsters.json 不存在")
+        for mid, m in monsters.items():
+            self.assertIn("sprite", m, f"怪物 {mid} 缺少 sprite 配置")
+            sprite = m["sprite"]
+            self.assertIn("body", sprite, f"怪物 {mid} 的 sprite 缺少 body")
+            body = sprite["body"]
+            for field in ["shape", "color", "x", "y", "w", "h"]:
+                self.assertIn(field, body, f"怪物 {mid} 的 sprite.body 缺少 {field}")
+
+    def test_cfg_monsters_sprite_body_shape_valid(self):
+        monsters = self.configs.get("monsters")
+        if not monsters:
+            self.skipTest("monsters.json 不存在")
+        valid_shapes = {"rect", "rounded_rect", "circle", "ellipse"}
+        for mid, m in monsters.items():
+            sprite = m.get("sprite")
+            if not sprite:
+                continue
+            body = sprite.get("body")
+            if not body:
+                continue
+            self.assertIn(body["shape"], valid_shapes,
+                          f"怪物 {mid} 的 sprite.body.shape '{body['shape']}' 不是有效形状")
+
+    def test_cfg_monsters_sprite_parts_valid_types(self):
+        monsters = self.configs.get("monsters")
+        if not monsters:
+            self.skipTest("monsters.json 不存在")
+        valid_types = {"rect", "rounded_rect", "circle", "ellipse", "triangle",
+                       "eyes", "legs", "horns"}
+        for mid, m in monsters.items():
+            sprite = m.get("sprite")
+            if not sprite:
+                continue
+            for i, part in enumerate(sprite.get("parts", [])):
+                self.assertIn("type", part, f"怪物 {mid} 的 sprite.parts[{i}] 缺少 type")
+                self.assertIn(part["type"], valid_types,
+                              f"怪物 {mid} 的 sprite.parts[{i}].type '{part['type']}' 不是有效类型")
+
+    def test_cfg_monsters_boss_sprite_phases_valid(self):
+        monsters = self.configs.get("monsters")
+        if not monsters:
+            self.skipTest("monsters.json 不存在")
+        for mid, m in monsters.items():
+            if m.get("type") != "boss":
+                continue
+            sprite = m.get("sprite")
+            if not sprite:
+                continue
+            phases = sprite.get("sprite_phases", {})
+            for phase_key, phase_override in phases.items():
+                self.assertTrue(phase_key.isdigit(),
+                               f"BOSS {mid} 的 sprite_phases key '{phase_key}' 应为数字字符串")
+                if "body" in phase_override:
+                    self.assertIsInstance(phase_override["body"], dict,
+                                          f"BOSS {mid} 的 sprite_phases[{phase_key}].body 应为字典")
+
 
 if __name__ == "__main__":
     unittest.main()

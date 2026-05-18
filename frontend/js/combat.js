@@ -290,6 +290,183 @@ function drawMapMonster(ctx, monster) {
   }
 }
 
+function drawSpritePart(ctx, p, part, bodyConfig) {
+  const bodyColor = bodyConfig ? bodyConfig.color : "#888";
+  switch (part.type) {
+    case "rect":
+      ctx.fillStyle = part.color || bodyColor;
+      ctx.fillRect(p * part.x, p * part.y, p * part.w, p * part.h);
+      break;
+    case "rounded_rect": {
+      ctx.fillStyle = part.color || bodyColor;
+      const rx = p * part.x, ry = p * part.y;
+      const rw = p * part.w, rh = p * part.h;
+      const r = p * (part.radius || 1);
+      ctx.beginPath();
+      ctx.moveTo(rx + r, ry);
+      ctx.lineTo(rx + rw - r, ry);
+      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r);
+      ctx.lineTo(rx + rw, ry + rh - r);
+      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh);
+      ctx.lineTo(rx + r, ry + rh);
+      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r);
+      ctx.lineTo(rx, ry + r);
+      ctx.quadraticCurveTo(rx, ry, rx + r, ry);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+    case "circle":
+      ctx.fillStyle = part.color || bodyColor;
+      ctx.beginPath();
+      ctx.arc(p * part.cx, p * part.cy, p * part.r, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case "ellipse":
+      ctx.fillStyle = part.color || bodyColor;
+      ctx.beginPath();
+      ctx.ellipse(p * part.cx, p * part.cy, p * part.rx, p * part.ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case "triangle":
+      ctx.fillStyle = part.color || bodyColor;
+      ctx.beginPath();
+      ctx.moveTo(p * part.x1, p * part.y1);
+      ctx.lineTo(p * part.x2, p * part.y2);
+      ctx.lineTo(p * part.x3, p * part.y3);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    case "eyes": {
+      const ey = p * part.y;
+      const spacing = p * (part.spacing || 2);
+      const eyeSize = p * (part.size || 1);
+      const pupilSize = p * (part.pupil_size || 0.5);
+      const centerX = p * (bodyConfig ? (bodyConfig.x + bodyConfig.w / 2) : 4);
+      const leftX = centerX - spacing / 2;
+      const rightX = centerX + spacing / 2;
+      const style = part.style || "round";
+      ctx.fillStyle = part.eye_color || "#fff";
+      if (style === "slit") {
+        ctx.fillRect(leftX - eyeSize / 2, ey - eyeSize / 2, eyeSize, eyeSize);
+        ctx.fillRect(rightX - eyeSize / 2, ey - eyeSize / 2, eyeSize, eyeSize);
+      } else {
+        ctx.beginPath();
+        ctx.arc(leftX, ey, eyeSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(rightX, ey, eyeSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = part.pupil_color || "#000";
+      if (style === "slit") {
+        ctx.fillRect(leftX - pupilSize / 4, ey - eyeSize / 2, pupilSize / 2, eyeSize);
+        ctx.fillRect(rightX - pupilSize / 4, ey - eyeSize / 2, pupilSize / 2, eyeSize);
+      } else {
+        ctx.beginPath();
+        ctx.arc(leftX, ey, pupilSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(rightX, ey, pupilSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case "legs": {
+      const ly = p * part.y;
+      const count = part.count || 2;
+      const lSpacing = p * (part.spacing || 2);
+      const lw = p * (part.w || 1);
+      const lh = p * (part.h || 1);
+      const lColor = part.color || bodyColor;
+      const centerX = p * (bodyConfig ? (bodyConfig.x + bodyConfig.w / 2) : 4);
+      ctx.fillStyle = lColor;
+      for (let i = 0; i < count; i++) {
+        const lx = centerX - (p * (part.spacing || 2) * (count - 1)) / 2 + i * lSpacing;
+        ctx.fillRect(lx - lw / 2, ly, lw, lh);
+      }
+      break;
+    }
+    case "horns": {
+      const hy = p * part.y;
+      const hSpacing = p * (part.spacing || 2);
+      const hw = p * (part.w || 1);
+      const hh = p * (part.h || 2);
+      const hColor = part.color || bodyColor;
+      const centerX = p * (bodyConfig ? (bodyConfig.x + bodyConfig.w / 2) : 4);
+      ctx.fillStyle = hColor;
+      if (part.style === "round") {
+        ctx.beginPath();
+        ctx.arc(centerX - hSpacing / 2, hy, hw / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX + hSpacing / 2, hy, hw / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(centerX - hSpacing / 2 - hw / 2, hy + hh);
+        ctx.lineTo(centerX - hSpacing / 2, hy);
+        ctx.lineTo(centerX - hSpacing / 2 + hw / 2, hy + hh);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(centerX + hSpacing / 2 - hw / 2, hy + hh);
+        ctx.lineTo(centerX + hSpacing / 2, hy);
+        ctx.lineTo(centerX + hSpacing / 2 + hw / 2, hy + hh);
+        ctx.closePath();
+        ctx.fill();
+      }
+      break;
+    }
+  }
+}
+
+function drawSprite(ctx, spriteConfig, p) {
+  const shadow = spriteConfig.shadow !== false;
+  if (shadow) {
+    const sx = spriteConfig.shadow_x || 2;
+    const sy = spriteConfig.shadow_y || 6;
+    const sw = spriteConfig.shadow_w || 4;
+    const sh = spriteConfig.shadow_h || 1;
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.fillRect(p * sx, p * sy, p * sw, p * sh);
+  }
+
+  const body = spriteConfig.body;
+  if (body) {
+    drawSpritePart(ctx, p, { type: body.shape || "rect", ...body }, body);
+  }
+
+  const parts = spriteConfig.parts || [];
+  for (const part of parts) {
+    drawSpritePart(ctx, p, part, body);
+  }
+}
+
+function getDefaultSprite(color, accent) {
+  return {
+    body: { shape: "rect", color: color, x: 2, y: 3, w: 4, h: 4 },
+    parts: [
+      { type: "rect", color: accent, x: 3, y: 1, w: 2, h: 3 }
+    ]
+  };
+}
+
+function deepMergeSprite(base, override) {
+  if (!override) return base;
+  const result = JSON.parse(JSON.stringify(base));
+  if (override.body) {
+    result.body = { ...result.body, ...override.body };
+  }
+  if (override.parts) {
+    result.parts = override.parts;
+  }
+  if (override.tint) {
+    result.tint = override.tint;
+  }
+  return result;
+}
+
 function drawMonsterSpriteOnCanvas(canvas, monsterId, isBoss, currentPhase) {
   if (!canvas) return;
   const mCtx = canvas.getContext("2d");
@@ -300,93 +477,20 @@ function drawMonsterSpriteOnCanvas(canvas, monsterId, isBoss, currentPhase) {
 
   const s = canvas.width;
   const p = s / 8;
-  const color = config.sprite_color;
-  const accent = config.sprite_accent;
 
-  mCtx.fillStyle = "rgba(0,0,0,0.2)";
-  mCtx.fillRect(p * 2, s - p * 2, p * 4, p * 1);
+  let spriteConfig = config.sprite || getDefaultSprite(config.sprite_color, config.sprite_accent);
 
-  if (monsterId === "slime") {
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 1, p * 4, p * 6, p * 3);
-    mCtx.fillRect(p * 2, p * 3, p * 4, p * 1);
-    mCtx.fillStyle = accent;
-    mCtx.fillRect(p * 2, p * 3, p * 4, p * 1);
-    mCtx.fillStyle = "#fff";
-    mCtx.fillRect(p * 3, p * 5, p, p);
-    mCtx.fillRect(p * 5, p * 5, p, p);
-    mCtx.fillStyle = "#000";
-    mCtx.fillRect(p * 3, p * 5, p * 0.5, p * 0.5);
-    mCtx.fillRect(p * 5, p * 5, p * 0.5, p * 0.5);
-  } else if (monsterId === "wild_wolf") {
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 1, p * 5, p * 6, p * 2);
-    mCtx.fillRect(p * 0, p * 4, p * 2, p * 2);
-    mCtx.fillStyle = accent;
-    mCtx.fillRect(p * 0, p * 4, p * 2, p * 2);
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 2, p * 7, p, p);
-    mCtx.fillRect(p * 5, p * 7, p, p);
-    mCtx.fillStyle = "#ff0";
-    mCtx.fillRect(p * 1, p * 4, p * 0.5, p * 0.5);
-  } else if (monsterId === "forest_spider") {
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 3, p * 4, p * 2, p * 2);
-    mCtx.fillStyle = accent;
-    mCtx.fillRect(p * 1, p * 3, p * 2, p);
-    mCtx.fillRect(p * 5, p * 3, p * 2, p);
-    mCtx.fillRect(p * 1, p * 6, p * 2, p);
-    mCtx.fillRect(p * 5, p * 6, p * 2, p);
-    mCtx.fillStyle = "#f00";
-    mCtx.fillRect(p * 3, p * 4, p * 0.5, p * 0.5);
-    mCtx.fillRect(p * 4.5, p * 4, p * 0.5, p * 0.5);
-  } else if (monsterId === "goblin") {
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 2, p * 3, p * 4, p * 4);
-    mCtx.fillRect(p * 3, p * 1, p * 2, p * 3);
-    mCtx.fillStyle = accent;
-    mCtx.fillRect(p * 2, p * 1, p, p * 2);
-    mCtx.fillRect(p * 5, p * 1, p, p * 2);
-    mCtx.fillStyle = "#f00";
-    mCtx.fillRect(p * 3, p * 3, p, p);
-    mCtx.fillRect(p * 5, p * 3, p, p);
-    mCtx.fillStyle = accent;
-    mCtx.fillRect(p * 2, p * 7, p * 2, p);
-    mCtx.fillRect(p * 4, p * 7, p * 2, p);
-  } else if (monsterId === "dark_bear") {
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 0, p * 3, p * 8, p * 4);
-    mCtx.fillRect(p * 0, p * 2, p * 3, p * 2);
-    mCtx.fillStyle = accent;
-    mCtx.fillRect(p * 0, p * 2, p * 3, p * 2);
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 1, p * 7, p * 2, p);
-    mCtx.fillRect(p * 5, p * 7, p * 2, p);
-    mCtx.fillStyle = "#f00";
-    mCtx.fillRect(p * 1, p * 2, p * 0.5, p * 0.5);
-  } else if (monsterId === "shadow_tree_spirit") {
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 1, p * 2, p * 6, p * 5);
-    mCtx.fillStyle = accent;
-    mCtx.fillRect(p * 2, p * 1, p * 4, p * 2);
-    mCtx.fillStyle = "#4a0e4a";
-    mCtx.fillRect(p * 2, p * 3, p * 1.5, p * 1.5);
-    mCtx.fillRect(p * 4.5, p * 3, p * 1.5, p * 1.5);
-    mCtx.fillStyle = "#0f0";
-    mCtx.fillRect(p * 2.5, p * 3.5, p * 0.5, p * 0.5);
-    mCtx.fillRect(p * 5, p * 3.5, p * 0.5, p * 0.5);
-    mCtx.fillStyle = "#1a3a1a";
-    mCtx.fillRect(p * 1, p * 7, p * 2, p);
-    mCtx.fillRect(p * 5, p * 7, p * 2, p);
-  } else {
-    mCtx.fillStyle = color;
-    mCtx.fillRect(p * 2, p * 3, p * 4, p * 4);
-    mCtx.fillStyle = accent;
-    mCtx.fillRect(p * 3, p * 1, p * 2, p * 3);
+  if (isBoss && currentPhase >= 2 && config.sprite_phases && config.sprite_phases[String(currentPhase)]) {
+    spriteConfig = deepMergeSprite(spriteConfig, config.sprite_phases[String(currentPhase)]);
   }
 
-  if (isBoss && currentPhase >= 2) {
+  drawSprite(mCtx, spriteConfig, p);
+
+  if (isBoss && currentPhase >= 2 && !spriteConfig.tint) {
     mCtx.fillStyle = "rgba(255, 0, 0, 0.15)";
+    mCtx.fillRect(0, 0, s, s);
+  } else if (spriteConfig.tint) {
+    mCtx.fillStyle = spriteConfig.tint;
     mCtx.fillRect(0, 0, s, s);
   }
 }
