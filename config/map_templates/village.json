@@ -1,0 +1,220 @@
+{
+  "id": "village",
+  "name": "青石村",
+  "width": 60,
+  "height": 50,
+  "tile_size": 32,
+  "metadata": {
+    "level_range": [1, 1],
+    "region": "village",
+    "environment": {
+      "particles": [{"type": "leaf", "rate": 0.05}],
+      "ambient_color": null,
+      "danger_zone": false
+    },
+    "map_names": {
+      "forest": "幽暗森林",
+      "dark_cave": "黑暗洞穴",
+      "desert_oasis": "沙漠绿洲",
+      "royal_city": "王城"
+    }
+  },
+  "zones": [
+    {
+      "id": "village_center",
+      "name": "村中心广场",
+      "bounds": {"x": 20, "y": 18, "w": 20, "h": 14},
+      "theme": "plaza",
+      "ground_tile": 22,
+      "road_tile": 1
+    },
+    {
+      "id": "village_residential_west",
+      "name": "西区居民区",
+      "bounds": {"x": 2, "y": 3, "w": 17, "h": 15},
+      "theme": "residential",
+      "ground_tile": 0,
+      "road_tile": 1
+    },
+    {
+      "id": "village_residential_east",
+      "name": "东区居民区",
+      "bounds": {"x": 41, "y": 3, "w": 17, "h": 15},
+      "theme": "residential",
+      "ground_tile": 0,
+      "road_tile": 1
+    },
+    {
+      "id": "village_farm",
+      "name": "农田区",
+      "bounds": {"x": 2, "y": 33, "w": 17, "h": 15},
+      "theme": "farm",
+      "ground_tile": 0,
+      "road_tile": 1
+    },
+    {
+      "id": "village_commercial",
+      "name": "商业区",
+      "bounds": {"x": 41, "y": 33, "w": 17, "h": 15},
+      "theme": "commercial",
+      "ground_tile": 0,
+      "road_tile": 1
+    },
+    {
+      "id": "village_temple",
+      "name": "神殿区",
+      "bounds": {"x": 2, "y": 18, "w": 17, "h": 14},
+      "theme": "temple",
+      "ground_tile": 0,
+      "road_tile": 10
+    },
+    {
+      "id": "village_riverside",
+      "name": "河岸区",
+      "bounds": {"x": 41, "y": 18, "w": 17, "h": 14},
+      "theme": "riverside",
+      "ground_tile": 0,
+      "road_tile": 1
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "fountain",
+      "name": "喷泉广场",
+      "zone": "village_center",
+      "offset": {"x": 7, "y": 5},
+      "width": 5, "height": 5,
+      "tiles": [
+        [22, 22, 22, 22, 22],
+        [22,  0,  0,  0, 22],
+        [22,  0, 16,  0, 22],
+        [22,  0,  0,  0, 22],
+        [22, 22,  1, 22, 22]
+      ]
+    },
+    {
+      "id": "bulletin_board",
+      "name": "公告板",
+      "zone": "village_center",
+      "offset": {"x": 2, "y": 1},
+      "width": 1, "height": 1,
+      "tiles": [[27]]
+    }
+  ],
+  "paths": [
+    {
+      "type": "main_road",
+      "points": [[30, 1], [30, 18], [30, 32], [30, 48]],
+      "width": 2,
+      "tile": 1
+    },
+    {
+      "type": "main_road",
+      "points": [[1, 25], [20, 25], [40, 25], [58, 25]],
+      "width": 2,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[10, 3], [10, 10], [12, 15], [10, 18], [10, 25]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[50, 3], [50, 10], [48, 15], [50, 18], [50, 25]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[10, 25], [10, 30], [8, 33], [10, 40]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[50, 25], [50, 30], [52, 33], [50, 40]],
+      "width": 1,
+      "tile": 1
+    }
+  ],
+  "water_features": [
+    {
+      "type": "river",
+      "start": [58, 12],
+      "end": [2, 38],
+      "width": 2,
+      "meander": 4,
+      "bridges": [[30, 25], [15, 30]]
+    }
+  ],
+  "buildings": [
+    {
+      "template": "house_with_yard",
+      "zone": "village_residential_west",
+      "offset": {"x": 1, "y": 1}
+    },
+    {
+      "template": "house_small",
+      "zone": "village_residential_west",
+      "offset": {"x": 1, "y": 8}
+    },
+    {
+      "template": "house_small",
+      "zone": "village_residential_east",
+      "offset": {"x": 1, "y": 1}
+    },
+    {
+      "template": "house_with_yard",
+      "zone": "village_residential_east",
+      "offset": {"x": 8, "y": 8}
+    },
+    {
+      "template": "temple",
+      "zone": "village_temple",
+      "offset": {"x": 4, "y": 2}
+    },
+    {
+      "template": "blacksmith",
+      "zone": "village_commercial",
+      "offset": {"x": 1, "y": 1}
+    },
+    {
+      "template": "shop",
+      "zone": "village_commercial",
+      "offset": {"x": 1, "y": 8}
+    },
+    {
+      "template": "tavern",
+      "zone": "village_commercial",
+      "offset": {"x": 9, "y": 4}
+    }
+  ],
+  "decorations": [
+    {
+      "zone": "village_farm",
+      "type": "farmland",
+      "count": 4
+    },
+    {
+      "zone": "village_temple",
+      "type": "graves",
+      "count": 6
+    },
+    {
+      "zone": "village_riverside",
+      "type": "riverside_flowers",
+      "count": 8
+    },
+    {
+      "zone": "village_center",
+      "type": "flowers",
+      "count": 10
+    }
+  ],
+  "player_spawn": {"x": 30, "y": 25},
+  "objects": [],
+  "npcs": [],
+  "monster_groups": []
+}

@@ -1,0 +1,177 @@
+{
+  "id": "dark_cave",
+  "name": "幽暗洞穴",
+  "width": 60,
+  "height": 60,
+  "tile_size": 32,
+  "metadata": {
+    "level_range": [5, 12],
+    "region": "cave",
+    "environment": {
+      "particles": [],
+      "ambient_color": "rgba(0, 0, 30, 0.15)",
+      "danger_zone": true
+    },
+    "map_names": {
+      "forest": "幽暗森林"
+    }
+  },
+  "zones": [
+    {
+      "id": "cave_entrance",
+      "name": "入口大厅",
+      "bounds": {"x": 2, "y": 2, "w": 56, "h": 12},
+      "theme": "cave_entrance",
+      "ground_tile": 14,
+      "road_tile": 10,
+      "wall_tile": 13
+    },
+    {
+      "id": "cave_mine_tunnel",
+      "name": "矿脉通道",
+      "bounds": {"x": 2, "y": 15, "w": 18, "h": 20},
+      "theme": "cave_mine",
+      "ground_tile": 14,
+      "road_tile": 10,
+      "wall_tile": 13
+    },
+    {
+      "id": "cave_spider_nest",
+      "name": "蜘蛛巢穴",
+      "bounds": {"x": 21, "y": 15, "w": 18, "h": 20},
+      "theme": "cave_spider",
+      "ground_tile": 14,
+      "road_tile": 10,
+      "wall_tile": 13
+    },
+    {
+      "id": "cave_mushroom_cave",
+      "name": "蘑菇洞穴",
+      "bounds": {"x": 40, "y": 15, "w": 18, "h": 20},
+      "theme": "cave_mushroom",
+      "ground_tile": 14,
+      "road_tile": 10,
+      "wall_tile": 13
+    },
+    {
+      "id": "cave_abyss_corridor",
+      "name": "深渊走廊",
+      "bounds": {"x": 2, "y": 36, "w": 56, "h": 8},
+      "theme": "cave_abyss",
+      "ground_tile": 14,
+      "road_tile": 10,
+      "wall_tile": 13
+    },
+    {
+      "id": "cave_boss_hall",
+      "name": "骷髅王大厅",
+      "bounds": {"x": 10, "y": 45, "w": 40, "h": 13},
+      "theme": "cave_boss",
+      "ground_tile": 14,
+      "road_tile": 10,
+      "wall_tile": 13
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "entrance_torches",
+      "name": "入口火把",
+      "zone": "cave_entrance",
+      "offset": {"x": 26, "y": 5},
+      "width": 7, "height": 3,
+      "tiles": [
+        [31, 14, 14, 10, 14, 14, 31],
+        [14, 14, 10, 10, 10, 14, 14],
+        [14, 10, 10, 10, 10, 10, 14]
+      ]
+    },
+    {
+      "id": "boss_throne",
+      "name": "骷髅王座",
+      "zone": "cave_boss_hall",
+      "offset": {"x": 17, "y": 2},
+      "width": 5, "height": 3,
+      "tiles": [
+        [13, 13, 34, 13, 13],
+        [13, 14, 14, 14, 13],
+        [14, 14, 10, 14, 14]
+      ]
+    }
+  ],
+  "paths": [
+    {
+      "type": "main_road",
+      "points": [[30, 1], [30, 14]],
+      "width": 2,
+      "tile": 10
+    },
+    {
+      "type": "corridor",
+      "points": [[10, 14], [10, 36]],
+      "width": 2,
+      "tile": 10
+    },
+    {
+      "type": "corridor",
+      "points": [[30, 14], [30, 36]],
+      "width": 2,
+      "tile": 10
+    },
+    {
+      "type": "corridor",
+      "points": [[50, 14], [50, 36]],
+      "width": 2,
+      "tile": 10
+    },
+    {
+      "type": "corridor",
+      "points": [[10, 36], [10, 45], [30, 50]],
+      "width": 2,
+      "tile": 10
+    },
+    {
+      "type": "corridor",
+      "points": [[50, 36], [50, 45], [30, 50]],
+      "width": 2,
+      "tile": 10
+    }
+  ],
+  "water_features": [],
+  "buildings": [],
+  "decorations": [
+    {
+      "zone": "cave_entrance",
+      "type": "cave_entrance_deco",
+      "count": 5
+    },
+    {
+      "zone": "cave_mine_tunnel",
+      "type": "mine_deco",
+      "count": 10
+    },
+    {
+      "zone": "cave_spider_nest",
+      "type": "spider_deco",
+      "count": 8
+    },
+    {
+      "zone": "cave_mushroom_cave",
+      "type": "mushroom_deco",
+      "count": 10
+    },
+    {
+      "zone": "cave_abyss_corridor",
+      "type": "abyss_deco",
+      "count": 6
+    },
+    {
+      "zone": "cave_boss_hall",
+      "type": "boss_deco",
+      "count": 4
+    }
+  ],
+  "player_spawn": {"x": 30, "y": 5},
+  "objects": [],
+  "npcs": [],
+  "monster_groups": []
+}

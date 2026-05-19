@@ -1,0 +1,256 @@
+{
+  "id": "royal_city",
+  "name": "王城",
+  "width": 100,
+  "height": 75,
+  "tile_size": 32,
+  "metadata": {
+    "level_range": [7, 11],
+    "region": "city",
+    "environment": {
+      "particles": [],
+      "ambient_color": null,
+      "danger_zone": false
+    },
+    "map_names": {
+      "village": "青石村",
+      "desert_oasis": "沙漠绿洲"
+    }
+  },
+  "zones": [
+    {
+      "id": "city_noble_quarter",
+      "name": "贵族区",
+      "bounds": {"x": 3, "y": 3, "w": 30, "h": 20},
+      "theme": "noble",
+      "ground_tile": 0,
+      "road_tile": 22
+    },
+    {
+      "id": "city_palace",
+      "name": "王宫区",
+      "bounds": {"x": 35, "y": 3, "w": 30, "h": 20},
+      "theme": "palace",
+      "ground_tile": 22,
+      "road_tile": 22
+    },
+    {
+      "id": "city_wall_north",
+      "name": "北城区",
+      "bounds": {"x": 67, "y": 3, "w": 30, "h": 20},
+      "theme": "city_wall",
+      "ground_tile": 0,
+      "road_tile": 22
+    },
+    {
+      "id": "city_west_gate",
+      "name": "西门区",
+      "bounds": {"x": 3, "y": 24, "w": 30, "h": 20},
+      "theme": "residential",
+      "ground_tile": 0,
+      "road_tile": 1
+    },
+    {
+      "id": "city_main_avenue",
+      "name": "中央大道",
+      "bounds": {"x": 35, "y": 24, "w": 30, "h": 20},
+      "theme": "avenue",
+      "ground_tile": 22,
+      "road_tile": 22
+    },
+    {
+      "id": "city_east_gate",
+      "name": "东城区",
+      "bounds": {"x": 67, "y": 24, "w": 30, "h": 20},
+      "theme": "residential",
+      "ground_tile": 0,
+      "road_tile": 1
+    },
+    {
+      "id": "city_commercial",
+      "name": "商业区",
+      "bounds": {"x": 3, "y": 45, "w": 30, "h": 27},
+      "theme": "commercial",
+      "ground_tile": 0,
+      "road_tile": 1
+    },
+    {
+      "id": "city_market",
+      "name": "居民市集",
+      "bounds": {"x": 35, "y": 45, "w": 30, "h": 27},
+      "theme": "market",
+      "ground_tile": 0,
+      "road_tile": 1
+    },
+    {
+      "id": "city_dark_alley",
+      "name": "暗巷区",
+      "bounds": {"x": 67, "y": 45, "w": 30, "h": 27},
+      "theme": "dark_alley",
+      "ground_tile": 0,
+      "road_tile": 1
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "palace_square",
+      "name": "王宫广场",
+      "zone": "city_palace",
+      "offset": {"x": 5, "y": 3},
+      "width": 19, "height": 13,
+      "tiles": [
+        [22, 22, 22, 22, 22, 22, 33, 33, 33, 33, 33, 33, 33, 33, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 33,  6,  6,  6,  6,  6,  6, 33, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 33,  6,  6,  6,  6,  6,  6, 33, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 33,  6,  6, 34,  6,  6,  6, 33, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 33,  6,  6,  6,  6,  6,  6, 33, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 33,  6,  6,  6,  6,  6,  6, 33, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 33, 33, 33,  1, 33, 33, 33, 33, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22],
+        [22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22]
+      ]
+    }
+  ],
+  "paths": [
+    {
+      "type": "main_road",
+      "points": [[50, 1], [50, 74]],
+      "width": 3,
+      "tile": 22
+    },
+    {
+      "type": "main_road",
+      "points": [[1, 35], [98, 35]],
+      "width": 3,
+      "tile": 22
+    },
+    {
+      "type": "main_road",
+      "points": [[1, 55], [98, 55]],
+      "width": 2,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[18, 23], [18, 35]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[82, 23], [82, 35]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[18, 35], [18, 45]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[82, 35], [82, 45]],
+      "width": 1,
+      "tile": 1
+    }
+  ],
+  "water_features": [],
+  "buildings": [
+    {
+      "template": "house_with_yard",
+      "zone": "city_noble_quarter",
+      "offset": {"x": 2, "y": 2}
+    },
+    {
+      "template": "house_medium",
+      "zone": "city_noble_quarter",
+      "offset": {"x": 15, "y": 2}
+    },
+    {
+      "template": "house_with_yard",
+      "zone": "city_noble_quarter",
+      "offset": {"x": 2, "y": 11}
+    },
+    {
+      "template": "blacksmith",
+      "zone": "city_commercial",
+      "offset": {"x": 2, "y": 2}
+    },
+    {
+      "template": "shop",
+      "zone": "city_commercial",
+      "offset": {"x": 12, "y": 2}
+    },
+    {
+      "template": "tavern",
+      "zone": "city_commercial",
+      "offset": {"x": 2, "y": 12}
+    },
+    {
+      "template": "academy",
+      "zone": "city_market",
+      "offset": {"x": 5, "y": 2}
+    },
+    {
+      "template": "shop",
+      "zone": "city_market",
+      "offset": {"x": 18, "y": 2}
+    },
+    {
+      "template": "house_small",
+      "zone": "city_west_gate",
+      "offset": {"x": 2, "y": 2}
+    },
+    {
+      "template": "house_small",
+      "zone": "city_west_gate",
+      "offset": {"x": 12, "y": 2}
+    },
+    {
+      "template": "house_small",
+      "zone": "city_west_gate",
+      "offset": {"x": 2, "y": 10}
+    },
+    {
+      "template": "house_small",
+      "zone": "city_east_gate",
+      "offset": {"x": 2, "y": 2}
+    },
+    {
+      "template": "house_medium",
+      "zone": "city_east_gate",
+      "offset": {"x": 12, "y": 2}
+    }
+  ],
+  "decorations": [
+    {
+      "zone": "city_noble_quarter",
+      "type": "noble_garden",
+      "count": 6
+    },
+    {
+      "zone": "city_palace",
+      "type": "palace_deco",
+      "count": 8
+    },
+    {
+      "zone": "city_main_avenue",
+      "type": "avenue_deco",
+      "count": 10
+    },
+    {
+      "zone": "city_dark_alley",
+      "type": "dark_alley_deco",
+      "count": 8
+    }
+  ],
+  "player_spawn": {"x": 50, "y": 55},
+  "objects": [],
+  "npcs": [],
+  "monster_groups": []
+}

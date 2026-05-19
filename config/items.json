@@ -1713,7 +1713,7 @@
     "name": "技能书：雷霆一击",
     "type": "skill_book",
     "category": "skill_book",
-    "description": "学习通用技能「雷霆一击」。仅限战士或法师使用，需要等级8。",
+    "description": "学习法师技能「雷霆一击」。仅限法师使用，需要等级8。",
     "buy_price": 500,
     "sell_price": 125,
     "stackable": false,

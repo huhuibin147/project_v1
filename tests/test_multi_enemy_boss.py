@@ -267,24 +267,15 @@ class TestBossImmunity(unittest.TestCase):
 
 
 class TestAOEDamage(unittest.TestCase):
-    """AOE 技能伤害递减测试"""
+    """AOE 技能统一伤害乘数测试"""
 
-    def test_aoe_multiplier_single_target(self):
+    def test_aoe_multiplier_unified(self):
         from combat.skills import _get_aoe_multiplier
-        self.assertEqual(_get_aoe_multiplier(1), 1.0)
-
-    def test_aoe_multiplier_two_targets(self):
-        from combat.skills import _get_aoe_multiplier
-        self.assertEqual(_get_aoe_multiplier(2), 0.8)
-
-    def test_aoe_multiplier_three_targets(self):
-        from combat.skills import _get_aoe_multiplier
+        self.assertEqual(_get_aoe_multiplier(1), 0.65)
+        self.assertEqual(_get_aoe_multiplier(2), 0.65)
         self.assertEqual(_get_aoe_multiplier(3), 0.65)
-
-    def test_aoe_multiplier_four_plus_targets(self):
-        from combat.skills import _get_aoe_multiplier
-        self.assertEqual(_get_aoe_multiplier(4), 0.5)
-        self.assertEqual(_get_aoe_multiplier(5), 0.5)
+        self.assertEqual(_get_aoe_multiplier(4), 0.65)
+        self.assertEqual(_get_aoe_multiplier(5), 0.65)
 
 
 class TestMonsterGroupConfig(unittest.TestCase):

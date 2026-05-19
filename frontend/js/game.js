@@ -100,12 +100,16 @@ async function transferToMap(targetMap, targetX, targetY) {
     if (resp.ok && data.success) {
       currentMap = data.map_data;
       mapObjects = currentMap.objects || [];
+      groundCanvasDirty = true;
+      groundCanvasMapId = null;
+      minimapTileCache = null;
       if (typeof setPlayerPosition === 'function') setPlayerPosition(targetX, targetY);
       if (typeof fetchAllNpcs === 'function') await fetchAllNpcs();
       if (typeof loadMapMonsters === 'function') loadMapMonsters();
       if (typeof playerInfo !== 'undefined') Object.assign(playerInfo, data.player_info);
       if (typeof updatePlayerHUD === 'function') updatePlayerHUD();
       if (typeof updateCamera === 'function') updateCamera();
+      if (typeof updateHudMapName === 'function') updateHudMapName();
     }
   } catch (e) {
     console.error("地图切换失败:", e);

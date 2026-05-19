@@ -1,0 +1,176 @@
+{
+  "id": "forest",
+  "name": "幽暗森林",
+  "width": 80,
+  "height": 60,
+  "tile_size": 32,
+  "metadata": {
+    "level_range": [2, 5],
+    "region": "forest",
+    "environment": {
+      "particles": [{"type": "leaf", "rate": 0.1}],
+      "ambient_color": null,
+      "danger_zone": true
+    },
+    "map_names": {
+      "village": "青石村",
+      "dark_cave": "黑暗洞穴",
+      "desert_oasis": "沙漠绿洲"
+    }
+  },
+  "zones": [
+    {
+      "id": "forest_entrance",
+      "name": "入口区",
+      "bounds": {"x": 2, "y": 2, "w": 76, "h": 12},
+      "theme": "forest_light",
+      "ground_tile": 9,
+      "road_tile": 1,
+      "tree_density": 0.15
+    },
+    {
+      "id": "forest_shallow_west",
+      "name": "浅林区西",
+      "bounds": {"x": 2, "y": 15, "w": 37, "h": 18},
+      "theme": "forest_medium",
+      "ground_tile": 9,
+      "road_tile": 1,
+      "tree_density": 0.3
+    },
+    {
+      "id": "forest_stream_valley",
+      "name": "溪谷区",
+      "bounds": {"x": 40, "y": 15, "w": 38, "h": 18},
+      "theme": "forest_stream",
+      "ground_tile": 9,
+      "road_tile": 1,
+      "tree_density": 0.2
+    },
+    {
+      "id": "forest_deep_west",
+      "name": "深林区西",
+      "bounds": {"x": 2, "y": 34, "w": 37, "h": 24},
+      "theme": "forest_dark",
+      "ground_tile": 21,
+      "road_tile": 1,
+      "tree_density": 0.5
+    },
+    {
+      "id": "forest_ruins",
+      "name": "遗迹区",
+      "bounds": {"x": 40, "y": 34, "w": 38, "h": 24},
+      "theme": "forest_ruins",
+      "ground_tile": 21,
+      "road_tile": 10,
+      "tree_density": 0.2
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "guide_post",
+      "name": "向导标牌",
+      "zone": "forest_entrance",
+      "offset": {"x": 37, "y": 5},
+      "width": 1, "height": 1,
+      "tiles": [[27]]
+    },
+    {
+      "id": "ancient_ruins",
+      "name": "古代遗迹",
+      "zone": "forest_ruins",
+      "offset": {"x": 12, "y": 8},
+      "width": 9, "height": 9,
+      "tiles": [
+        [21, 21,  8, 21, 21, 21, 21,  8, 21],
+        [21,  8, 21, 21, 10, 10, 21, 21,  8],
+        [ 8, 21, 21, 10, 10, 10, 10, 21, 21],
+        [21, 21, 10, 10, 10, 10, 10, 10, 21],
+        [21, 10, 10, 10, 34, 10, 10, 10, 21],
+        [21, 21, 10, 10, 10, 10, 10, 10, 21],
+        [ 8, 21, 21, 10, 10, 10, 10, 21, 21],
+        [21,  8, 21, 21, 10, 10, 21, 21,  8],
+        [21, 21,  8, 21, 21, 21, 21,  8, 21]
+      ]
+    }
+  ],
+  "paths": [
+    {
+      "type": "main_road",
+      "points": [[40, 1], [40, 14]],
+      "width": 2,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[40, 14], [35, 20], [30, 25], [25, 30], [20, 34]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[40, 14], [50, 20], [55, 25], [55, 34]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[20, 34], [15, 40], [10, 45], [8, 52]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "winding_path",
+      "points": [[55, 34], [55, 42], [52, 48], [52, 55]],
+      "width": 1,
+      "tile": 1
+    },
+    {
+      "type": "hidden_path",
+      "points": [[20, 34], [30, 36], [40, 35], [55, 34]],
+      "width": 1,
+      "tile": 21
+    }
+  ],
+  "water_features": [
+    {
+      "type": "river",
+      "start": [78, 18],
+      "end": [42, 55],
+      "width": 2,
+      "meander": 5,
+      "bridges": [[55, 25], [48, 40]]
+    }
+  ],
+  "buildings": [],
+  "decorations": [
+    {
+      "zone": "forest_entrance",
+      "type": "light_forest",
+      "count": 15
+    },
+    {
+      "zone": "forest_shallow_west",
+      "type": "medium_forest",
+      "count": 25
+    },
+    {
+      "zone": "forest_stream_valley",
+      "type": "stream_vegetation",
+      "count": 20
+    },
+    {
+      "zone": "forest_deep_west",
+      "type": "dark_forest",
+      "count": 35
+    },
+    {
+      "zone": "forest_ruins",
+      "type": "ruins_vegetation",
+      "count": 10
+    }
+  ],
+  "player_spawn": {"x": 40, "y": 5},
+  "objects": [],
+  "npcs": [],
+  "monster_groups": []
+}

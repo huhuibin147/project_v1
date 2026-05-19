@@ -147,15 +147,15 @@
   "thunder_strike": {
     "skill_id": "thunder_strike",
     "name": "雷霆一击",
-    "description": "召唤天雷轰击敌人，造成 2.0 倍魔法伤害，无视 50% 防御",
+    "description": "召唤天雷轰击敌人，造成 1.6 倍魔法伤害，无视 50% 防御",
     "mp_cost": 25,
     "cooldown": 3,
     "type": "damage",
     "target": "enemy",
     "damage_type": "magic",
-    "power": 2.0,
+    "power": 1.6,
     "effects": [{"type": "defense_ignore", "value": 50, "duration": 0}],
-    "class_requirement": ["warrior", "mage"],
+    "class_requirement": ["mage"],
     "level_requirement": 8
   },
   "whirlwind": {

@@ -2296,6 +2296,41 @@ body {
   background: #3a3a6e;
 }
 
+.result-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.btn-result-close {
+  padding: 10px 24px;
+  background: #3a1a1a;
+  color: #ff8888;
+  border: 2px solid #ff6666;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-result-close:hover {
+  background: #5a2a2a;
+}
+
+.btn-combat.btn-close {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  color: #ff8888;
+  border-color: #ff6666;
+  background: #3a1a1a;
+}
+
+.btn-combat.btn-close:hover:not(:disabled) {
+  background: #5a2a2a;
+}
+
 .combat-shake {
   animation: combatShake 0.3s ease-in-out;
 }

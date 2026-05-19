@@ -1258,7 +1258,10 @@ async function showCombatResult(data, isVictory) {
     if (data.fled) {
       html = `<div class="result-title flee-title">🏃 逃跑成功！</div>`;
     }
-    html += `<button class="btn-result-continue" onclick="endCombat()">继续</button>`;
+    html += `<div class="result-buttons">`;
+    html += `<button class="btn-result-continue" onclick="viewCombatLog()">📜 查看记录</button>`;
+    html += `<button class="btn-result-close" onclick="endCombat()">✕ 关闭</button>`;
+    html += `</div>`;
     content.innerHTML = html;
   } else {
     let html = `<div class="result-title defeat-title">💀 战斗失败</div>`;
@@ -1268,11 +1271,30 @@ async function showCombatResult(data, isVictory) {
       html += `<div class="result-line">损失金币: -${data.gold_lost}</div>`;
     }
     html += `</div>`;
-    html += `<button class="btn-result-continue" onclick="endCombat()">继续</button>`;
+    html += `<div class="result-buttons">`;
+    html += `<button class="btn-result-continue" onclick="viewCombatLog()">📜 查看记录</button>`;
+    html += `<button class="btn-result-close" onclick="endCombat()">✕ 关闭</button>`;
+    html += `</div>`;
     content.innerHTML = html;
   }
 
   overlay.style.display = "flex";
+}
+
+function viewCombatLog() {
+  const overlay = document.getElementById("combat-result-overlay");
+  if (overlay) overlay.style.display = "none";
+
+  // 禁用战斗操作按钮
+  const actionButtons = document.querySelectorAll("#combat-action-main .btn-combat, .btn-flee");
+  actionButtons.forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = "0.3";
+  });
+
+  // 显示关闭按钮
+  const closeBtn = document.getElementById("btn-combat-close");
+  if (closeBtn) closeBtn.style.display = "inline-block";
 }
 
 async function endCombat() {
@@ -1312,6 +1334,15 @@ async function endCombat() {
 
   const container = document.getElementById("combat-monsters-container");
   if (container) container.innerHTML = "";
+
+  // 恢复按钮状态
+  const actionButtons = document.querySelectorAll("#combat-action-main .btn-combat, .btn-flee");
+  actionButtons.forEach(btn => {
+    btn.disabled = false;
+    btn.style.opacity = "";
+  });
+  const closeBtn = document.getElementById("btn-combat-close");
+  if (closeBtn) closeBtn.style.display = "none";
 
   if (typeof fetchPlayerInfo === "function") {
     await fetchPlayerInfo();

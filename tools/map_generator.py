@@ -28,6 +28,7 @@
 import json
 import os
 import sys
+import math
 import random
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Set
@@ -270,6 +271,36 @@ STRUCTURES = {
             [0, 20, 0],
         ],
     },
+    "house_with_yard": {
+        "name": "带院子的民居",
+        "width": 9,
+        "height": 8,
+        "tiles": [
+            [0,  0,  8,  8,  8,  8,  8,  0,  0],
+            [0,  0,  8, 15, 15, 15,  8,  0,  0],
+            [0,  0,  8,  0,  0,  0,  8,  0,  0],
+            [4,  4,  4,  4,  4,  4,  4,  4,  4],
+            [4, 14, 14, 14, 14, 14, 14, 14,  4],
+            [4, 14, 14, 14, 14, 14, 14, 14,  4],
+            [4, 14, 14, 14, 14, 14, 14, 14,  4],
+            [4,  4,  4,  1,  4,  4,  4,  4,  4]
+        ],
+        "door": [3, 7],
+    },
+    "shop_with_sign": {
+        "name": "带招牌的商店",
+        "width": 7,
+        "height": 6,
+        "tiles": [
+            [4,  4,  4,  8,  4,  4,  4],
+            [4, 14, 14, 14, 14, 14,  4],
+            [4, 14, 14, 14, 14, 14,  4],
+            [4, 14, 14, 14, 14, 14,  4],
+            [4, 14, 14, 14, 14, 14,  4],
+            [4,  4,  4,  1,  4,  4,  4]
+        ],
+        "door": [3, 5],
+    },
 }
 
 # 地图模板
@@ -453,6 +484,171 @@ class MapGenerator:
             
             self.place_structure(ground, deco, x, y)
     
+    def generate_from_template(self, template_path: str) -> Dict:
+        with open(template_path, "r", encoding="utf-8") as f:
+            tpl = json.load(f)
+        W, H = tpl["width"], tpl["height"]
+        ground = [[4] * W for _ in range(H)]
+        for zone in tpl.get("zones", []):
+            b = zone["bounds"]
+            gt = zone.get("ground_tile", 0)
+            for r in range(b["y"], min(b["y"] + b["h"], H - 1)):
+                for c in range(b["x"], min(b["x"] + b["w"], W - 1)):
+                    if 0 < r < H - 1 and 0 < c < W - 1:
+                        ground[r][c] = gt
+        for lm in tpl.get("landmarks", []):
+            zone_id = lm.get("zone", "")
+            zone = next((z for z in tpl.get("zones", []) if z["id"] == zone_id), None)
+            if not zone:
+                continue
+            b = zone["bounds"]
+            ox = b["x"] + lm["offset"]["x"]
+            oy = b["y"] + lm["offset"]["y"]
+            for r, row in enumerate(lm["tiles"]):
+                for c, tile_id in enumerate(row):
+                    ty, tx = oy + r, ox + c
+                    if 0 < ty < H - 1 and 0 < tx < W - 1:
+                        ground[ty][tx] = tile_id
+        for path in tpl.get("paths", []):
+            pts = path["points"]
+            w = path.get("width", 1)
+            tile = path.get("tile", 1)
+            for i in range(len(pts) - 1):
+                self._draw_path_segment(ground, pts[i], pts[i + 1], w, tile)
+        for wf in tpl.get("water_features", []):
+            if wf["type"] == "river":
+                self._draw_river(ground, wf)
+        for bld in tpl.get("buildings", []):
+            zone_id = bld.get("zone", "")
+            zone = next((z for z in tpl.get("zones", []) if z["id"] == zone_id), None)
+            if not zone:
+                continue
+            zb = zone["bounds"]
+            bx = zb["x"] + bld["offset"]["x"]
+            by = zb["y"] + bld["offset"]["y"]
+            self.place_structure(ground, bld["template"], bx, by)
+        for deco in tpl.get("decorations", []):
+            zone_id = deco.get("zone", "")
+            zone = next((z for z in tpl.get("zones", []) if z["id"] == zone_id), None)
+            if not zone:
+                continue
+            self._apply_zone_decoration(ground, zone, deco)
+        map_data = {
+            "id": tpl["id"],
+            "name": tpl["name"],
+            "width": W,
+            "height": H,
+            "tile_size": tpl.get("tile_size", 32),
+            "metadata": tpl.get("metadata", {}),
+            "layers": {"ground": ground},
+            "objects": tpl.get("objects", []),
+            "npcs": tpl.get("npcs", []),
+            "monster_groups": tpl.get("monster_groups", []),
+            "player_spawn": tpl.get("player_spawn", {"x": W // 2, "y": H // 2}),
+        }
+        return map_data
+
+    def _draw_path_segment(self, ground, start, end, width, tile):
+        x1, y1 = start
+        x2, y2 = end
+        H = len(ground)
+        W = len(ground[0])
+        if x1 == x2:
+            for y in range(min(y1, y2), max(y1, y2) + 1):
+                for dw in range(width):
+                    tx = x1 + dw
+                    if 0 < tx < W - 1 and 0 < y < H - 1:
+                        ground[y][tx] = tile
+        elif y1 == y2:
+            for x in range(min(x1, x2), max(x1, x2) + 1):
+                for dw in range(width):
+                    ty = y1 + dw
+                    if 0 < x < W - 1 and 0 < ty < H - 1:
+                        ground[ty][x] = tile
+        else:
+            steps = max(abs(x2 - x1), abs(y2 - y1))
+            for s in range(steps + 1):
+                t = s / max(steps, 1)
+                cx = int(x1 + (x2 - x1) * t)
+                cy = int(y1 + (y2 - y1) * t)
+                for dw in range(width):
+                    for dh in range(width):
+                        tx, ty = cx + dw, cy + dh
+                        if 0 < tx < W - 1 and 0 < ty < H - 1:
+                            ground[ty][tx] = tile
+
+    def _draw_river(self, ground, config):
+        sx, sy = config["start"]
+        ex, ey = config["end"]
+        w = config.get("width", 2)
+        meander = config.get("meander", 3)
+        H = len(ground)
+        W = len(ground[0])
+        steps = max(abs(ex - sx), abs(ey - sy)) * 2
+        prev_x, prev_y = sx, sy
+        for s in range(1, steps + 1):
+            t = s / steps
+            base_x = sx + (ex - sx) * t
+            base_y = sy + (ey - sy) * t
+            offset_x = meander * math.sin(t * math.pi * 3) * (1 - abs(2 * t - 1))
+            cx = int(base_x + offset_x)
+            cy = int(base_y)
+            for dw in range(w):
+                for dh in range(max(1, w // 2)):
+                    tx, ty = cx + dw, cy + dh
+                    if 0 < tx < W - 1 and 0 < ty < H - 1:
+                        ground[ty][tx] = 16
+            prev_x, prev_y = cx, cy
+        for bx, by in config.get("bridges", []):
+            for dw in range(w):
+                for dh in range(max(1, w // 2)):
+                    tx, ty = bx + dw, by + dh
+                    if 0 < tx < W - 1 and 0 < ty < H - 1:
+                        ground[ty][tx] = 17
+
+    def _apply_zone_decoration(self, ground, zone, deco):
+        b = zone["bounds"]
+        deco_type = deco.get("type", "")
+        count = deco.get("count", 5)
+        H = len(ground)
+        W = len(ground[0])
+        gt = zone.get("ground_tile", 0)
+        deco_map = {
+            "farmland": 25,
+            "graves": 26,
+            "riverside_flowers": 20,
+            "flowers": 15,
+            "light_forest": 5,
+            "medium_forest": 5,
+            "stream_vegetation": 18,
+            "dark_forest": 19,
+            "ruins_vegetation": 8,
+            "cave_entrance_deco": 31,
+            "mine_deco": 8,
+            "spider_deco": 8,
+            "mushroom_deco": 20,
+            "abyss_deco": 23,
+            "boss_deco": 31,
+            "barren_desert": 19,
+            "dune_desert": 29,
+            "oasis_vegetation": 28,
+            "quicksand_area": 30,
+            "noble_garden": 20,
+            "palace_deco": 22,
+            "avenue_deco": 20,
+            "dark_alley_deco": 8,
+        }
+        tile_id = deco_map.get(deco_type, 0)
+        placed = 0
+        attempts = 0
+        while placed < count and attempts < count * 10:
+            x = random.randint(b["x"] + 1, min(b["x"] + b["w"] - 2, W - 2))
+            y = random.randint(b["y"] + 1, min(b["y"] + b["h"] - 2, H - 2))
+            if ground[y][x] == gt:
+                ground[y][x] = tile_id
+                placed += 1
+            attempts += 1
+
     def generate_map(self, map_type: str, map_id: str, 
                      width: int = None, height: int = None,
                      name: str = None) -> Dict:
@@ -1500,6 +1696,25 @@ def main():
             print("用法: python map_generator.py fix-enclosed <id>")
             return
         generator.find_and_fix_enclosed_areas(sys.argv[2])
+
+    elif command == "template":
+        if len(sys.argv) < 3:
+            print("用法: python map_generator.py template <template_name>")
+            print("示例: python map_generator.py template village")
+            print("\n可用模板:")
+            tpl_dir = ROOT_DIR / "config" / "map_templates"
+            if tpl_dir.exists():
+                for f in sorted(tpl_dir.glob("*.json")):
+                    print(f"  {f.stem}")
+            return
+        tpl_name = sys.argv[2]
+        tpl_path = ROOT_DIR / "config" / "map_templates" / f"{tpl_name}.json"
+        if not tpl_path.exists():
+            print(f"错误: 模板 '{tpl_name}' 不存在")
+            return
+        map_data = generator.generate_from_template(str(tpl_path))
+        filepath = generator.save_map(map_data)
+        print(f"已从模板生成地图: {filepath} ({map_data['width']}x{map_data['height']})")
 
     else:
         print(f"未知命令: {command}")

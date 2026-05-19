@@ -214,6 +214,13 @@ function drawMap(ctx) {
     if (sw > 0 && sh > 0) {
       ctx.drawImage(groundCanvas, sx, sy, sw, sh, sx, sy, sw, sh);
     }
+
+    const ambientColor = currentMap.metadata?.environment?.ambient_color;
+    if (ambientColor) {
+      ctx.fillStyle = ambientColor;
+      ctx.fillRect(sx, sy, sw, sh);
+    }
+
     return;
   }
 
@@ -697,6 +704,85 @@ function initTileRenderers() {
     ctx.fillRect(x + p * 4, y + p * 5, p * 3, p);
     ctx.fillStyle = "#a0c8e0";
     ctx.fillRect(x + p * 2, y + p * 3, p * 2, p);
+  });
+
+  registerTileRenderer("farmland", (ctx, x, y) => {
+    ctx.fillStyle = "#6a8a3a";
+    ctx.fillRect(x + p * 0, y + p * 2, p * 8, p);
+    ctx.fillRect(x + p * 0, y + p * 5, p * 8, p);
+  });
+
+  registerTileRenderer("tombstone", (ctx, x, y) => {
+    ctx.fillStyle = "#4a4a4a";
+    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 5);
+    ctx.fillRect(x + p * 2, y + p * 2, p * 4, p);
+  });
+
+  registerTileRenderer("bulletin_board", (ctx, x, y) => {
+    ctx.fillStyle = "#6a5b3a";
+    ctx.fillRect(x + p * 1, y + p * 1, p * 6, p * 5);
+    ctx.fillRect(x + p * 3, y + p * 6, p * 2, p * 2);
+    ctx.fillStyle = "#e8d8a0";
+    ctx.fillRect(x + p * 2, y + p * 2, p * 4, p * 3);
+  });
+
+  registerTileRenderer("palm_tree", (ctx, x, y) => {
+    const time = Date.now() / 1000;
+    const sway = Math.sin(time * 1.5 + x * 0.1) * p * 0.5;
+    ctx.fillStyle = "#8a6a3a";
+    ctx.fillRect(x + p * 3, y + p * 4, p * 2, p * 4);
+    ctx.fillStyle = "#2d6a1e";
+    ctx.fillRect(x + p * 1 + sway, y + p * 1, p * 6, p * 2);
+    ctx.fillRect(x + p * 0 + sway, y + p * 2, p * 3, p * 2);
+    ctx.fillRect(x + p * 5 + sway, y + p * 2, p * 3, p * 2);
+  });
+
+  registerTileRenderer("dune", (ctx, x, y) => {
+    ctx.fillStyle = "#b49040";
+    ctx.fillRect(x + p * 0, y + p * 4, p * 8, p * 4);
+    ctx.fillRect(x + p * 1, y + p * 3, p * 6, p);
+    ctx.fillRect(x + p * 2, y + p * 2, p * 4, p);
+  });
+
+  registerTileRenderer("quicksand", (ctx, x, y) => {
+    const time = Date.now() / 1000;
+    const ripple = Math.sin(time * 2 + x * 0.2) * p;
+    ctx.fillStyle = "#a08830";
+    ctx.fillRect(x + p * 2 + ripple, y + p * 3, p * 4, p);
+    ctx.fillRect(x + p * 1 - ripple, y + p * 5, p * 6, p);
+  });
+
+  registerTileRenderer("torch", (ctx, x, y) => {
+    const time = Date.now() / 1000;
+    const flicker = 0.5 + Math.sin(time * 8 + x) * 0.3;
+    ctx.fillStyle = "#8a5a2a";
+    ctx.fillRect(x + p * 3, y + p * 3, p * 2, p * 5);
+    ctx.fillStyle = `rgba(255, 160, 0, ${flicker})`;
+    ctx.fillRect(x + p * 2, y + p * 1, p * 4, p * 2);
+    ctx.fillStyle = `rgba(255, 220, 50, ${flicker * 0.7})`;
+    ctx.fillRect(x + p * 3, y + p * 0, p * 2, p);
+  });
+
+  registerTileRenderer("sand_pillar", (ctx, x, y) => {
+    ctx.fillStyle = "#8a7a5a";
+    ctx.fillRect(x + p * 2, y + p * 1, p * 4, p * 7);
+    ctx.fillRect(x + p * 3, y + p * 0, p * 2, p);
+  });
+
+  registerTileRenderer("city_wall", (ctx, x, y) => {
+    ctx.fillStyle = "#5a5a5a";
+    ctx.fillRect(x + p * 0, y + p * 0, p * 8, p * 3);
+    ctx.fillRect(x + p * 0, y + p * 5, p * 8, p * 3);
+    ctx.fillRect(x + p * 0, y + p * 3, p * 2, p * 2);
+    ctx.fillRect(x + p * 6, y + p * 3, p * 2, p * 2);
+  });
+
+  registerTileRenderer("throne", (ctx, x, y) => {
+    ctx.fillStyle = "#aa8a3a";
+    ctx.fillRect(x + p * 2, y + p * 1, p * 4, p * 6);
+    ctx.fillRect(x + p * 1, y + p * 0, p * 6, p * 2);
+    ctx.fillStyle = "#cc3333";
+    ctx.fillRect(x + p * 3, y + p * 3, p * 2, p * 2);
   });
 }
 

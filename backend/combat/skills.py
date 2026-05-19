@@ -9,11 +9,11 @@ if TYPE_CHECKING:
     from .damage import calc_damage
 
 
-AOE_DAMAGE_MULTIPLIER = {1: 1.0, 2: 0.8, 3: 0.65}
+AOE_DAMAGE_MULTIPLIER = 0.65
 
 
 def _get_aoe_multiplier(target_count: int) -> float:
-    return AOE_DAMAGE_MULTIPLIER.get(target_count, 0.5)
+    return AOE_DAMAGE_MULTIPLIER
 
 
 def execute_skill(session: "CombatSession", skill_id: str) -> dict:
