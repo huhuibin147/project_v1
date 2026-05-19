@@ -163,7 +163,11 @@
     }
   ],
   "player_spawn": {"x": 35, "y": 5},
-  "objects": [],
+  "objects": [
+    {"id": "portal_village", "type": "portal", "x": 5, "y": 27, "properties": {"target_map": "village", "target_x": 56, "target_y": 25, "name": "青石村"}},
+    {"id": "portal_forest", "type": "portal", "x": 60, "y": 5, "properties": {"target_map": "forest", "target_x": 7, "target_y": 48, "name": "幽暗森林"}},
+    {"id": "portal_royal_city", "type": "portal", "x": 65, "y": 45, "properties": {"target_map": "royal_city", "target_x": 5, "target_y": 37, "name": "王城"}}
+  ],
   "npcs": [],
   "monster_groups": []
 }

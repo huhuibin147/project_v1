@@ -34,47 +34,92 @@ from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Set
 from collections import deque
 
-# 瓦片类型定义
-TILES = {
-    0: {"name": "草地", "symbol": ".", "color": "\033[32m", "walkable": True},
-    1: {"name": "泥土路", "symbol": "·", "color": "\033[33m", "walkable": True},
-    2: {"name": "水面", "symbol": "~", "color": "\033[34m", "walkable": False},
-    3: {"name": "木桥", "symbol": "=", "color": "\033[33m", "walkable": True},
-    4: {"name": "墙/边界", "symbol": "#", "color": "\033[37m", "walkable": False},
-    5: {"name": "树木", "symbol": "T", "color": "\033[32m", "walkable": False},
-    6: {"name": "石头", "symbol": "S", "color": "\033[37m", "walkable": False},
-    7: {"name": "花朵", "symbol": "*", "color": "\033[35m", "walkable": True},
-    8: {"name": "栅栏", "symbol": "+", "color": "\033[33m", "walkable": False},
-    9: {"name": "森林地面", "symbol": ",", "color": "\033[32m", "walkable": True},
-    10: {"name": "洞穴地面", "symbol": "_", "color": "\033[90m", "walkable": True},
-    11: {"name": "熔岩", "symbol": "!", "color": "\033[31m", "walkable": False},
-    12: {"name": "沙地", "symbol": "s", "color": "\033[93m", "walkable": True},
-    13: {"name": "雪地", "symbol": "S", "color": "\033[97m", "walkable": True},
-    14: {"name": "室内地板", "symbol": "F", "color": "\033[90m", "walkable": True},
-    15: {"name": "花丛草地", "symbol": "f", "color": "\033[32m", "walkable": True},
-    16: {"name": "小河", "symbol": "r", "color": "\033[34m", "walkable": False},
-    17: {"name": "木桥", "symbol": "B", "color": "\033[33m", "walkable": True},
-    18: {"name": "灌木丛", "symbol": "b", "color": "\033[32m", "walkable": False},
-    19: {"name": "枯树", "symbol": "D", "color": "\033[33m", "walkable": False},
-    20: {"name": "花朵", "symbol": "F", "color": "\033[35m", "walkable": True},
-    21: {"name": "深草地", "symbol": "g", "color": "\033[32m", "walkable": True},
-    22: {"name": "石板", "symbol": "P", "color": "\033[37m", "walkable": True},
-    23: {"name": "熔岩", "symbol": "L", "color": "\033[31m", "walkable": False},
-    24: {"name": "冰面", "symbol": "I", "color": "\033[96m", "walkable": True},
+# 瓦片类型定义 - 从 tiles.json 动态加载（见 load_tiles_config）
+# 以下为 fallback 默认值，仅当 tiles.json 不存在时使用
+_TILES_FALLBACK = {
+    0: {"name": "草地", "walkable": True},
+    1: {"name": "泥土路", "walkable": True},
+    2: {"name": "房屋墙", "walkable": False},
+    3: {"name": "屋顶", "walkable": False},
+    4: {"name": "树木", "walkable": False},
+    5: {"name": "水面", "walkable": False},
+    6: {"name": "木地板", "walkable": True},
+    7: {"name": "栅栏", "walkable": False},
+    8: {"name": "石头", "walkable": False},
+    9: {"name": "木地板2", "walkable": True},
+    10: {"name": "石板路", "walkable": True},
+    11: {"name": "沙地", "walkable": True},
+    12: {"name": "雪地", "walkable": True},
+    13: {"name": "岩壁", "walkable": False},
+    14: {"name": "岩地", "walkable": True},
+    15: {"name": "花丛草地", "walkable": True},
+    16: {"name": "小河", "walkable": False},
+    17: {"name": "木桥", "walkable": True},
+    18: {"name": "灌木丛", "walkable": False},
+    19: {"name": "枯树", "walkable": False},
+    20: {"name": "花朵", "walkable": True},
+    21: {"name": "深草地", "walkable": True},
+    22: {"name": "石板", "walkable": True},
+    23: {"name": "熔岩", "walkable": False},
+    24: {"name": "冰面", "walkable": True},
 }
 
+# 瓦片符号映射（仅用于终端预览，与逻辑无关）
+TILE_SYMBOLS = {
+    0: ".", 1: "·", 2: "#", 3: "^", 4: "T", 5: "~", 6: "F", 7: "+",
+    8: "S", 9: "f", 10: "P", 11: "s", 12: "S", 13: "█", 14: "_",
+    15: "f", 16: "r", 17: "B", 18: "b", 19: "D", 20: "*", 21: "g",
+    22: "P", 23: "!", 24: "I",
+}
+
+TILE_COLORS = {
+    0: "\033[32m", 1: "\033[33m", 2: "\033[37m", 3: "\033[31m", 4: "\033[32m",
+    5: "\033[34m", 6: "\033[90m", 7: "\033[33m", 8: "\033[37m", 9: "\033[90m",
+    10: "\033[37m", 11: "\033[93m", 12: "\033[97m", 13: "\033[90m", 14: "\033[90m",
+    15: "\033[32m", 16: "\033[34m", 17: "\033[33m", 18: "\033[32m", 19: "\033[33m",
+    20: "\033[35m", 21: "\033[32m", 22: "\033[37m", 23: "\033[31m", 24: "\033[96m",
+}
+
+
+def load_tiles_config(config_dir: Path = None) -> Dict[int, Dict]:
+    """从 tiles.json 加载瓦片定义，替代硬编码的 TILES 字典"""
+    config_dir = config_dir or (Path(__file__).parent.parent / "config")
+    tiles_path = config_dir / "tiles.json"
+    if tiles_path.exists():
+        with open(tiles_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        tiles = {}
+        for key, val in data.items():
+            if key == "gather_appearances":
+                continue
+            try:
+                tid = int(key)
+            except ValueError:
+                continue
+            tiles[tid] = {
+                "name": val["name"],
+                "walkable": val.get("walkable", True),
+            }
+        return tiles
+    return dict(_TILES_FALLBACK)
+
+
+# 启动时加载瓦片定义
+TILES = load_tiles_config()
+
 # 结构定义（可放置在地图上的建筑/装饰）
+# 瓦片ID已对齐 tiles.json：墙=2, 木地板=6, 栅栏=7, 水面=5, 树木=4, 泥土路=1, 石板=22
 STRUCTURES = {
     "house_small": {
         "name": "小型房屋",
         "width": 5,
         "height": 5,
         "tiles": [
-            [4, 4, 4, 4, 4],
-            [4, 14, 14, 14, 4],
-            [4, 14, 14, 14, 4],
-            [4, 14, 14, 14, 4],
-            [4, 4, 1, 4, 4],
+            [2, 2, 2, 2, 2],
+            [2, 6, 6, 6, 2],
+            [2, 6, 6, 6, 2],
+            [2, 6, 6, 6, 2],
+            [2, 2, 1, 2, 2],
         ],
         "door": (2, 4),
     },
@@ -83,12 +128,12 @@ STRUCTURES = {
         "width": 7,
         "height": 6,
         "tiles": [
-            [4, 4, 4, 4, 4, 4, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 4, 4, 1, 4, 4, 4],
+            [2, 2, 2, 2, 2, 2, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 2, 2, 1, 2, 2, 2],
         ],
         "door": (3, 5),
     },
@@ -97,12 +142,12 @@ STRUCTURES = {
         "width": 8,
         "height": 6,
         "tiles": [
-            [4, 4, 4, 4, 4, 4, 4, 4],
-            [4, 14, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 14, 4],
-            [4, 4, 4, 4, 1, 4, 4, 4],
+            [2, 2, 2, 2, 2, 2, 2, 2],
+            [2, 6, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 6, 2],
+            [2, 2, 2, 2, 1, 2, 2, 2],
         ],
         "door": (4, 5),
     },
@@ -111,11 +156,11 @@ STRUCTURES = {
         "width": 7,
         "height": 5,
         "tiles": [
-            [4, 4, 4, 4, 4, 4, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 4, 1, 4, 4, 4, 4],
+            [2, 2, 2, 2, 2, 2, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 2, 1, 2, 2, 2, 2],
         ],
         "door": (2, 4),
     },
@@ -124,13 +169,13 @@ STRUCTURES = {
         "width": 7,
         "height": 7,
         "tiles": [
-            [4, 4, 4, 4, 4, 4, 4],
-            [4, 22, 22, 22, 22, 22, 4],
-            [4, 22, 22, 22, 22, 22, 4],
-            [4, 22, 22, 22, 22, 22, 4],
-            [4, 22, 22, 22, 22, 22, 4],
-            [4, 22, 22, 22, 22, 22, 4],
-            [4, 4, 4, 1, 4, 4, 4],
+            [2, 2, 2, 2, 2, 2, 2],
+            [2, 22, 22, 22, 22, 22, 2],
+            [2, 22, 22, 22, 22, 22, 2],
+            [2, 22, 22, 22, 22, 22, 2],
+            [2, 22, 22, 22, 22, 22, 2],
+            [2, 22, 22, 22, 22, 22, 2],
+            [2, 2, 2, 1, 2, 2, 2],
         ],
         "door": (3, 6),
     },
@@ -139,13 +184,13 @@ STRUCTURES = {
         "width": 8,
         "height": 7,
         "tiles": [
-            [4, 4, 4, 4, 4, 4, 4, 4],
-            [4, 22, 22, 22, 22, 22, 22, 4],
-            [4, 22, 22, 22, 22, 22, 22, 4],
-            [4, 22, 22, 22, 22, 22, 22, 4],
-            [4, 22, 22, 22, 22, 22, 22, 4],
-            [4, 22, 22, 22, 22, 22, 22, 4],
-            [4, 4, 4, 4, 1, 4, 4, 4],
+            [2, 2, 2, 2, 2, 2, 2, 2],
+            [2, 22, 22, 22, 22, 22, 22, 2],
+            [2, 22, 22, 22, 22, 22, 22, 2],
+            [2, 22, 22, 22, 22, 22, 22, 2],
+            [2, 22, 22, 22, 22, 22, 22, 2],
+            [2, 22, 22, 22, 22, 22, 22, 2],
+            [2, 2, 2, 2, 1, 2, 2, 2],
         ],
         "door": (4, 6),
     },
@@ -154,12 +199,12 @@ STRUCTURES = {
         "width": 7,
         "height": 6,
         "tiles": [
-            [4, 4, 4, 4, 4, 4, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 14, 14, 14, 14, 14, 4],
-            [4, 4, 4, 1, 4, 4, 4],
+            [2, 2, 2, 2, 2, 2, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 6, 6, 6, 6, 6, 2],
+            [2, 2, 2, 1, 2, 2, 2],
         ],
         "door": (3, 5),
     },
@@ -168,9 +213,9 @@ STRUCTURES = {
         "width": 3,
         "height": 3,
         "tiles": [
-            [8, 8, 8],
-            [8, 2, 8],
-            [8, 8, 8],
+            [7, 7, 7],
+            [7, 5, 7],
+            [7, 7, 7],
         ],
     },
     "tree_cluster": {
@@ -178,9 +223,9 @@ STRUCTURES = {
         "width": 3,
         "height": 3,
         "tiles": [
-            [0, 5, 0],
-            [5, 0, 5],
-            [0, 5, 0],
+            [0, 4, 0],
+            [4, 0, 4],
+            [0, 4, 0],
         ],
     },
     "pond": {
@@ -189,8 +234,8 @@ STRUCTURES = {
         "height": 4,
         "tiles": [
             [0, 0, 0, 0, 0],
-            [0, 2, 2, 2, 0],
-            [0, 2, 2, 2, 0],
+            [0, 5, 5, 5, 0],
+            [0, 5, 5, 5, 0],
             [0, 0, 0, 0, 0],
         ],
     },
@@ -231,13 +276,13 @@ STRUCTURES = {
         "name": "横向栅栏",
         "width": 5,
         "height": 1,
-        "tiles": [[8, 8, 8, 8, 8]],
+        "tiles": [[7, 7, 7, 7, 7]],
     },
     "fence_v": {
         "name": "纵向栅栏",
         "width": 1,
         "height": 5,
-        "tiles": [[8], [8], [8], [8], [8]],
+        "tiles": [[7], [7], [7], [7], [7]],
     },
     "road_h": {
         "name": "横向道路",
@@ -276,14 +321,14 @@ STRUCTURES = {
         "width": 9,
         "height": 8,
         "tiles": [
-            [0,  0,  8,  8,  8,  8,  8,  0,  0],
-            [0,  0,  8, 15, 15, 15,  8,  0,  0],
-            [0,  0,  8,  0,  0,  0,  8,  0,  0],
-            [4,  4,  4,  4,  4,  4,  4,  4,  4],
-            [4, 14, 14, 14, 14, 14, 14, 14,  4],
-            [4, 14, 14, 14, 14, 14, 14, 14,  4],
-            [4, 14, 14, 14, 14, 14, 14, 14,  4],
-            [4,  4,  4,  1,  4,  4,  4,  4,  4]
+            [0,  0,  7,  7,  7,  7,  7,  0,  0],
+            [0,  0,  7, 15, 15, 15,  7,  0,  0],
+            [0,  0,  7,  0,  0,  0,  7,  0,  0],
+            [2,  2,  2,  2,  2,  2,  2,  2,  2],
+            [2,  6,  6,  6,  6,  6,  6,  6,  2],
+            [2,  6,  6,  6,  6,  6,  6,  6,  2],
+            [2,  6,  6,  6,  6,  6,  6,  6,  2],
+            [2,  2,  2,  1,  2,  2,  2,  2,  2]
         ],
         "door": [3, 7],
     },
@@ -292,12 +337,12 @@ STRUCTURES = {
         "width": 7,
         "height": 6,
         "tiles": [
-            [4,  4,  4,  8,  4,  4,  4],
-            [4, 14, 14, 14, 14, 14,  4],
-            [4, 14, 14, 14, 14, 14,  4],
-            [4, 14, 14, 14, 14, 14,  4],
-            [4, 14, 14, 14, 14, 14,  4],
-            [4,  4,  4,  1,  4,  4,  4]
+            [2,  2,  2,  7,  2,  2,  2],
+            [2,  6,  6,  6,  6,  6,  2],
+            [2,  6,  6,  6,  6,  6,  2],
+            [2,  6,  6,  6,  6,  6,  2],
+            [2,  6,  6,  6,  6,  6,  2],
+            [2,  2,  2,  1,  2,  2,  2]
         ],
         "door": [3, 5],
     },
@@ -308,7 +353,7 @@ TEMPLATES = {
     "village": {
         "description": "村庄地图 - 有房屋、道路和NPC",
         "default_size": (50, 40),
-        "border_tile": 4,
+        "border_tile": 13,
         "ground_tile": 0,
         "structures": ["house_small", "house_medium", "blacksmith", "shop", "well"],
         "roads": True,
@@ -317,7 +362,7 @@ TEMPLATES = {
     "forest": {
         "description": "森林地图 - 有树木、道路和采集点",
         "default_size": (60, 50),
-        "border_tile": 4,
+        "border_tile": 13,
         "ground_tile": 9,
         "structures": [],
         "roads": True,
@@ -326,17 +371,17 @@ TEMPLATES = {
     "cave": {
         "description": "洞穴地图 - 有石头、熔岩和宝箱",
         "default_size": (40, 30),
-        "border_tile": 4,
-        "ground_tile": 10,
+        "border_tile": 13,
+        "ground_tile": 14,
         "structures": [],
         "roads": False,
         "decorations": [],
-        "hazards": [11],
+        "hazards": [23],
     },
     "town": {
         "description": "城镇地图 - 大型村庄，有更多建筑",
         "default_size": (80, 60),
-        "border_tile": 4,
+        "border_tile": 13,
         "ground_tile": 0,
         "structures": ["house_small", "house_medium", "blacksmith", "shop", "well"],
         "roads": True,
@@ -345,8 +390,8 @@ TEMPLATES = {
     "desert": {
         "description": "沙漠地图 - 有沙地和绿洲",
         "default_size": (50, 50),
-        "border_tile": 4,
-        "ground_tile": 12,
+        "border_tile": 13,
+        "ground_tile": 11,
         "structures": ["well"],
         "roads": True,
         "decorations": ["pond"],
@@ -365,7 +410,7 @@ class MapGenerator:
         self.maps_dir = maps_dir or MAPS_DIR
         self.maps_dir.mkdir(parents=True, exist_ok=True)
     
-    def create_empty_map(self, width: int, height: int, border_tile: int = 4, 
+    def create_empty_map(self, width: int, height: int, border_tile: int = 13, 
                          ground_tile: int = 0) -> List[List[int]]:
         """创建空白地图"""
         ground = []
@@ -405,22 +450,21 @@ class MapGenerator:
             for c in range(struct_width):
                 ground[y + r][x + c] = struct_tiles[r][c]
         
-        # 确保门口有通路（在门外放置道路瓦片）
+        # 确保门口有通路（在门外放置道路瓦片并延伸）
         if "door" in struct:
             door_x, door_y = struct["door"]
-            # 门外的位置（相对于结构）
             outside_x = x + door_x
             outside_y = y + door_y + 1
             
-            # 确保门外是可行走的
+            # 门外第一格：确保可行走
             if 0 <= outside_x < width and 0 <= outside_y < height:
-                # 如果门外是不可行走的墙或边界，改为道路
-                if not TILES.get(ground[outside_y][outside_x], {}).get("walkable", True):
+                if not self._is_walkable(ground[outside_y][outside_x]):
                     ground[outside_y][outside_x] = 1
-                
-                # 在门外再延伸一格道路，确保可以进入
-                further_y = outside_y + 1
-                if 0 <= further_y < height and not TILES.get(ground[further_y][outside_x], {}).get("walkable", True):
+            
+            # 门外第二格：继续延伸道路，直到遇到可行走瓦片或超出范围
+            further_y = outside_y + 1
+            if 0 <= further_y < height and 0 <= outside_x < width:
+                if not self._is_walkable(ground[further_y][outside_x]):
                     ground[further_y][outside_x] = 1
         
         return True
@@ -445,7 +489,7 @@ class MapGenerator:
                         ground[y1 + w][x] = 1
     
     def add_random_trees(self, ground: List[List[int]], count: int, 
-                         border_tile: int = 4) -> None:
+                         border_tile: int = 13) -> None:
         """随机添加树木"""
         height = len(ground)
         width = len(ground[0])
@@ -458,8 +502,8 @@ class MapGenerator:
             x = random.randint(3, width - 4)
             y = random.randint(3, height - 4)
             
-            if ground[y][x] != border_tile and ground[y][x] != 5:
-                ground[y][x] = 5
+            if ground[y][x] != border_tile and ground[y][x] != 4:
+                ground[y][x] = 4
                 placed += 1
             
             attempts += 1
@@ -488,10 +532,16 @@ class MapGenerator:
         with open(template_path, "r", encoding="utf-8") as f:
             tpl = json.load(f)
         W, H = tpl["width"], tpl["height"]
-        ground = [[4] * W for _ in range(H)]
+        # 初始化：边界为岩壁(13)，内部为草地(0)作为默认地面
+        ground = [[13] * W for _ in range(H)]
+        default_ground = tpl.get("ground_tile", 0)
+        for r in range(1, H - 1):
+            for c in range(1, W - 1):
+                ground[r][c] = default_ground
+        # 各 zone 覆盖自己的 ground_tile
         for zone in tpl.get("zones", []):
             b = zone["bounds"]
-            gt = zone.get("ground_tile", 0)
+            gt = zone.get("ground_tile", default_ground)
             for r in range(b["y"], min(b["y"] + b["h"], H - 1)):
                 for c in range(b["x"], min(b["x"] + b["w"], W - 1)):
                     if 0 < r < H - 1 and 0 < c < W - 1:
@@ -509,15 +559,7 @@ class MapGenerator:
                     ty, tx = oy + r, ox + c
                     if 0 < ty < H - 1 and 0 < tx < W - 1:
                         ground[ty][tx] = tile_id
-        for path in tpl.get("paths", []):
-            pts = path["points"]
-            w = path.get("width", 1)
-            tile = path.get("tile", 1)
-            for i in range(len(pts) - 1):
-                self._draw_path_segment(ground, pts[i], pts[i + 1], w, tile)
-        for wf in tpl.get("water_features", []):
-            if wf["type"] == "river":
-                self._draw_river(ground, wf)
+        # 先放置建筑，再画道路（确保道路感知建筑位置）
         for bld in tpl.get("buildings", []):
             zone_id = bld.get("zone", "")
             zone = next((z for z in tpl.get("zones", []) if z["id"] == zone_id), None)
@@ -527,12 +569,29 @@ class MapGenerator:
             bx = zb["x"] + bld["offset"]["x"]
             by = zb["y"] + bld["offset"]["y"]
             self.place_structure(ground, bld["template"], bx, by)
+        for path in tpl.get("paths", []):
+            pts = path["points"]
+            w = path.get("width", 1)
+            tile = path.get("tile", 1)
+            for i in range(len(pts) - 1):
+                self._draw_path_segment(ground, pts[i], pts[i + 1], w, tile)
+        for wf in tpl.get("water_features", []):
+            if wf["type"] == "river":
+                self._draw_river(ground, wf)
         for deco in tpl.get("decorations", []):
             zone_id = deco.get("zone", "")
             zone = next((z for z in tpl.get("zones", []) if z["id"] == zone_id), None)
             if not zone:
                 continue
             self._apply_zone_decoration(ground, zone, deco)
+        # 连通性检查与修复：确保出生点可达所有可行走区域
+        spawn = tpl.get("player_spawn", {"x": W // 2, "y": H // 2})
+        result = self.check_connectivity(ground, (spawn["x"], spawn["y"]))
+        if not result["connected"]:
+            print(f"  连通性检测: {result['reachable_count']}/{result['total_walkable']} 可达, {result['unreachable_regions']} 个不连通区域, 正在修复...")
+            self.fix_connectivity(ground, (spawn["x"], spawn["y"]))
+            result2 = self.check_connectivity(ground, (spawn["x"], spawn["y"]))
+            print(f"  修复后: {result2['reachable_count']}/{result2['total_walkable']} 可达, {result2['unreachable_regions']} 个不连通区域")
         map_data = {
             "id": tpl["id"],
             "name": tpl["name"],
@@ -544,11 +603,19 @@ class MapGenerator:
             "objects": tpl.get("objects", []),
             "npcs": tpl.get("npcs", []),
             "monster_groups": tpl.get("monster_groups", []),
-            "player_spawn": tpl.get("player_spawn", {"x": W // 2, "y": H // 2}),
+            "player_spawn": spawn,
         }
         return map_data
 
+    def _is_walkable(self, tile_id: int) -> bool:
+        """检查瓦片是否可行走（未知瓦片默认不可行走，与前端一致）"""
+        info = TILES.get(tile_id)
+        if info is None:
+            return False
+        return info.get("walkable", True)
+
     def _draw_path_segment(self, ground, start, end, width, tile):
+        """绘制路径段，遇到不可行走的瓦片时跳过（不覆盖建筑墙壁等）"""
         x1, y1 = start
         x2, y2 = end
         H = len(ground)
@@ -558,13 +625,15 @@ class MapGenerator:
                 for dw in range(width):
                     tx = x1 + dw
                     if 0 < tx < W - 1 and 0 < y < H - 1:
-                        ground[y][tx] = tile
+                        if self._is_walkable(ground[y][tx]):
+                            ground[y][tx] = tile
         elif y1 == y2:
             for x in range(min(x1, x2), max(x1, x2) + 1):
                 for dw in range(width):
                     ty = y1 + dw
                     if 0 < x < W - 1 and 0 < ty < H - 1:
-                        ground[ty][x] = tile
+                        if self._is_walkable(ground[ty][x]):
+                            ground[ty][x] = tile
         else:
             steps = max(abs(x2 - x1), abs(y2 - y1))
             for s in range(steps + 1):
@@ -575,7 +644,8 @@ class MapGenerator:
                     for dh in range(width):
                         tx, ty = cx + dw, cy + dh
                         if 0 < tx < W - 1 and 0 < ty < H - 1:
-                            ground[ty][tx] = tile
+                            if self._is_walkable(ground[ty][tx]):
+                                ground[ty][tx] = tile
 
     def _draw_river(self, ground, config):
         sx, sy = config["start"]
@@ -607,19 +677,23 @@ class MapGenerator:
                         ground[ty][tx] = 17
 
     def _apply_zone_decoration(self, ground, zone, deco):
+        """在区域内智能放置装饰物，支持最小间距和避让建筑/道路"""
         b = zone["bounds"]
         deco_type = deco.get("type", "")
         count = deco.get("count", 5)
+        min_spacing = deco.get("min_spacing", 2)
         H = len(ground)
         W = len(ground[0])
         gt = zone.get("ground_tile", 0)
+        # 道路类瓦片集合，装饰物不应覆盖
+        road_tiles = {1, 10, 22}
         deco_map = {
             "farmland": 25,
             "graves": 26,
             "riverside_flowers": 20,
             "flowers": 15,
-            "light_forest": 5,
-            "medium_forest": 5,
+            "light_forest": 4,
+            "medium_forest": 4,
             "stream_vegetation": 18,
             "dark_forest": 19,
             "ruins_vegetation": 8,
@@ -639,14 +713,37 @@ class MapGenerator:
             "dark_alley_deco": 8,
         }
         tile_id = deco_map.get(deco_type, 0)
+        placed_positions = []
         placed = 0
         attempts = 0
-        while placed < count and attempts < count * 10:
+        while placed < count and attempts < count * 15:
             x = random.randint(b["x"] + 1, min(b["x"] + b["w"] - 2, W - 2))
             y = random.randint(b["y"] + 1, min(b["y"] + b["h"] - 2, H - 2))
-            if ground[y][x] == gt:
-                ground[y][x] = tile_id
-                placed += 1
+            # 只在区域地面瓦片上放置
+            if ground[y][x] != gt:
+                attempts += 1
+                continue
+            # 不覆盖道路
+            if ground[y][x] in road_tiles:
+                attempts += 1
+                continue
+            # 不覆盖不可行走的瓦片（建筑等）
+            if not self._is_walkable(ground[y][x]):
+                attempts += 1
+                continue
+            # 检查与已放置装饰物的最小间距
+            if min_spacing > 0:
+                too_close = False
+                for px, py in placed_positions:
+                    if abs(x - px) + abs(y - py) < min_spacing:
+                        too_close = True
+                        break
+                if too_close:
+                    attempts += 1
+                    continue
+            ground[y][x] = tile_id
+            placed_positions.append((x, y))
+            placed += 1
             attempts += 1
 
     def generate_map(self, map_type: str, map_id: str, 
@@ -729,7 +826,7 @@ class MapGenerator:
             x = random.randint(3, width - 4)
             y = random.randint(3, height - 4)
             if ground[y][x] == 0:  # 只在草地上放置
-                ground[y][x] = random.choice([7, 15, 20])  # 花朵/花丛/花朵
+                ground[y][x] = random.choice([15, 20])  # 花丛草地/花朵
         
         # 添加栅栏围栏
         self.place_structure(ground, "fence_h", 15, height // 2 + 8)
@@ -759,7 +856,7 @@ class MapGenerator:
                         nx, ny = x + dx, y + dy
                         if 3 <= nx < width - 3 and 3 <= ny < height - 3:
                             if ground[ny][nx] == 9 and random.random() < 0.6:
-                                ground[ny][nx] = 5
+                                ground[ny][nx] = 4
         
         # 添加主要道路（十字路口）
         self.add_road(ground, (width // 2, 2), (width // 2, height - 3), width=2)
@@ -806,7 +903,7 @@ class MapGenerator:
                 ground[y][x] = 21
     
     def _generate_cave_content(self, ground: List[List[int]], 
-                                template: Dict) -> None:
+                               template: Dict) -> None:
         """生成洞穴内容 - 三层区域"""
         height = len(ground)
         width = len(ground[0])
@@ -816,25 +913,25 @@ class MapGenerator:
         
         for r in range(2, zone1_end - 1):
             for c in range(2, width - 2):
-                if ground[r][c] == 10:
+                if ground[r][c] == 14:
                     if random.random() < 0.08:
                         ground[r][c] = 6
         
         for r in range(zone1_end, zone2_end - 1):
             for c in range(2, width - 2):
-                if ground[r][c] == 10:
+                if ground[r][c] == 14:
                     if random.random() < 0.12:
                         ground[r][c] = 6
                     elif random.random() < 0.04:
-                        ground[r][c] = 11
+                        ground[r][c] = 23
         
         for r in range(zone2_end, height - 2):
             for c in range(2, width - 2):
-                if ground[r][c] == 10:
+                if ground[r][c] == 14:
                     if random.random() < 0.15:
                         ground[r][c] = 6
                     elif random.random() < 0.08:
-                        ground[r][c] = 11
+                        ground[r][c] = 23
         
         self.add_road(ground, (width // 2, 2), (width // 2, height - 3), width=2)
         self.add_road(ground, (2, zone1_end), (width - 3, zone1_end), width=1)
@@ -843,13 +940,13 @@ class MapGenerator:
         for _ in range(15):
             x = random.randint(3, width - 4)
             y = random.randint(3, height - 4)
-            if ground[y][x] == 10:
-                ground[y][x] = random.choice([7, 20])
+            if ground[y][x] == 14:
+                ground[y][x] = random.choice([8, 20])
         
         for _ in range(10):
             x = random.randint(3, width - 4)
             y = random.randint(zone2_end, height - 4)
-            if ground[y][x] == 10:
+            if ground[y][x] == 14:
                 ground[y][x] = 24
     
     def auto_place_npcs(self, map_id: str) -> bool:
@@ -865,7 +962,7 @@ class MapGenerator:
         walkable_positions = []
         for r in range(2, height - 2):
             for c in range(2, width - 2):
-                if TILES.get(ground[r][c], {}).get('walkable', False):
+                if self._is_walkable(ground[r][c]):
                     occupied = False
                     for npc in data.get('npcs', []):
                         if npc.get('x') == c and npc.get('y') == r:
@@ -903,7 +1000,7 @@ class MapGenerator:
         walkable_positions = []
         for r in range(3, height - 3):
             for c in range(3, width - 3):
-                if TILES.get(ground[r][c], {}).get('walkable', False):
+                if self._is_walkable(ground[r][c]):
                     walkable_positions.append((c, r))
         
         if not walkable_positions:
@@ -955,7 +1052,7 @@ class MapGenerator:
         walkable_positions = []
         for r in range(3, height - 3):
             for c in range(3, width - 3):
-                if TILES.get(ground[r][c], {}).get('walkable', False):
+                if self._is_walkable(ground[r][c]):
                     occupied = False
                     for obj in data.get('objects', []):
                         if obj.get('x') == c and obj.get('y') == r:
@@ -1011,7 +1108,7 @@ class MapGenerator:
         spawn_x, spawn_y = spawn.get('x', 0), spawn.get('y', 0)
         
         reachable = self._check_reachability(ground, spawn_x, spawn_y)
-        total_walkable = sum(1 for r in ground for t in r if TILES.get(t, {}).get('walkable', True))
+        total_walkable = sum(1 for r in ground for t in r if self._is_walkable(t))
         
         if reachable >= total_walkable * 0.9:
             print(f"地图 '{map_id}' 可达性良好: {reachable}/{total_walkable}")
@@ -1028,7 +1125,7 @@ class MapGenerator:
                 continue
             if not (0 <= x < width and 0 <= y < height):
                 continue
-            if not TILES.get(ground[y][x], {}).get('walkable', True):
+            if not self._is_walkable(ground[y][x]):
                 continue
             visited.add((x, y))
             for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
@@ -1047,7 +1144,7 @@ class MapGenerator:
                     for dy in range(-2, 3):
                         nx, ny = px + dx, py + dy
                         if 0 <= nx < width and 0 <= ny < height:
-                            if not TILES.get(ground[ny][nx], {}).get('walkable', True):
+                            if not self._is_walkable(ground[ny][nx]):
                                 ground[ny][nx] = 1
                                 fixed += 1
         
@@ -1176,7 +1273,182 @@ class MapGenerator:
                 print(f"警告: 无法读取 {filepath}: {e}")
         
         return maps
-    
+
+    def check_connectivity(self, ground: List[List[int]], 
+                           start: Tuple[int, int] = None) -> Dict:
+        """检查地图连通性：从起点出发 BFS，返回可达的可行走区域信息
+        
+        Returns:
+            {
+                "connected": bool,  # 是否所有可行走区域都连通
+                "reachable_count": int,  # 从起点可达的可行走格数
+                "total_walkable": int,  # 地图上所有可行走格数
+                "unreachable_regions": int,  # 不连通的区域数
+                "start": (x, y),  # 起点坐标
+            }
+        """
+        H = len(ground)
+        W = len(ground[0])
+        
+        # 找到起点（默认取第一个可行走格）
+        if start is None:
+            for r in range(H):
+                for c in range(W):
+                    if self._is_walkable(ground[r][c]):
+                        start = (c, r)
+                        break
+                if start:
+                    break
+        
+        if start is None:
+            return {"connected": False, "reachable_count": 0, 
+                    "total_walkable": 0, "unreachable_regions": 0, "start": None}
+        
+        # BFS 从起点遍历所有可达的可行走格
+        visited = set()
+        queue = [start]
+        visited.add(start)
+        
+        while queue:
+            cx, cy = queue.pop(0)
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = cx + dx, cy + dy
+                if (nx, ny) not in visited and 0 <= nx < W and 0 <= ny < H:
+                    if self._is_walkable(ground[ny][nx]):
+                        visited.add((nx, ny))
+                        queue.append((nx, ny))
+        
+        # 统计所有可行走格
+        total_walkable = 0
+        for r in range(H):
+            for c in range(W):
+                if self._is_walkable(ground[r][c]):
+                    total_walkable += 1
+        
+        reachable_count = len(visited)
+        unreachable = total_walkable - reachable_count
+        
+        # 计算不连通区域数（对未访问的可行走格再做 BFS）
+        unreachable_regions = 0
+        unvisited_walkable = set()
+        for r in range(H):
+            for c in range(W):
+                if self._is_walkable(ground[r][c]) and (c, r) not in visited:
+                    unvisited_walkable.add((c, r))
+        
+        while unvisited_walkable:
+            unreachable_regions += 1
+            seed = next(iter(unvisited_walkable))
+            region_queue = [seed]
+            region_visited = {seed}
+            unvisited_walkable.discard(seed)
+            
+            while region_queue:
+                cx, cy = region_queue.pop(0)
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    nx, ny = cx + dx, cy + dy
+                    if (nx, ny) in unvisited_walkable:
+                        unvisited_walkable.discard((nx, ny))
+                        region_visited.add((nx, ny))
+                        region_queue.append((nx, ny))
+        
+        return {
+            "connected": unreachable == 0,
+            "reachable_count": reachable_count,
+            "total_walkable": total_walkable,
+            "unreachable_regions": unreachable_regions,
+            "start": start,
+        }
+
+    def fix_connectivity(self, ground: List[List[int]], 
+                         start: Tuple[int, int] = None) -> List[List[int]]:
+        """修复地图连通性：将不连通区域打通到最近的主连通区域
+        
+        通过在不连通区域和主连通区域之间挖一条1格宽的通道来修复。
+        最多尝试3轮修复。
+        """
+        H = len(ground)
+        W = len(ground[0])
+        
+        for round_num in range(3):
+            result = self.check_connectivity(ground, start)
+            if result["connected"]:
+                return ground
+            
+            # BFS 标记主连通区域
+            if start is None:
+                start = result["start"]
+            if start is None:
+                return ground
+            
+            visited_main = set()
+            queue = [start]
+            visited_main.add(start)
+            while queue:
+                cx, cy = queue.pop(0)
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    nx, ny = cx + dx, cy + dy
+                    if (nx, ny) not in visited_main and 0 <= nx < W and 0 <= ny < H:
+                        if self._is_walkable(ground[ny][nx]):
+                            visited_main.add((nx, ny))
+                            queue.append((nx, ny))
+            
+            # 找所有不连通的可行走格
+            unvisited_walkable = set()
+            for r in range(H):
+                for c in range(W):
+                    if self._is_walkable(ground[r][c]) and (c, r) not in visited_main:
+                        unvisited_walkable.add((c, r))
+            
+            if not unvisited_walkable:
+                return ground
+            
+            # 对每个不连通区域，找到离主连通区域最近的点并打通
+            while unvisited_walkable:
+                seed = next(iter(unvisited_walkable))
+                region = {seed}
+                rq = [seed]
+                unvisited_walkable.discard(seed)
+                
+                while rq:
+                    cx, cy = rq.pop(0)
+                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                        nx, ny = cx + dx, cy + dy
+                        if (nx, ny) in unvisited_walkable:
+                            unvisited_walkable.discard((nx, ny))
+                            region.add((nx, ny))
+                            rq.append((nx, ny))
+                
+                # 找区域中离主连通区域最近的点对
+                best_dist = float('inf')
+                best_from = None
+                best_to = None
+                
+                for rx, ry in region:
+                    for vx, vy in visited_main:
+                        dist = abs(rx - vx) + abs(ry - vy)
+                        if dist < best_dist:
+                            best_dist = dist
+                            best_from = (rx, ry)
+                            best_to = (vx, vy)
+                
+                # 挖通道（L型路径）
+                if best_from and best_to:
+                    fx, fy = best_from
+                    tx, ty = best_to
+                    x_dir = 1 if tx > fx else -1
+                    for x in range(fx, tx + x_dir, x_dir):
+                        if 0 < x < W - 1 and 0 < fy < H - 1:
+                            if not self._is_walkable(ground[fy][x]):
+                                ground[fy][x] = 1
+                    y_dir = 1 if ty > fy else -1
+                    for y in range(fy, ty + y_dir, y_dir):
+                        if 0 < tx < W - 1 and 0 < y < H - 1:
+                            if not self._is_walkable(ground[y][tx]):
+                                ground[y][tx] = 1
+        
+        return ground
+
     def remove_border(self, ground: List[List[int]]) -> Tuple[List[List[int]], int]:
         """移除地图边界墙"""
         height = len(ground)
@@ -1380,7 +1652,7 @@ class MapGenerator:
         
         if not (0 <= spawn_x < width and 0 <= spawn_y < height):
             issues.append(f"玩家出生点超出地图范围: ({spawn_x}, {spawn_y})")
-        elif ground and not TILES.get(ground[spawn_y][spawn_x], {}).get('walkable', True):
+        elif ground and not self._is_walkable(ground[spawn_y][spawn_x]):
             issues.append(f"玩家出生点在不可通行区域: ({spawn_x}, {spawn_y})")
         
         # 检查NPC位置
@@ -1400,7 +1672,7 @@ class MapGenerator:
         # 检查可达性（从玩家出生点开始）
         if ground:
             reachable = self._check_reachability(ground, spawn_x, spawn_y)
-            total_walkable = sum(1 for r in ground for t in r if TILES.get(t, {}).get('walkable', True))
+            total_walkable = sum(1 for r in ground for t in r if self._is_walkable(t))
             if reachable < total_walkable * 0.5:
                 issues.append(f"可达区域过小: {reachable}/{total_walkable} ({reachable*100//total_walkable}%)")
         
@@ -1411,7 +1683,7 @@ class MapGenerator:
                 "width": width,
                 "height": height,
                 "total_tiles": width * height,
-                "walkable_tiles": sum(1 for r in ground for t in r if TILES.get(t, {}).get('walkable', True)),
+                "walkable_tiles": sum(1 for r in ground for t in r if self._is_walkable(t)),
                 "npcs": len(data.get('npcs', [])),
                 "objects": len(data.get('objects', []))
             }
@@ -1433,7 +1705,7 @@ class MapGenerator:
                 continue
             if not (0 <= x < width and 0 <= y < height):
                 continue
-            if not TILES.get(ground[y][x], {}).get('walkable', True):
+            if not self._is_walkable(ground[y][x]):
                 continue
             
             visited.add((x, y))
@@ -1472,7 +1744,7 @@ class MapGenerator:
             for dx, dy in directions:
                 nx, ny = cx + dx, cy + dy
                 if 0 <= nx < width and 0 <= ny < height:
-                    if (nx, ny) not in reachable and TILES.get(ground[ny][nx], {}).get('walkable', True):
+                    if (nx, ny) not in reachable and self._is_walkable(ground[ny][nx]):
                         reachable.add((nx, ny))
                         queue.append((nx, ny))
         
@@ -1483,7 +1755,7 @@ class MapGenerator:
         for y in range(height):
             for x in range(width):
                 if (x, y) not in visited and (x, y) not in reachable:
-                    if TILES.get(ground[y][x], {}).get('walkable', True):
+                    if self._is_walkable(ground[y][x]):
                         # 发现一个新的封闭区域
                         area = []
                         area_queue = deque([(x, y)])
@@ -1496,7 +1768,7 @@ class MapGenerator:
                             for dx, dy in directions:
                                 nx, ny = ax + dx, ay + dy
                                 if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in visited and (nx, ny) not in reachable:
-                                    if TILES.get(ground[ny][nx], {}).get('walkable', True):
+                                    if self._is_walkable(ground[ny][nx]):
                                         visited.add((nx, ny))
                                         area_queue.append((nx, ny))
                         
@@ -1528,7 +1800,7 @@ class MapGenerator:
                 for dx, dy in directions:
                     nx, ny = ex + dx, ey + dy
                     if 0 <= nx < width and 0 <= ny < height:
-                        if not TILES.get(ground[ny][nx], {}).get('walkable', True):
+                        if not self._is_walkable(ground[ny][nx]):
                             # 将不可行走瓦片改为道路
                             ground[ny][nx] = 1
                             fixed_count += 1
@@ -1569,13 +1841,16 @@ class MapGenerator:
             line = ""
             for c in range(0, width, step_x):
                 tile = ground[r][c]
-                tile_info = TILES.get(tile, {"symbol": "?", "color": "\033[37m"})
-                line += f"{tile_info['color']}{tile_info['symbol']}{RESET}"
+                symbol = TILE_SYMBOLS.get(tile, "?")
+                color = TILE_COLORS.get(tile, "\033[37m")
+                line += f"{color}{symbol}{RESET}"
             print(line)
         
         print(f"\n图例:")
         for tile_id, info in TILES.items():
-            print(f"  {info['color']}{info['symbol']}{RESET} = {info['name']} ({tile_id})")
+            symbol = TILE_SYMBOLS.get(tile_id, "?")
+            color = TILE_COLORS.get(tile_id, "\033[37m")
+            print(f"  {color}{symbol}{RESET} = {info['name']} ({tile_id})")
 
 
 def main():

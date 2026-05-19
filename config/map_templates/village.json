@@ -146,7 +146,7 @@
       "end": [2, 38],
       "width": 2,
       "meander": 4,
-      "bridges": [[30, 25], [15, 30]]
+      "bridges": [[30, 25], [15, 30], [45, 20], [20, 35]]
     }
   ],
   "buildings": [
@@ -158,7 +158,7 @@
     {
       "template": "house_small",
       "zone": "village_residential_west",
-      "offset": {"x": 1, "y": 8}
+      "offset": {"x": 1, "y": 10}
     },
     {
       "template": "house_small",
@@ -214,7 +214,10 @@
     }
   ],
   "player_spawn": {"x": 30, "y": 25},
-  "objects": [],
+  "objects": [
+    {"id": "portal_forest", "type": "portal", "x": 30, "y": 2, "properties": {"target_map": "forest", "target_x": 40, "target_y": 5, "name": "幽暗森林"}},
+    {"id": "portal_desert", "type": "portal", "x": 58, "y": 25, "properties": {"target_map": "desert_oasis", "target_x": 5, "target_y": 27, "name": "沙漠绿洲"}}
+  ],
   "npcs": [],
   "monster_groups": []
 }

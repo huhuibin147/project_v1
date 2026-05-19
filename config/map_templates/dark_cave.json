@@ -171,7 +171,9 @@
     }
   ],
   "player_spawn": {"x": 30, "y": 5},
-  "objects": [],
+  "objects": [
+    {"id": "portal_forest", "type": "portal", "x": 5, "y": 30, "properties": {"target_map": "forest", "target_x": 73, "target_y": 30, "name": "幽暗森林"}}
+  ],
   "npcs": [],
   "monster_groups": []
 }

@@ -170,7 +170,11 @@
     }
   ],
   "player_spawn": {"x": 40, "y": 5},
-  "objects": [],
+  "objects": [
+    {"id": "portal_village", "type": "portal", "x": 40, "y": 2, "properties": {"target_map": "village", "target_x": 30, "target_y": 3, "name": "青石村"}},
+    {"id": "portal_dark_cave", "type": "portal", "x": 75, "y": 30, "properties": {"target_map": "dark_cave", "target_x": 5, "target_y": 30, "name": "幽暗洞穴"}},
+    {"id": "portal_desert", "type": "portal", "x": 5, "y": 50, "properties": {"target_map": "desert_oasis", "target_x": 60, "target_y": 5, "name": "沙漠绿洲"}}
+  ],
   "npcs": [],
   "monster_groups": []
 }

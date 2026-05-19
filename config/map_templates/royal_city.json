@@ -250,7 +250,10 @@
     }
   ],
   "player_spawn": {"x": 50, "y": 55},
-  "objects": [],
+  "objects": [
+    {"id": "portal_village", "type": "portal", "x": 3, "y": 35, "properties": {"target_map": "village", "target_x": 56, "target_y": 25, "name": "青石村"}},
+    {"id": "portal_desert", "type": "portal", "x": 95, "y": 55, "properties": {"target_map": "desert_oasis", "target_x": 63, "target_y": 43, "name": "沙漠绿洲"}}
+  ],
   "npcs": [],
   "monster_groups": []
 }

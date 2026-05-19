@@ -107,6 +107,12 @@ async function loadMap(mapId) {
     const savedTiles = currentMap.explored_tiles || [];
     exploredTiles = new Set(savedTiles);
     pendingExploredTiles = new Set();
+    
+    // 设置玩家到地图出生点
+    if (currentMap.player_spawn && typeof setPlayerPosition === 'function') {
+      setPlayerPosition(currentMap.player_spawn.x, currentMap.player_spawn.y);
+    }
+    
     return currentMap;
   } catch (e) {
     console.error("加载地图失败:", e);
