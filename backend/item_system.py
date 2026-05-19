@@ -108,6 +108,9 @@ class Inventory:
             effect_type = effect.get("type")
             heal_value = effect.get("value") if effect_type == "heal" else None
             mp_value = effect.get("value") if effect_type == "restore_mp" else None
+            effect_detail = None
+            if effect_type == "cure":
+                effect_detail = effect.get("effect")
             instance_affixes = item.get("instance_affixes")
             instance_rarity = item.get("instance_rarity")
             affixes = instance_affixes if instance_affixes is not None else info.get("affixes", [])
@@ -120,6 +123,7 @@ class Inventory:
                 "quantity": item["quantity"],
                 "buy_price": info.get("buy_price", 0),
                 "sell_price": info.get("sell_price", 0),
+                "stackable": info.get("stackable", True),
                 "equip_slot": info.get("equip_slot"),
                 "stats": info.get("stats"),
                 "rarity": rarity,
@@ -128,6 +132,8 @@ class Inventory:
                 "affixes": affixes,
                 "heal_value": heal_value,
                 "mp_value": mp_value,
+                "effect_type": effect_type,
+                "effect_detail": effect_detail,
                 "required_class": info.get("required_class"),
             })
         return result

@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+from npc_affinity import AffinitySystem
 
 ROOT_DIR = Path(__file__).parent.parent
 CONFIG_DIR = ROOT_DIR / "config"
@@ -184,14 +185,21 @@ class QuestManager:
                 self.player.remove_item(item_id, count)
         rewards = cfg.get("rewards", {})
         reward_details = {"exp": 0, "gold": 0, "items": [], "affinity": 0}
+        quest_npc_id = cfg.get("npc_id", "")
+        reward_mult = 1.0
+        if quest_npc_id:
+            quest_npc_affinity = self._get_npc_affinity(quest_npc_id)
+            reward_mult = AffinitySystem(quest_npc_affinity).get_quest_reward_multiplier()
         exp = rewards.get("exp", 0)
         if exp > 0:
-            self.player.gain_exp(exp)
-            reward_details["exp"] = exp
+            adjusted_exp = int(exp * reward_mult)
+            self.player.gain_exp(adjusted_exp)
+            reward_details["exp"] = adjusted_exp
         gold = rewards.get("gold", 0)
         if gold > 0:
-            self.player.add_gold(gold)
-            reward_details["gold"] = gold
+            adjusted_gold = int(gold * reward_mult)
+            self.player.add_gold(adjusted_gold)
+            reward_details["gold"] = adjusted_gold
         for item_reward in rewards.get("items", []):
             self.player.add_item(item_reward["item_id"], item_reward.get("quantity", 1))
             from item_system import ITEMS_DB
@@ -217,6 +225,13 @@ class QuestManager:
             reward_msgs.append(f"{reward_details['exp']}经验")
         if reward_details["gold"] > 0:
             reward_msgs.append(f"{reward_details['gold']}金币")
+        if reward_mult != 1.0 and quest_npc_id:
+            npc_name = get_npc_name(quest_npc_id)
+            pct = int((reward_mult - 1.0) * 100)
+            if pct > 0:
+                reward_msgs.append(f"{npc_name}好感加成+{pct}%")
+            elif pct < 0:
+                reward_msgs.append(f"{npc_name}好感惩罚{pct}%")
         if reward_details["items"]:
             for it in reward_details["items"]:
                 reward_msgs.append(f"{it['name']}×{it['quantity']}")
@@ -261,6 +276,21 @@ class QuestManager:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception:
             pass
+
+    def _get_npc_affinity(self, npc_id: str) -> int:
+        save_dir = Path(__file__).parent.parent / "data"
+        slot = self.player.current_slot
+        if slot is None:
+            return 50
+        npc_file = save_dir / f"save_{slot}" / f"{npc_id}.json"
+        if not npc_file.exists():
+            return 50
+        try:
+            with open(npc_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data.get("affinity", 50)
+        except Exception:
+            return 50
 
     def on_kill(self, monster_id: str, monster_tags: list[str]) -> list[dict]:
         self._ensure_quest_data()

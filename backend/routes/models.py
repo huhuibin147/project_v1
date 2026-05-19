@@ -116,3 +116,13 @@ class ForgeCraftRequest(BaseModel):
 class ForgeRerollRequest(BaseModel):
     item_id: str
     slot: str
+
+
+class GenericServiceRequest(BaseModel):
+    npc_id: str
+    service_type: str
+
+
+class ExploredTilesRequest(BaseModel):
+    map_id: str
+    tiles: list[str]

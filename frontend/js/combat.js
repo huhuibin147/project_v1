@@ -91,54 +91,33 @@ async function loadMonstersConfig() {
 
 function loadMapMonsters() {
   mapMonsters = [];
-  if (!currentMap || !currentMap.monsters) return;
+  if (!currentMap) return;
 
-  currentMap.monsters.forEach((spawn, idx) => {
-    const config = monstersConfig[spawn.monster_id];
+  const groups = currentMap.monster_groups || [];
+  groups.forEach((group) => {
+    const firstMonster = group.monsters[0];
+    if (!firstMonster) return;
+    const config = monstersConfig[firstMonster.monster_id];
     if (!config) return;
 
     mapMonsters.push({
-      monster_id: spawn.monster_id,
-      instance_id: `${spawn.monster_id}_${idx}`,
-      x: spawn.x * TILE_SIZE,
-      y: spawn.y * TILE_SIZE,
+      monster_id: firstMonster.monster_id,
+      instance_id: group.group_id,
+      group_id: group.group_id,
+      x: group.x * TILE_SIZE,
+      y: group.y * TILE_SIZE,
       config: config,
       alive: true,
       inCombat: false,
-      patrol: (spawn.patrol || []).map(p => ({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE })),
+      patrol: (group.patrol || []).map(p => ({ x: p.x * TILE_SIZE, y: p.y * TILE_SIZE })),
       patrolIndex: 0,
-      patrolSpeed: 0.5,
+      patrolSpeed: group.patrol ? 0.5 : 0,
       animFrame: 0,
       direction: "down",
+      isGroup: group.monsters.length > 1 || !!group.group_id,
+      groupData: group,
     });
   });
-
-  if (currentMap.monster_groups) {
-    currentMap.monster_groups.forEach((group) => {
-      const firstMonster = group.monsters[0];
-      if (!firstMonster) return;
-      const config = monstersConfig[firstMonster.monster_id];
-      if (!config) return;
-
-      mapMonsters.push({
-        monster_id: firstMonster.monster_id,
-        instance_id: group.group_id,
-        group_id: group.group_id,
-        x: group.x * TILE_SIZE,
-        y: group.y * TILE_SIZE,
-        config: config,
-        alive: true,
-        inCombat: false,
-        patrol: [],
-        patrolIndex: 0,
-        patrolSpeed: 0,
-        animFrame: 0,
-        direction: "down",
-        isGroup: true,
-        groupData: group,
-      });
-    });
-  }
 }
 
 function updateMonsters(dt) {

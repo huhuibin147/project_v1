@@ -104,6 +104,9 @@ async function loadMap(mapId) {
     mapObjects = currentMap.objects || [];
     groundCanvasDirty = true;
     groundCanvasMapId = null;
+    const savedTiles = currentMap.explored_tiles || [];
+    exploredTiles = new Set(savedTiles);
+    pendingExploredTiles = new Set();
     return currentMap;
   } catch (e) {
     console.error("加载地图失败:", e);
@@ -175,9 +178,13 @@ function rebuildGroundCanvas() {
       gCtx.fillStyle = tileInfo.color || "#000";
       gCtx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
 
-      const detailName = tileInfo.detail;
-      if (detailName && tileRenderers[detailName]) {
-        tileRenderers[detailName](gCtx, x, y);
+      if (tileInfo.detail_config && tileInfo.detail_config.type !== "none" && tileInfo.detail_config.type !== "animated") {
+        renderTileDetail(gCtx, x, y, tileInfo.detail_config);
+      } else {
+        const detailName = tileInfo.detail;
+        if (detailName && tileRenderers[detailName]) {
+          tileRenderers[detailName](gCtx, x, y);
+        }
       }
 
       if (!tileInfo.walkable) {
@@ -232,9 +239,13 @@ function drawMap(ctx) {
       ctx.fillStyle = tileInfo.color || "#000";
       ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
 
-      const detailName = tileInfo.detail;
-      if (detailName && tileRenderers[detailName]) {
-        tileRenderers[detailName](ctx, x, y);
+      if (tileInfo.detail_config && tileInfo.detail_config.type !== "none" && tileInfo.detail_config.type !== "animated") {
+        renderTileDetail(ctx, x, y, tileInfo.detail_config);
+      } else {
+        const detailName = tileInfo.detail;
+        if (detailName && tileRenderers[detailName]) {
+          tileRenderers[detailName](ctx, x, y);
+        }
       }
 
       if (!tileInfo.walkable) {
@@ -249,20 +260,15 @@ function drawMap(ctx) {
 function drawEnvironmentParticles(ctx) {
   if (!currentMap) return;
 
-  const time = Date.now() / 1000;
-  const mapId = currentMap.id;
-
-  // 根据地图类型生成环境粒子
-  if (mapId === "forest" && Math.random() < 0.1) {
-    const px = camera.x + Math.random() * camera.viewportWidth;
-    const py = camera.y - 10;
-    particleSystem.emit("leaf", px, py, 1);
-  }
-
-  if (mapId === "village" && Math.random() < 0.05) {
-    const px = camera.x + Math.random() * camera.viewportWidth;
-    const py = camera.y - 10;
-    particleSystem.emit("leaf", px, py, 1);
+  const env = currentMap.metadata?.environment;
+  if (env?.particles) {
+    for (const p of env.particles) {
+      if (Math.random() < p.rate) {
+        const px = camera.x + Math.random() * camera.viewportWidth;
+        const py = camera.y - 10;
+        particleSystem.emit(p.type, px, py, 1);
+      }
+    }
   }
 
   particleSystem.update(0.016);
@@ -339,13 +345,7 @@ function drawPortal(ctx, x, y, obj) {
 
   // 目标名称标签
   if (obj?.properties?.target_map) {
-    const mapNames = {
-      "village": "青石村",
-      "forest": "幽暗森林",
-      "dark_cave": "黑暗洞穴",
-      "desert_oasis": "沙漠绿洲",
-      "royal_city": "王城"
-    };
+    const mapNames = currentMap.metadata?.map_names || {};
     const name = mapNames[obj.properties.target_map] || obj.properties.target_map;
     
     ctx.save();
@@ -376,63 +376,26 @@ function drawGatherPoint(ctx, x, y, obj) {
   const lastGathered = obj?.state?.lastGathered;
   const respawnTime = (obj?.properties?.respawn_time || 60) * 1000;
   const now = Date.now();
-  
-  // 检查是否在冷却中
+
   const isOnCooldown = lastGathered && (now - lastGathered) < respawnTime;
-  
+
+  const gatherApp = tileConfig?.gather_appearances?.[itemId] || { base: "#4a8c3f", mid: "#6abf5a", top: "#8ee07a" };
+
   if (isOnCooldown) {
-    // 冷却中的采集点 - 灰色
     ctx.fillStyle = "#666";
     ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
     ctx.fillStyle = "#888";
     ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
     return;
   }
-  
-  // 根据物品类型显示不同颜色
-  if (itemId === "herb") {
-    // 草药 - 绿色
-    ctx.fillStyle = "#4a8c3f";
-    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
-    ctx.fillStyle = "#6abf5a";
-    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
-    ctx.fillStyle = "#8ee07a";
-    ctx.fillRect(x + p * 3, y + p * 2, p, p);
-  } else if (itemId === "mushroom") {
-    // 蘑菇 - 棕色
-    ctx.fillStyle = "#8b6914";
-    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
-    ctx.fillStyle = "#a67c00";
-    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
-    ctx.fillStyle = "#c9a000";
-    ctx.fillRect(x + p * 3, y + p * 2, p, p);
-  } else if (itemId === "iron_ore") {
-    // 铁矿石 - 灰色
-    ctx.fillStyle = "#666";
-    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
-    ctx.fillStyle = "#888";
-    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
-    ctx.fillStyle = "#aaa";
-    ctx.fillRect(x + p * 3, y + p * 2, p, p);
-  } else if (itemId === "beast_bone") {
-    // 兽骨 - 白色
-    ctx.fillStyle = "#ccc";
-    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
-    ctx.fillStyle = "#eee";
-    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(x + p * 3, y + p * 2, p, p);
-  } else {
-    // 默认颜色
-    ctx.fillStyle = "#4a8c3f";
-    ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
-    ctx.fillStyle = "#6abf5a";
-    ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
-    ctx.fillStyle = "#8ee07a";
-    ctx.fillRect(x + p * 3, y + p * 2, p, p);
-  }
-  
-  // 添加闪烁效果表示可采集
+
+  ctx.fillStyle = gatherApp.base;
+  ctx.fillRect(x + p * 2, y + p * 4, p * 4, p * 3);
+  ctx.fillStyle = gatherApp.mid;
+  ctx.fillRect(x + p * 3, y + p * 2, p * 2, p * 3);
+  ctx.fillStyle = gatherApp.top;
+  ctx.fillRect(x + p * 3, y + p * 2, p, p);
+
   const blink = Math.sin(Date.now() / 300) > 0;
   if (blink) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
@@ -506,6 +469,35 @@ function getNearbyInteractableObject() {
 }
 
 // 初始化瓦片渲染器
+function renderTileDetail(ctx, x, y, config) {
+  const p = TILE_SIZE / 8;
+  if (!config || config.type === "none") return;
+  switch (config.type) {
+    case "scatter": {
+      ctx.fillStyle = config.color;
+      const seed = (x * 7 + y * 13) % 100;
+      for (const spot of config.spots) {
+        if (seed < spot.prob * 100) ctx.fillRect(x + spot.x * p, y + spot.y * p, p, p);
+      }
+      break;
+    }
+    case "lines": {
+      ctx.fillStyle = config.color;
+      for (const line of config.lines) {
+        ctx.fillRect(x + line.x * p, y + line.y * p, line.w * p, line.h * p);
+      }
+      break;
+    }
+    case "rect": {
+      ctx.fillStyle = config.color;
+      for (const rect of config.rects) {
+        ctx.fillRect(x + rect.x * p, y + rect.y * p, rect.w * p, rect.h * p);
+      }
+      break;
+    }
+  }
+}
+
 function initTileRenderers() {
   const p = TILE_SIZE / 8;
 
@@ -819,6 +811,7 @@ function renderMinimap() {
 let worldMapOpen = false;
 let worldMapCanvas, worldMapCtx;
 let exploredTiles = new Set();
+let pendingExploredTiles = new Set();
 
 function initWorldMap() {
   worldMapCanvas = document.getElementById("worldmap-canvas");
@@ -967,10 +960,30 @@ function recordExploredTile() {
   const key = `${tileX},${tileY}`;
   if (!exploredTiles.has(key)) {
     exploredTiles.add(key);
+    pendingExploredTiles.add(key);
   }
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
-      exploredTiles.add(`${tileX + dx},${tileY + dy}`);
+      const nk = `${tileX + dx},${tileY + dy}`;
+      if (!exploredTiles.has(nk)) {
+        exploredTiles.add(nk);
+        pendingExploredTiles.add(nk);
+      }
     }
+  }
+}
+
+async function flushExploredTiles() {
+  if (!currentMap || pendingExploredTiles.size === 0) return;
+  const tiles = Array.from(pendingExploredTiles);
+  pendingExploredTiles = new Set();
+  try {
+    await fetch("/api/map/explored", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ map_id: currentMap.id, tiles }),
+    });
+  } catch (e) {
+    for (const t of tiles) pendingExploredTiles.add(t);
   }
 }

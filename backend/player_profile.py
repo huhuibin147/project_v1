@@ -93,6 +93,7 @@ class PlayerProfile:
         self.player_y = 20
         self.current_map = "village"
         self.map_states = {}
+        self.explored_tiles = {}
         self.skills = list(defaults.get("skills", {}).get(self.class_id, []))
         self.learned_skills = []
         self.talents = []
@@ -138,6 +139,7 @@ class PlayerProfile:
             "player_y": self.player_y,
             "current_map": self.current_map,
             "map_states": self.map_states,
+            "explored_tiles": self.explored_tiles,
             "quests": self.quests,
             "save_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
@@ -217,6 +219,7 @@ class PlayerProfile:
         self.player_y = data.get("player_y", 20)
         self.current_map = data.get("current_map", "village")
         self.map_states = data.get("map_states", {})
+        self.explored_tiles = data.get("explored_tiles", {})
         self.quests = data.get("quests", {"active": {}, "completed": [], "daily_reset": ""})
         self.forge_streaks = data.get("forge_streaks", {})
 
@@ -718,6 +721,10 @@ class PlayerProfile:
             effect = get_item_effect(item_id)
             heal_value = effect.get("value") if effect.get("type") == "heal" else None
             mp_value = effect.get("value") if effect.get("type") == "restore_mp" else None
+            effect_type = effect.get("type")
+            effect_detail = None
+            if effect_type == "cure":
+                effect_detail = effect.get("effect")
             instance_affixes = item.get("instance_affixes")
             instance_rarity = item.get("instance_rarity")
             affixes = instance_affixes if instance_affixes is not None else info.get("affixes", [])
@@ -730,10 +737,13 @@ class PlayerProfile:
                 "quantity": item["quantity"],
                 "buy_price": info.get("buy_price", 0),
                 "sell_price": info.get("sell_price", 0),
+                "stackable": info.get("stackable", True),
                 "equip_slot": info.get("equip_slot"),
                 "stats": info.get("stats"),
                 "heal_value": heal_value,
                 "mp_value": mp_value,
+                "effect_type": effect_type,
+                "effect_detail": effect_detail,
                 "rarity": rarity,
                 "tier": info.get("tier"),
                 "level_range": info.get("level_range"),

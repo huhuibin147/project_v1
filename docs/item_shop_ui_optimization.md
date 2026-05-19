@@ -2,7 +2,7 @@
 
 > 创建日期：2026-05-18
 > 优先级：P1 中
-> 状态：✅ 已完成
+> 状态：✅ 已完成（含补充优化）
 
 ---
 
@@ -209,10 +209,208 @@
 
 ---
 
-## 七、完成状态
+## 七、补充优化：Tooltip 详情信息增强
 
-> 更新日期：2026-05-18
+> 创建日期：2026-05-19
+> 优先级：P1 中
 > 状态：✅ 已完成
+
+### 7.1 当前问题分析
+
+当前 Tooltip 已展示基础信息（名称、属性、稀有度、描述、出售价、来源标签），但以下详情信息缺失，影响玩家决策：
+
+| # | 问题 | 影响 | 优先级 |
+|---|------|------|--------|
+| 1 | Tooltip 仅显示出售价，缺少购买价 | 玩家在背包中无法快速判断物品的购入成本 | P1 |
+| 2 | 掉落来源仅显示"怪物掉落"，未显示具体怪物名和掉率 | 玩家不知道去哪打怪才能获得目标物品 | P0 |
+| 3 | 可锻造物品未显示锻造配方（材料、金币、成功率） | 玩家需切换到锻造面板才能查看配方，效率低 | P1 |
+| 4 | 消耗品仅显示 heal/mp 值，未显示 cure 等其他效果 | 解毒药等特殊效果物品缺少效果说明 | P1 |
+| 5 | 未显示物品是否可堆叠 | 玩家不确定物品能否堆叠存放 | P2 |
+
+### 7.2 优化目标
+
+| 目标 | 优先级 | 说明 |
+|------|--------|------|
+| 显示购买价格 | P1 | Tooltip 价格行同时显示购买价和出售价 |
+| 详细掉落来源 | P0 | 显示具体怪物名称 + 掉落概率 |
+| 锻造配方信息 | P1 | 可锻造物品显示配方摘要（材料、金币、成功率） |
+| 消耗品完整效果 | P1 | 显示所有效果类型（治疗/解毒/增益等） |
+| 可堆叠标识 | P2 | 物品元信息行显示堆叠标识 |
+
+### 7.3 设计方案
+
+#### 7.3.1 购买价格显示
+
+**当前**：Tooltip 底部仅显示 `出售价: X 金`
+
+**优化后**：价格行同时显示购买价和出售价
+
+```
+┌──────────────────────────┐
+│ 铁剑              x1     │
+│ 武器 · 武器槽 · 初级 Lv.4│
+│ 攻+8                     │
+│ 一把坚固的铁剑...        │
+│ 来源: 老王铁匠铺         │
+│ 购入: 80金  出售: 40金    │  ← 同时显示两个价格
+└──────────────────────────┘
+```
+
+**规则**：
+- 商店物品：显示购入价和出售价
+- 非卖品（buy_price=0）：仅显示出售价，标注"不可购买"
+- 不可售品（sell_price=0）：仅显示购入价，标注"不可出售"
+
+#### 7.3.2 详细掉落来源
+
+**当前**：来源标签仅显示 `怪物掉落`，不区分具体怪物。
+
+**优化后**：显示具体怪物名称和掉落概率。
+
+```
+来源:
+  [老王铁匠铺] [野狼 50%] [哥布林 30%]
+```
+
+**实现方式**：
+- 修改 `buildItemSourceMap()` 函数，从 `/api/monsters` 获取怪物名和掉率
+- `ITEM_SOURCE_MAP` 结构从 `{itemId: [string]}` 改为 `{itemId: [{type, name, chance?}]}`
+- 渲染时根据 type 区分商店来源和怪物来源
+
+**数据结构**：
+
+```javascript
+// 旧结构
+ITEM_SOURCE_MAP = { "wolf_pelt": ["老王铁匠铺", "怪物掉落"] }
+
+// 新结构
+ITEM_SOURCE_MAP = {
+  "wolf_pelt": [
+    { type: "shop", name: "老王铁匠铺" },
+    { type: "monster", name: "野狼", chance: 0.5 },
+    { type: "monster", name: "哥布林", chance: 0.3 }
+  ]
+}
+```
+
+#### 7.3.3 锻造配方信息
+
+**当前**：可锻造物品的 Tooltip 无任何锻造相关信息。
+
+**优化后**：在 Tooltip 中显示锻造配方摘要。
+
+```
+┌──────────────────────────┐
+│ 铁剑              x1     │
+│ 武器 · 武器槽 · 初级 Lv.4│
+│ 攻+8                     │
+│ 一把坚固的铁剑...        │
+│ ─── 锻造配方 ───         │
+│ 材料: 铁矿石x3 兽骨x1    │
+│ 费用: 50金  成功率: 100%  │
+│ 来源: [老王铁匠铺]       │
+│ 购入: 80金  出售: 40金    │
+└──────────────────────────┘
+```
+
+**实现方式**：
+- 前端加载 `forge_recipes.json` 数据（通过 `/api/forge/recipes` 接口）
+- 构建 `ITEM_FORGE_MAP = { output_item_id: recipe_summary }`
+- Tooltip 渲染时查询该物品是否有锻造配方
+
+**后端新增 API**：
+
+```
+GET /api/forge/recipes_map
+→ 返回 { item_id: { materials: [{name, quantity}], gold_cost, success_rate, recipe_name } }
+```
+
+#### 7.3.4 消耗品完整效果
+
+**当前**：仅显示 `heal_value` 和 `mp_value`，其他效果类型（如 cure）未展示。
+
+**优化后**：根据 effect.type 显示完整效果描述。
+
+| effect.type | 显示文本 |
+|-------------|----------|
+| heal | 回复 X HP |
+| restore_mp | 回复 X MP |
+| cure:poison | 解除中毒状态 |
+| cure:curse | 解除诅咒状态 |
+| buff | 增益效果（具体描述） |
+
+**实现方式**：
+- 后端 `to_list()` 和 `get_inventory()` 已返回 `heal_value` 和 `mp_value`
+- 需额外返回 `effect_type` 和 `effect_detail` 字段
+- 前端 Tooltip 根据 effect_type 渲染对应效果描述
+
+#### 7.3.5 可堆叠标识
+
+**当前**：Tooltip 元信息行无堆叠标识。
+
+**优化后**：在元信息行显示堆叠状态。
+
+```
+消耗品 · 可堆叠 · [普通]     ← 可堆叠物品
+武器 · 武器槽 · 唯一 · [优秀]  ← 不可堆叠装备
+```
+
+### 7.4 实施计划
+
+#### Phase 1：后端数据补充
+
+- `item_system.py` 的 `to_list()` 增加 `buy_price`、`stackable`、`effect_type`、`effect_detail` 字段
+- `player_profile.py` 的 `get_inventory()` 同步增加上述字段
+- 新增 `/api/forge/recipes_map` 接口，返回物品→锻造配方映射
+- 新增 `/api/monsters/drop_map` 接口，返回物品→怪物掉落映射（含掉率）
+
+#### Phase 2：前端 Tooltip 增强
+
+- 修改 `buildItemSourceMap()` 支持详细掉落来源（怪物名+掉率）
+- 修改 `showItemTooltip()` 增加购买价、锻造配方、完整效果、堆叠标识
+- 新增 `ITEM_FORGE_MAP` 数据结构
+- 新增 Tooltip CSS 样式
+
+#### Phase 3：样式与交互优化
+
+- Tooltip 宽度自适应（内容多时适当加宽）
+- 锻造配方区域样式
+- 掉落来源标签样式（区分商店/怪物）
+
+### 7.5 文件修改清单
+
+| 文件 | 修改内容 |
+|------|----------|
+| `backend/item_system.py` | `to_list()` 增加 buy_price、stackable、effect_type、effect_detail 字段 |
+| `backend/player_profile.py` | `get_inventory()` 同步增加上述字段 |
+| `backend/routes/forge.py` | 新增 `/api/forge/recipes_map` 接口 |
+| `backend/routes/map.py` 或 `backend/routes/npc.py` | 新增 `/api/monsters/drop_map` 接口 |
+| `frontend/js/inventory.js` | 修改 buildItemSourceMap、showItemTooltip，新增 ITEM_FORGE_MAP |
+| `frontend/css/style.css` | 新增锻造配方、详细来源、效果描述等 Tooltip 样式 |
+
+### 7.6 测试用例
+
+| 用例 | 描述 |
+|------|------|
+| 购买价显示 | Tooltip 同时显示购入价和出售价 |
+| 不可购买标识 | buy_price=0 的物品显示"不可购买" |
+| 不可出售标识 | sell_price=0 的物品显示"不可出售" |
+| 详细怪物掉落 | 来源标签显示具体怪物名和掉落概率 |
+| 商店来源 | 来源标签显示商店NPC名称 |
+| 锻造配方显示 | 可锻造物品显示材料、费用、成功率 |
+| 非锻造物品 | 无锻造配方的物品不显示锻造区域 |
+| 消耗品治疗效果 | 显示"回复 X HP" |
+| 消耗品MP效果 | 显示"回复 X MP" |
+| 消耗品解毒效果 | 显示"解除中毒状态" |
+| 可堆叠标识 | 可堆叠物品元信息行显示"可堆叠" |
+| 唯一标识 | 不可堆叠装备元信息行显示"唯一" |
+
+---
+
+## 八、完成状态
+
+> 更新日期：2026-05-19
+> 状态：✅ 已完成（含补充优化）
 
 | 优化项 | 状态 | 说明 |
 |--------|------|------|
@@ -225,3 +423,24 @@
 | 右键上下文菜单 | ✅ | 右键物品弹出菜单：购买/出售/装备/使用/详情 |
 | 背包排序 | ✅ | 按稀有度/售价/名称排序 |
 | Tooltip增强 | ✅ | 词条完整描述+属性条可视化对比+装备来源提示 |
+| 购买价格显示 | ✅ | Tooltip 同时显示购入价和出售价，不可购买/出售标注 |
+| 详细掉落来源 | ✅ | 显示具体怪物名称+掉落概率，区分商店/怪物/锻造来源标签 |
+| 锻造配方信息 | ✅ | 可锻造物品显示配方摘要（材料、费用、成功率） |
+| 消耗品完整效果 | ✅ | 显示所有效果类型（治疗/解毒/MP回复等） |
+| 可堆叠标识 | ✅ | 物品元信息行显示"可堆叠"或"唯一" |
+| Tooltip 宽度自适应 | ✅ | min-width 220px / max-width 340px，定位基于实际尺寸 |
+| 锻造来源标签 | ✅ | 可锻造物品来源标签显示紫色"锻造"标签 |
+| 锻造配方数据补全 | ✅ | 补充 items.json 中 7 个缺失的锻造产出物品 |
+| Tooltip 增强测试 | ✅ | 前端 23 项 + 后端 11 项测试覆盖价格/效果/配方/来源/堆叠 |
+
+**涉及修改文件**：
+- `backend/item_system.py` — to_list() 增加 stackable、effect_type、effect_detail 字段
+- `backend/player_profile.py` — get_inventory() 同步增加上述字段
+- `backend/routes/forge.py` — 新增 /api/forge/recipes_map 接口
+- `backend/routes/combat.py` — 新增 /api/monsters/drop_map 接口
+- `frontend/js/inventory.js` — 重构 buildItemSourceMap 支持详细来源，新增 buildItemForgeMap（含锻造来源标签）、getItemForgeHtml、getEffectHtml、getPriceHtml，修改 showItemTooltip（宽度自适应定位）
+- `frontend/js/game.js` — DOMContentLoaded 中调用 buildItemForgeMap
+- `frontend/css/style.css` — 新增锻造配方、来源标签、效果描述、价格等 Tooltip 样式
+- `config/items.json` — 补充 7 个缺失的锻造产出物品（darkgold_dagger、hard_leather_armor 等）
+- `tests/test_backend_logic.py` — 新增 TestTooltipEnhancement、TestForgeRecipesMapAPI、TestMonstersDropMapAPI 测试类
+- `frontend/__tests__/inventory.test.js` — 新增 INV-15~20 共 23 项 Tooltip 增强测试

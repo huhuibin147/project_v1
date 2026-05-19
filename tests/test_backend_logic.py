@@ -849,5 +849,163 @@ class TestItemShopOptimization(unittest.TestCase):
                                        f"NPC {npc.get('id')} shop slot {slot.get('item_id')} quantity <= 0")
 
 
+class TestTooltipEnhancement(unittest.TestCase):
+    """Tooltip 详情信息增强测试"""
+
+    def setUp(self):
+        from item_system import ITEMS_DB
+        self.items_db = ITEMS_DB
+
+    def test_to_list_includes_stackable(self):
+        from item_system import Inventory
+        inv = Inventory(gold=100)
+        inv.add_item("health_potion", 1)
+        items = inv.to_list()
+        self.assertGreater(len(items), 0)
+        for item in items:
+            self.assertIn("stackable", item, f"Item {item['item_id']} missing stackable field")
+
+    def test_to_list_includes_buy_price(self):
+        from item_system import Inventory
+        inv = Inventory(gold=100)
+        inv.add_item("health_potion", 1)
+        items = inv.to_list()
+        self.assertGreater(len(items), 0)
+        for item in items:
+            self.assertIn("buy_price", item, f"Item {item['item_id']} missing buy_price field")
+
+    def test_to_list_includes_effect_fields(self):
+        from item_system import Inventory
+        inv = Inventory(gold=100)
+        inv.add_item("health_potion", 1)
+        items = inv.to_list()
+        potion = next((i for i in items if i["item_id"] == "health_potion"), None)
+        if potion:
+            self.assertIn("effect_type", potion)
+            self.assertIn("effect_detail", potion)
+
+    def test_consumable_has_effect_type(self):
+        consumables = []
+        for item_id, info in self.items_db.items():
+            if info.get("type") == "consumable":
+                consumables.append((item_id, info))
+        for item_id, info in consumables:
+            effect = info.get("effect")
+            if effect:
+                self.assertIn("type", effect, f"Consumable {item_id} effect missing type")
+
+    def test_items_have_stackable_field(self):
+        for item_id, info in self.items_db.items():
+            if "stackable" in info:
+                self.assertIsInstance(info["stackable"], bool,
+                                     f"Item {item_id} stackable should be bool")
+
+
+class TestForgeRecipesMapAPI(unittest.TestCase):
+    """锻造配方映射 API 测试"""
+
+    def test_get_forge_recipes_map(self):
+        from forge_system import get_all_recipes
+        from item_system import ITEMS_DB
+        all_recipes = get_all_recipes()
+        recipes_map = {}
+        for recipe in all_recipes:
+            output_id = recipe["output"]["item_id"]
+            materials = []
+            for mat in recipe.get("materials", []):
+                mat_info = ITEMS_DB.get(mat["item_id"], {})
+                materials.append({
+                    "item_id": mat["item_id"],
+                    "name": mat_info.get("name", mat["item_id"]),
+                    "quantity": mat["quantity"],
+                })
+            output_info = ITEMS_DB.get(output_id, {})
+            recipes_map[output_id] = {
+                "recipe_name": recipe.get("name", ""),
+                "materials": materials,
+                "gold_cost": recipe.get("gold_cost", 0),
+                "success_rate": recipe.get("success_rate", 1.0),
+                "level_requirement": recipe.get("level_requirement", 1),
+                "output_name": output_info.get("name", output_id),
+            }
+        self.assertIsInstance(recipes_map, dict)
+        for item_id, recipe in recipes_map.items():
+            self.assertIn("materials", recipe)
+            self.assertIn("gold_cost", recipe)
+            self.assertIn("success_rate", recipe)
+            self.assertIsInstance(recipe["materials"], list)
+            for mat in recipe["materials"]:
+                self.assertIn("name", mat)
+                self.assertIn("quantity", mat)
+
+    def test_forge_recipes_have_valid_output(self):
+        from forge_system import get_all_recipes
+        from item_system import ITEMS_DB
+        all_recipes = get_all_recipes()
+        for recipe in all_recipes:
+            output_id = recipe["output"]["item_id"]
+            self.assertIn(output_id, ITEMS_DB, f"Recipe output {output_id} not in ITEMS_DB")
+
+    def test_forge_recipes_materials_valid(self):
+        from forge_system import get_all_recipes
+        from item_system import ITEMS_DB
+        all_recipes = get_all_recipes()
+        for recipe in all_recipes:
+            for mat in recipe.get("materials", []):
+                mat_id = mat.get("item_id")
+                if mat_id:
+                    self.assertIn(mat_id, ITEMS_DB, f"Recipe material {mat_id} not in ITEMS_DB")
+
+
+class TestMonstersDropMapAPI(unittest.TestCase):
+    """怪物掉落映射 API 测试"""
+
+    def setUp(self):
+        monsters_file = CONFIG_DIR / "monsters.json"
+        with open(monsters_file, "r", encoding="utf-8") as f:
+            self.monsters_db = json.load(f)
+
+    def test_get_monsters_drop_map(self):
+        drop_map = {}
+        for monster_id, monster in self.monsters_db.items():
+            monster_name = monster.get("name", monster_id)
+            for drop in monster.get("drops", []):
+                item_id = drop.get("item_id") if isinstance(drop, dict) else drop
+                if not item_id:
+                    continue
+                chance = drop.get("chance") if isinstance(drop, dict) else None
+                if item_id not in drop_map:
+                    drop_map[item_id] = []
+                drop_map[item_id].append({
+                    "monster_id": monster_id,
+                    "monster_name": monster_name,
+                    "chance": chance,
+                })
+        self.assertIsInstance(drop_map, dict)
+        for item_id, drops in drop_map.items():
+            self.assertIsInstance(drops, list)
+            for drop in drops:
+                self.assertIn("monster_id", drop)
+                self.assertIn("monster_name", drop)
+
+    def test_drop_map_items_exist_in_db(self):
+        from item_system import ITEMS_DB
+        for monster_id, monster in self.monsters_db.items():
+            for drop in monster.get("drops", []):
+                item_id = drop.get("item_id") if isinstance(drop, dict) else drop
+                if item_id:
+                    self.assertIn(item_id, ITEMS_DB,
+                                  f"Drop {item_id} from {monster_id} not in ITEMS_DB")
+
+    def test_drop_chances_valid_range(self):
+        for monster_id, monster in self.monsters_db.items():
+            for drop in monster.get("drops", []):
+                if isinstance(drop, dict):
+                    chance = drop.get("chance")
+                    if chance is not None:
+                        self.assertGreater(chance, 0, f"Drop chance <= 0 in {monster_id}")
+                        self.assertLessEqual(chance, 1.0, f"Drop chance > 1.0 in {monster_id}")
+
+
 if __name__ == "__main__":
     unittest.main()

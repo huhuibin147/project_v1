@@ -67,8 +67,24 @@ async function openDialogue(npc) {
 
   renderDialogue(npc.npc_id);
   
-  // 使用 setTimeout 确保在当前事件循环完成后清空输入框
-  // 这样可以清除掉按键快捷键带来的字符残留
+  setTimeout(() => {
+    document.getElementById("dialogue-input").value = "";
+  }, 0);
+}
+
+function openDialogueWithMessage(npcId, message) {
+  const npc = npcs.find(n => n.npc_id === npcId);
+  if (!npc) return;
+  dialogueOpen = true;
+  dialogueShowAll = false;
+  activeNpcId = npcId;
+  const state = getDialogueState(npcId);
+  state.messages.push({ role: "npc", text: message });
+  document.getElementById("dialogue-panel").classList.add("active");
+  document.getElementById("dialogue-title").textContent = npc.name;
+  document.getElementById("dialogue-input").value = "";
+  document.getElementById("dialogue-input").focus();
+  renderDialogue(npcId);
   setTimeout(() => {
     document.getElementById("dialogue-input").value = "";
   }, 0);

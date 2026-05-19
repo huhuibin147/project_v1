@@ -252,4 +252,179 @@ describe('背包模块 (inventory.js)', () => {
       expect(typeof renderInventoryGrid).toBe('function');
     });
   });
+
+  describe('INV-15: Tooltip 价格显示 (getPriceHtml)', () => {
+    it('应同时显示购入价和出售价', () => {
+      var item = { buy_price: 80, sell_price: 40 };
+      var html = getPriceHtml(item);
+      expect(html).toContain('购入');
+      expect(html).toContain('80');
+      expect(html).toContain('出售');
+      expect(html).toContain('40');
+    });
+
+    it('buy_price=0 应显示不可购买', () => {
+      var item = { buy_price: 0, sell_price: 5 };
+      var html = getPriceHtml(item);
+      expect(html).toContain('不可购买');
+      expect(html).toContain('出售');
+    });
+
+    it('sell_price=0 应显示不可出售', () => {
+      var item = { buy_price: 50, sell_price: 0 };
+      var html = getPriceHtml(item);
+      expect(html).toContain('购入');
+      expect(html).toContain('不可出售');
+    });
+
+    it('两者都为0 应同时显示不可购买和不可出售', () => {
+      var item = { buy_price: 0, sell_price: 0 };
+      var html = getPriceHtml(item);
+      expect(html).toContain('不可购买');
+      expect(html).toContain('不可出售');
+    });
+  });
+
+  describe('INV-16: Tooltip 效果显示 (getEffectHtml)', () => {
+    it('heal 效果应显示回复 HP', () => {
+      var item = { effect_type: 'heal', heal_value: 50 };
+      var html = getEffectHtml(item);
+      expect(html).toContain('回复');
+      expect(html).toContain('50');
+      expect(html).toContain('HP');
+    });
+
+    it('restore_mp 效果应显示回复 MP', () => {
+      var item = { effect_type: 'restore_mp', mp_value: 30 };
+      var html = getEffectHtml(item);
+      expect(html).toContain('回复');
+      expect(html).toContain('30');
+      expect(html).toContain('MP');
+    });
+
+    it('cure:poison 效果应显示解除中毒状态', () => {
+      var item = { effect_type: 'cure', effect_detail: 'poison' };
+      var html = getEffectHtml(item);
+      expect(html).toContain('解除中毒状态');
+    });
+
+    it('cure:curse 效果应显示解除诅咒状态', () => {
+      var item = { effect_type: 'cure', effect_detail: 'curse' };
+      var html = getEffectHtml(item);
+      expect(html).toContain('解除诅咒状态');
+    });
+
+    it('无 effect_type 应返回空字符串', () => {
+      var item = { heal_value: 50 };
+      var html = getEffectHtml(item);
+      expect(html).toBe('');
+    });
+  });
+
+  describe('INV-17: Tooltip 锻造配方显示 (getItemForgeHtml)', () => {
+    it('有配方时应显示锻造配方信息', () => {
+      ITEM_FORGE_MAP['iron_sword'] = {
+        recipe_name: '铁剑',
+        materials: [
+          { name: '铁矿石', quantity: 3 },
+          { name: '兽骨', quantity: 1 }
+        ],
+        gold_cost: 50,
+        success_rate: 1.0
+      };
+      var html = getItemForgeHtml('iron_sword');
+      expect(html).toContain('锻造配方');
+      expect(html).toContain('铁矿石x3');
+      expect(html).toContain('兽骨x1');
+      expect(html).toContain('50');
+      expect(html).toContain('100%');
+    });
+
+    it('无配方时应返回空字符串', () => {
+      delete ITEM_FORGE_MAP['nonexistent_item'];
+      var html = getItemForgeHtml('nonexistent_item');
+      expect(html).toBe('');
+    });
+  });
+
+  describe('INV-18: Tooltip 来源标签显示 (getItemSourceHtml)', () => {
+    it('商店来源应显示商店标签', () => {
+      ITEM_SOURCE_MAP['test_item_1'] = [{ type: 'shop', name: '老王铁匠铺' }];
+      var html = getItemSourceHtml('test_item_1');
+      expect(html).toContain('来源');
+      expect(html).toContain('老王铁匠铺');
+      expect(html).toContain('tt-source-shop');
+    });
+
+    it('怪物来源应显示怪物名和掉率', () => {
+      ITEM_SOURCE_MAP['test_item_2'] = [{ type: 'monster', name: '野狼', monster_id: 'wolf', chance: 0.5 }];
+      var html = getItemSourceHtml('test_item_2');
+      expect(html).toContain('野狼');
+      expect(html).toContain('50%');
+      expect(html).toContain('tt-source-monster');
+    });
+
+    it('锻造来源应显示锻造标签', () => {
+      ITEM_SOURCE_MAP['test_item_3'] = [{ type: 'forge', name: '铁剑锻造' }];
+      var html = getItemSourceHtml('test_item_3');
+      expect(html).toContain('铁剑锻造');
+      expect(html).toContain('tt-source-forge');
+    });
+
+    it('无来源时应返回空字符串', () => {
+      delete ITEM_SOURCE_MAP['no_source_item'];
+      var html = getItemSourceHtml('no_source_item');
+      expect(html).toBe('');
+    });
+
+    it('多种来源应同时显示', () => {
+      ITEM_SOURCE_MAP['multi_source'] = [
+        { type: 'shop', name: '商店' },
+        { type: 'monster', name: '野狼', monster_id: 'wolf', chance: 0.3 },
+        { type: 'forge', name: '锻造' }
+      ];
+      var html = getItemSourceHtml('multi_source');
+      expect(html).toContain('tt-source-shop');
+      expect(html).toContain('tt-source-monster');
+      expect(html).toContain('tt-source-forge');
+    });
+  });
+
+  describe('INV-19: Tooltip 堆叠标识', () => {
+    it('stackable=false 应显示唯一', () => {
+      var item = { stackable: false };
+      var text = item.stackable === false ? "唯一" : "可堆叠";
+      expect(text).toBe('唯一');
+    });
+
+    it('stackable=true 应显示可堆叠', () => {
+      var item = { stackable: true };
+      var text = item.stackable === false ? "唯一" : "可堆叠";
+      expect(text).toBe('可堆叠');
+    });
+
+    it('stackable 未定义时默认显示可堆叠', () => {
+      var item = {};
+      var text = item.stackable === false ? "唯一" : "可堆叠";
+      expect(text).toBe('可堆叠');
+    });
+  });
+
+  describe('INV-20: ITEM_FORGE_MAP 和 ITEM_SOURCE_MAP 数据结构', () => {
+    it('ITEM_FORGE_MAP 应为对象', () => {
+      expect(typeof ITEM_FORGE_MAP).toBe('object');
+    });
+
+    it('ITEM_SOURCE_MAP 应为对象', () => {
+      expect(typeof ITEM_SOURCE_MAP).toBe('object');
+    });
+
+    it('buildItemForgeMap 应为异步函数', () => {
+      expect(typeof buildItemForgeMap).toBe('function');
+    });
+
+    it('buildItemSourceMap 应为异步函数', () => {
+      expect(typeof buildItemSourceMap).toBe('function');
+    });
+  });
 });

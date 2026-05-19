@@ -29,6 +29,26 @@ async def get_monsters_config():
     return MONSTERS_DB
 
 
+@router.get("/monsters/drop_map")
+async def get_monsters_drop_map():
+    drop_map = {}
+    for monster_id, monster in MONSTERS_DB.items():
+        monster_name = monster.get("name", monster_id)
+        for drop in monster.get("drops", []):
+            item_id = drop.get("item_id") if isinstance(drop, dict) else drop
+            if not item_id:
+                continue
+            chance = drop.get("chance") if isinstance(drop, dict) else None
+            if item_id not in drop_map:
+                drop_map[item_id] = []
+            drop_map[item_id].append({
+                "monster_id": monster_id,
+                "monster_name": monster_name,
+                "chance": chance,
+            })
+    return {"drop_map": drop_map}
+
+
 @router.post("/combat/start")
 async def combat_start(req: CombatStartRequest):
     cleanup_expired_sessions()

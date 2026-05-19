@@ -2619,7 +2619,8 @@ body {
 /* 物品提示框 */
 .item-tooltip {
   position: fixed;
-  width: 260px;
+  min-width: 220px;
+  max-width: 340px;
   background: rgba(15, 15, 35, 0.98);
   border: 1px solid rgba(240, 192, 96, 0.4);
   border-radius: 6px;
@@ -2720,6 +2721,72 @@ body {
   padding: 1px 5px;
   font-size: 10px;
   color: #c0a060;
+}
+
+.tt-source-shop {
+  background: rgba(100, 180, 255, 0.12);
+  border-color: rgba(100, 180, 255, 0.25);
+  color: #6bb5ff;
+}
+
+.tt-source-monster {
+  background: rgba(255, 100, 100, 0.12);
+  border-color: rgba(255, 100, 100, 0.25);
+  color: #ff8888;
+}
+
+.tt-source-forge {
+  background: rgba(160, 120, 255, 0.12);
+  border-color: rgba(160, 120, 255, 0.25);
+  color: #b090ff;
+}
+
+.tt-stackable {
+  color: #aaa;
+  font-size: 10px;
+}
+
+.tt-effect {
+  font-size: 11px;
+  color: #4CAF50;
+  margin-bottom: 2px;
+}
+
+.tt-effect .heal-num {
+  color: #66BB6A;
+  font-weight: bold;
+}
+
+.tt-forge {
+  margin-top: 4px;
+  padding: 4px 6px;
+  background: rgba(160, 120, 255, 0.08);
+  border: 1px solid rgba(160, 120, 255, 0.2);
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.tt-forge-title {
+  color: #b090ff;
+  font-size: 10px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.tt-forge-mats {
+  color: #bbb;
+  font-size: 10px;
+  margin-bottom: 1px;
+}
+
+.tt-forge-cost {
+  color: #999;
+  font-size: 10px;
+}
+
+.price-unavailable {
+  color: #666;
+  font-style: italic;
 }
 
 .compare-bar-section {

@@ -27,6 +27,9 @@ function initNpcs(npcList) {
         name: cfg.name,
         role: cfg.role,
         greeting: cfg.greeting,
+        appearance: cfg.appearance || null,
+        services: cfg.services || {},
+        interaction_buttons: cfg.interaction_buttons || ["talk", "quest", "shop"],
         x: pos.x * TILE_SIZE,
         y: pos.y * TILE_SIZE,
         mood: "平静",
@@ -59,6 +62,68 @@ function getNearestNpc() {
   return nearest;
 }
 
+const DEFAULT_NPC_APPEARANCE = {
+  body: { color: "#6a4a8a", light: "#8a6aaa" },
+  head: { color: "#d4a574" },
+  hair: { color: "#3a2a2a", style: "default" },
+  accessories: []
+};
+
+function drawNPCAccessory(ctx, acc, x, y, p, breathe) {
+  const type = acc.type;
+  if (type === "beard") {
+    ctx.fillStyle = acc.color;
+    ctx.fillRect(x + p * 3, y + p * 3 + breathe, p * 2, p * 1);
+  } else if (type === "hood") {
+    ctx.fillStyle = acc.color;
+    ctx.fillRect(x + p * 1, y + p * 0 + breathe, p * 6, p * 2);
+    if (acc.accent) {
+      ctx.fillStyle = acc.accent;
+      ctx.fillRect(x + p * 3, y + p * 4 + breathe, p * 2, p * 1);
+      ctx.fillRect(x + p * 3, y + p * 5 + breathe, p * 2, p * 1);
+    }
+  } else if (type === "glasses") {
+    ctx.fillStyle = acc.frame_color || "#333";
+    ctx.fillRect(x + p * 2, y + p * 2 + breathe, p * 2, p);
+    ctx.fillRect(x + p * 5, y + p * 2 + breathe, p * 2, p);
+    ctx.fillStyle = "#aaa";
+    ctx.fillRect(x + p * 4, y + p * 2 + breathe, p, p);
+  } else if (type === "tool") {
+    const pos = acc.position || "right";
+    const toolType = acc.tool_type || "staff";
+    if (pos === "right") {
+      if (toolType === "hammer") {
+        ctx.fillStyle = acc.color;
+        ctx.fillRect(x + p * 6, y + p * 3 + breathe, p, p * 3);
+        ctx.fillStyle = acc.accent;
+        ctx.fillRect(x + p * 6, y + p * 2 + breathe, p * 2, p * 2);
+      } else if (toolType === "staff") {
+        ctx.fillStyle = acc.color;
+        ctx.fillRect(x + p * 7, y + p * 2 + breathe, p, p * 5);
+        ctx.fillStyle = acc.accent;
+        ctx.fillRect(x + p * 6, y + p * 1 + breathe, p * 3, p);
+      } else if (toolType === "book") {
+        ctx.fillStyle = acc.color;
+        ctx.fillRect(x + p * 7, y + p * 3 + breathe, p * 2, p * 3);
+        ctx.fillStyle = acc.accent;
+        ctx.fillRect(x + p * 7, y + p * 4 + breathe, p * 2, p);
+      }
+    }
+  } else if (type === "hat") {
+    ctx.fillStyle = acc.color;
+    ctx.fillRect(x + p * 2, y + p * 0 + breathe, p * 4, p * 1);
+  } else if (type === "apron") {
+    ctx.fillStyle = acc.color;
+    ctx.fillRect(x + p * 3, y + p * 5 + breathe, p * 2, p * 2);
+  } else if (type === "cape") {
+    ctx.fillStyle = acc.color;
+    ctx.fillRect(x + p * 1, y + p * 5 + breathe, p * 6, p * 3);
+  } else if (type === "scarf") {
+    ctx.fillStyle = acc.color;
+    ctx.fillRect(x + p * 2, y + p * 3 + breathe, p * 4, p * 1);
+  }
+}
+
 function drawNPC(ctx, npc) {
   const x = Math.round(npc.x);
   const y = Math.round(npc.y);
@@ -67,90 +132,35 @@ function drawNPC(ctx, npc) {
   const time = Date.now() / 1000;
   const breathe = Math.sin(time * 2) * 1;
 
-  // 根据 NPC 类型选择颜色
-  const isBlacksmith = npc.npc_id === "blacksmith";
-  const isPriest = npc.npc_id === "priest";
-  const isSkillMaster = npc.npc_id === "skill_master";
-  let bodyColor, bodyLight, hairColor, skinColor;
-  if (isBlacksmith) {
-    bodyColor = "#8b4513"; bodyLight = "#a0522d"; hairColor = "#4a3728"; skinColor = "#d4a574";
-  } else if (isPriest) {
-    bodyColor = "#f0e6d2"; bodyLight = "#fff8ee"; hairColor = "#e8c880"; skinColor = "#f5d5b8";
-  } else if (isSkillMaster) {
-    bodyColor = "#2e4053"; bodyLight = "#3d5a80"; hairColor = "#c0c0c0"; skinColor = "#e0c8a8";
-  } else {
-    bodyColor = "#6a4a8a"; bodyLight = "#8a6aaa"; hairColor = "#3a2a2a"; skinColor = "#d4a574";
-  }
+  const appearance = npc.appearance || DEFAULT_NPC_APPEARANCE;
+  const bodyColor = appearance.body.color;
+  const bodyLight = appearance.body.light;
+  const skinColor = appearance.head.color;
+  const hairColor = appearance.hair.color;
 
-  // 阴影
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fillRect(x + p * 2, y + s - p * 2, p * 4, p * 1);
 
-  // 身体
   ctx.fillStyle = bodyColor;
   ctx.fillRect(x + p * 2, y + p * 3 + breathe, p * 4, p * 4);
   ctx.fillStyle = bodyLight;
   ctx.fillRect(x + p * 3, y + p * 4 + breathe, p * 2, p * 3);
 
-  // 头部
   ctx.fillStyle = skinColor;
   ctx.fillRect(x + p * 2, y + p * 1 + breathe, p * 4, p * 3);
 
-  // 头发
   ctx.fillStyle = hairColor;
   ctx.fillRect(x + p * 2, y + p * 0 + breathe, p * 4, p * 2);
 
-  if (isBlacksmith) {
-    // 铁匠：胡子
-    ctx.fillRect(x + p * 3, y + p * 3 + breathe, p * 2, p * 1);
-    // 锤子
-    ctx.fillStyle = "#666";
-    ctx.fillRect(x + p * 6, y + p * 3 + breathe, p, p * 3);
-    ctx.fillStyle = "#8b6b4a";
-    ctx.fillRect(x + p * 6, y + p * 2 + breathe, p * 2, p * 2);
-  } else if (isPriest) {
-    // 祭司：白色头巾/兜帽
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(x + p * 1, y + p * 0 + breathe, p * 6, p * 2);
-    // 金色十字架装饰
-    ctx.fillStyle = "#ffd700";
-    ctx.fillRect(x + p * 3, y + p * 4 + breathe, p * 2, p * 1);
-    ctx.fillRect(x + p * 3, y + p * 5 + breathe, p * 2, p * 1);
-    // 法杖
-    ctx.fillStyle = "#8b7355";
-    ctx.fillRect(x + p * 7, y + p * 2 + breathe, p, p * 5);
-    ctx.fillStyle = "#ffd700";
-    ctx.fillRect(x + p * 6, y + p * 1 + breathe, p * 3, p);
-  } else if (isSkillMaster) {
-    // 导师：眼镜
-    ctx.fillStyle = "#333";
-    ctx.fillRect(x + p * 2, y + p * 2 + breathe, p * 2, p);
-    ctx.fillRect(x + p * 5, y + p * 2 + breathe, p * 2, p);
-    ctx.fillStyle = "#aaa";
-    ctx.fillRect(x + p * 4, y + p * 2 + breathe, p, p);
-    // 长袍
-    ctx.fillStyle = "#1a2a3a";
-    ctx.fillRect(x + p * 1, y + p * 5 + breathe, p * 6, p * 3);
-    // 书本
-    ctx.fillStyle = "#8b4513";
-    ctx.fillRect(x + p * 7, y + p * 3 + breathe, p * 2, p * 3);
-    ctx.fillStyle = "#f5f5dc";
-    ctx.fillRect(x + p * 7, y + p * 4 + breathe, p * 2, p);
-  } else {
-    // 商人：围裙
-    ctx.fillStyle = "#e8d8b0";
-    ctx.fillRect(x + p * 3, y + p * 5 + breathe, p * 2, p * 2);
-    // 头巾
-    ctx.fillStyle = "#d4a060";
-    ctx.fillRect(x + p * 2, y + p * 0 + breathe, p * 4, p * 1);
+  const accessories = appearance.accessories || [];
+  for (const acc of accessories) {
+    drawNPCAccessory(ctx, acc, x, y, p, breathe);
   }
 
-  // 眼睛
   ctx.fillStyle = "#333";
   ctx.fillRect(x + p * 3, y + p * 2 + breathe, p, p);
   ctx.fillRect(x + p * 5, y + p * 2 + breathe, p, p);
 
-  // 名字标签
   ctx.fillStyle = "rgba(0,0,0,0.6)";
   ctx.font = "10px monospace";
   const nameWidth = ctx.measureText(npc.name).width + 10;
@@ -159,7 +169,6 @@ function drawNPC(ctx, npc) {
   ctx.textAlign = "center";
   ctx.fillText(npc.name, x + s / 2, y - 4);
 
-  // 交互提示
   if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !GameManager.isMenuOpen() && !combatOpen && !forgePanelOpen) {
     npc.showPrompt = true;
     const prompt = "按 E 交互";
@@ -220,27 +229,32 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+const INTERACTION_BUTTON_MAP = {
+  talk: { label: "对话", handler: "interactTalk" },
+  quest: { label: "任务", handler: "interactQuest" },
+  shop: { label: "商店", handler: "interactShop" },
+  forge: { label: "锻造", handler: "interactForge" },
+  heal: { label: "治疗服务", handler: "interactHeal" },
+  learn_skill: { label: "学习技能", handler: "interactLearnSkill" },
+  rest: { label: "住宿休息", handler: "interactRest" },
+  rumor: { label: "打听消息", handler: "interactRumor" },
+  cave_guide: { label: "洞穴向导", handler: "interactCaveGuide" },
+};
+
 function openNpcInteract(npc) {
   interactNpcId = npc.npc_id;
   activeNpcId = npc.npc_id;
   npcInteractOpen = true;
   document.getElementById("npc-interact-title").textContent = npc.name;
-  // 根据NPC类型显示不同的交互按钮
   const actionsDiv = document.getElementById("npc-interact-actions");
-  let html = '<button class="btn-interact" onclick="interactTalk()">对话 (1)</button>';
-  html += '<button class="btn-interact" onclick="interactQuest()">任务 (2)</button>';
-  if (npc.npc_id === "priest") {
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
-    html += '<button class="btn-interact" onclick="interactHeal()">治疗服务 (4)</button>';
-  } else if (npc.npc_id === "skill_master") {
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
-    html += '<button class="btn-interact" onclick="interactLearnSkill()">学习技能 (4)</button>';
-  } else if (npc.npc_id === "blacksmith") {
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
-    html += '<button class="btn-interact" onclick="interactForge()">锻造 (4)</button>';
-  } else {
-    html += '<button class="btn-interact" onclick="interactShop()">商店 (3)</button>';
-  }
+  const buttons = npc.interaction_buttons || ["talk", "quest", "shop"];
+  let html = "";
+  buttons.forEach((btnKey, idx) => {
+    const btnDef = INTERACTION_BUTTON_MAP[btnKey];
+    if (btnDef) {
+      html += `<button class="btn-interact" onclick="${btnDef.handler}()">${btnDef.label} (${idx + 1})</button>`;
+    }
+  });
   actionsDiv.innerHTML = html;
   document.getElementById("npc-interact-panel").classList.add("active");
 }
@@ -389,6 +403,55 @@ function closeSkillLearnPanel() {
   skillLearnPanelOpen = false;
   document.getElementById("skill-learn-panel").classList.remove("active");
   document.getElementById("skill-learn-message").style.display = "none";
+}
+
+function interactRest() {
+  if (!interactNpcId) return;
+  const npcId = interactNpcId;
+  closeNpcInteract();
+  requestNpcService(npcId, "rest");
+}
+
+function interactRumor() {
+  if (!interactNpcId) return;
+  const npcId = interactNpcId;
+  closeNpcInteract();
+  requestNpcService(npcId, "rumor");
+}
+
+function interactCaveGuide() {
+  if (!interactNpcId) return;
+  const npcId = interactNpcId;
+  closeNpcInteract();
+  requestNpcService(npcId, "cave_guide");
+}
+
+async function requestNpcService(npcId, serviceType) {
+  try {
+    const resp = await fetch("/api/npc/service/generic", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ npc_id: npcId, service_type: serviceType }),
+    });
+    const data = await resp.json();
+    if (data.success && data.dialogue) {
+      activeNpcId = npcId;
+      openDialogueWithMessage(npcId, data.dialogue);
+    } else {
+      const npc = npcs.find(n => n.npc_id === npcId);
+      if (npc) {
+        activeNpcId = npcId;
+        openDialogue(npc);
+      }
+    }
+  } catch (e) {
+    console.error("requestNpcService error:", e);
+    const npc = npcs.find(n => n.npc_id === npcId);
+    if (npc) {
+      activeNpcId = npcId;
+      openDialogue(npc);
+    }
+  }
 }
 
 async function fetchAvailableSkills(npcId) {

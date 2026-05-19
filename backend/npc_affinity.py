@@ -6,11 +6,11 @@ class AffinitySystem:
     
     # 好感度等级
     AFFINITY_LEVELS = [
-        (0, 20, "敌对", 1.2, "冷淡敌视"),
-        (21, 40, "冷淡", 1.1, "态度冷淡"),
-        (41, 60, "中性", 1.0, "公事公办"),
-        (61, 80, "友善", 0.9, "热情友好"),
-        (81, 100, "亲密", 0.8, "非常亲近"),
+        (0, 20, "敌对", 1.2, "冷淡敌视", 0.8),
+        (21, 40, "冷淡", 1.1, "态度冷淡", 0.9),
+        (41, 60, "中性", 1.0, "公事公办", 1.0),
+        (61, 80, "友善", 0.9, "热情友好", 1.2),
+        (81, 100, "亲密", 0.8, "非常亲近", 1.5),
     ]
     
     def __init__(self, initial_affinity: int = 50):
@@ -22,24 +22,27 @@ class AffinitySystem:
         return self.affinity
     
     def get_level(self) -> str:
-        """获取好感度等级名称"""
-        for min_val, max_val, name, _, _ in self.AFFINITY_LEVELS:
+        for min_val, max_val, name, _, _, _ in self.AFFINITY_LEVELS:
             if min_val <= self.affinity <= max_val:
                 return name
         return "中性"
     
     def get_dialog_style(self) -> str:
-        """获取对话风格描述"""
-        for min_val, max_val, _, _, style in self.AFFINITY_LEVELS:
+        for min_val, max_val, _, _, style, _ in self.AFFINITY_LEVELS:
             if min_val <= self.affinity <= max_val:
                 return style
         return "公事公办"
     
     def get_discount_multiplier(self) -> float:
-        """获取商店价格乘数（<1.0 为折扣，>1.0 为加价）"""
-        for min_val, max_val, _, multiplier, _ in self.AFFINITY_LEVELS:
+        for min_val, max_val, _, multiplier, _, _ in self.AFFINITY_LEVELS:
             if min_val <= self.affinity <= max_val:
                 return multiplier
+        return 1.0
+    
+    def get_quest_reward_multiplier(self) -> float:
+        for min_val, max_val, _, _, _, reward_mult in self.AFFINITY_LEVELS:
+            if min_val <= self.affinity <= max_val:
+                return reward_mult
         return 1.0
     
     def get_context_description(self) -> str:

@@ -9,7 +9,7 @@ from routes.context import (
     NPC_CONFIG_FILE, ITEMS_DB, ITEM_EFFECTS,
     format_skill_for_frontend,
 )
-from routes.models import ChatRequest, TradeRequest, HealServiceRequest, LearnSkillRequest
+from routes.models import ChatRequest, TradeRequest, HealServiceRequest, LearnSkillRequest, GenericServiceRequest
 from skill_system import get_skill, can_learn_skill
 
 router = APIRouter(prefix="/api", tags=["npc"])
@@ -27,6 +27,9 @@ async def list_npcs():
             "location": cfg["location"],
             "map_id": cfg.get("map_id", ""),
             "greeting": cfg["greeting"],
+            "appearance": cfg.get("appearance", None),
+            "services": cfg.get("services", {}),
+            "interaction_buttons": cfg.get("interaction_buttons", ["talk", "quest", "shop"]),
         }
         for npc_id, cfg in all_npcs.items()
     ]
@@ -269,3 +272,56 @@ async def npc_learn_skill(req: LearnSkillRequest):
         "skills": [format_skill_for_frontend(s) for s in player_profile.skills],
         "player_info": player_profile.get_info(),
     }
+
+
+SERVICE_DIALOGUES = {
+    "rest": {
+        "innkeeper": "来来来，楼上房间已经给你准备好了。好好休息一晚，明天又是元气满满的一天！",
+        "_default": "这里可以休息一下，恢复体力。",
+    },
+    "rumor": {
+        "innkeeper": "听说最近王城地下出现了一些奇怪的动静，有人说是古墓的入口……不过谁知道呢，可能是老鼠吧。",
+        "_default": "最近没什么特别的消息。",
+    },
+    "cave_guide": {
+        "cave_explorer": "这个洞穴我走了不下百遍了！往东走大概五十步有个岔路，左边通向矿脉区，右边比较危险，有骷髅兵出没。你要是找到什么好东西，记得分我一份啊！",
+        "_default": "我对这里不太了解，你自己小心探索吧。",
+    },
+}
+
+
+@router.post("/npc/service/generic")
+async def npc_generic_service(req: GenericServiceRequest):
+    npc = get_npc(req.npc_id)
+    cfg = npc.cfg
+    services = cfg.get("services", {})
+
+    if req.service_type not in services:
+        return {"success": False, "message": f"该NPC不提供此服务"}
+
+    service_cfg = services[req.service_type]
+    cost = service_cfg.get("cost", 0)
+
+    if cost > 0 and player_profile.gold < cost:
+        return {"success": False, "message": f"金币不足，需要 {cost} 金币"}
+
+    if cost > 0:
+        player_profile.spend_gold(cost)
+        player_profile._save()
+
+    dialogues = SERVICE_DIALOGUES.get(req.service_type, {})
+    dialogue = dialogues.get(req.npc_id, dialogues.get("_default", f"你使用了{service_cfg.get('name', '服务')}。"))
+
+    result = {
+        "success": True,
+        "dialogue": dialogue,
+        "cost": cost,
+    }
+
+    if req.service_type == "rest":
+        player_profile.hp = player_profile.max_hp
+        player_profile.mp = player_profile.max_mp
+        player_profile._save()
+        result["player_info"] = player_profile.get_info()
+
+    return result

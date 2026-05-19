@@ -6,12 +6,46 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from routes.context import player_profile, quest_manager
-from routes.models import TransferRequest, ObjectInteractRequest
+from routes.models import TransferRequest, ObjectInteractRequest, ExploredTilesRequest
 
 router = APIRouter(prefix="/api", tags=["map"])
 
 MAPS_DIR = Path(__file__).parent.parent.parent / "config" / "maps"
 TILES_FILE = Path(__file__).parent.parent.parent / "config" / "tiles.json"
+
+
+@router.get("/maps")
+async def list_maps():
+    result = []
+    for map_file in sorted(MAPS_DIR.glob("*.json")):
+        with open(map_file, "r", encoding="utf-8") as f:
+            d = json.load(f)
+        meta = d.get("metadata", {})
+        env = meta.get("environment", {})
+        result.append({
+            "id": d["id"],
+            "name": d["name"],
+            "width": d["width"],
+            "height": d["height"],
+            "level_range": meta.get("level_range", [1, 1]),
+            "region": meta.get("region", ""),
+            "environment": {
+                "particles": env.get("particles", []),
+                "ambient_color": env.get("ambient_color"),
+                "danger_zone": env.get("danger_zone", False),
+            },
+            "map_names": meta.get("map_names", {}),
+        })
+    return result
+
+
+@router.post("/map/explored")
+async def update_explored_tiles(req: ExploredTilesRequest):
+    existing = set(player_profile.explored_tiles.get(req.map_id, []))
+    existing.update(req.tiles)
+    player_profile.explored_tiles[req.map_id] = list(existing)
+    player_profile._save()
+    return {"success": True, "count": len(existing)}
 
 
 @router.get("/map/tiles")
@@ -34,6 +68,7 @@ async def get_map(map_id: str):
     for obj in map_data.get("objects", []):
         if obj["id"] in object_states:
             obj["state"] = object_states[obj["id"]]
+    map_data["explored_tiles"] = player_profile.explored_tiles.get(map_id, [])
     return map_data
 
 

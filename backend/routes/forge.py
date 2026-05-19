@@ -114,3 +114,31 @@ async def forge_reroll(req: ForgeRerollRequest):
 async def get_affix_types():
     from affix_system import get_affix_categories
     return {"categories": get_affix_categories()}
+
+
+@router.get("/forge/recipes_map")
+async def get_forge_recipes_map():
+    from forge_system import get_all_recipes
+    from item_system import ITEMS_DB
+    all_recipes = get_all_recipes()
+    recipes_map = {}
+    for recipe in all_recipes:
+        output_id = recipe["output"]["item_id"]
+        materials = []
+        for mat in recipe.get("materials", []):
+            mat_info = ITEMS_DB.get(mat["item_id"], {})
+            materials.append({
+                "item_id": mat["item_id"],
+                "name": mat_info.get("name", mat["item_id"]),
+                "quantity": mat["quantity"],
+            })
+        output_info = ITEMS_DB.get(output_id, {})
+        recipes_map[output_id] = {
+            "recipe_name": recipe.get("name", ""),
+            "materials": materials,
+            "gold_cost": recipe.get("gold_cost", 0),
+            "success_rate": recipe.get("success_rate", 1.0),
+            "level_requirement": recipe.get("level_requirement", 1),
+            "output_name": output_info.get("name", output_id),
+        }
+    return {"recipes_map": recipes_map}

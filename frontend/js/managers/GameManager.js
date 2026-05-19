@@ -84,6 +84,9 @@ const GameManager = (() => {
         if (gameStarted && typeof savePlayerPosition === 'function') {
           savePlayerPosition();
         }
+        if (typeof flushExploredTiles === 'function') {
+          flushExploredTiles();
+        }
       }, 5000);
 
       if (typeof InputManager !== 'undefined') {

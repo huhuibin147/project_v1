@@ -566,6 +566,7 @@ function getTypeIcon(type) {
 let tooltipEl = null;
 
 const ITEM_SOURCE_MAP = {};
+const ITEM_FORGE_MAP = {};
 
 async function buildItemSourceMap() {
   for (const key of Object.keys(ITEM_SOURCE_MAP)) {
@@ -573,9 +574,9 @@ async function buildItemSourceMap() {
   }
 
   try {
-    const [npcResp, monsterResp] = await Promise.all([
+    const [npcResp, dropMapResp] = await Promise.all([
       fetch("/api/npcs").catch(() => null),
-      fetch("/api/monsters").catch(() => null)
+      fetch("/api/monsters/drop_map").catch(() => null)
     ]);
 
     if (npcResp && npcResp.ok) {
@@ -588,42 +589,31 @@ async function buildItemSourceMap() {
             if (!itemId) continue;
             if (!ITEM_SOURCE_MAP[itemId]) ITEM_SOURCE_MAP[itemId] = [];
             const shopName = npc.name || npc.npc_id || "";
-            if (shopName && !ITEM_SOURCE_MAP[itemId].includes(shopName)) {
-              ITEM_SOURCE_MAP[itemId].push(shopName);
+            const exists = ITEM_SOURCE_MAP[itemId].some(s => s.type === "shop" && s.name === shopName);
+            if (shopName && !exists) {
+              ITEM_SOURCE_MAP[itemId].push({ type: "shop", name: shopName });
             }
           }
         }
       }
     }
 
-    if (monsterResp && monsterResp.ok) {
-      const monsterData = await monsterResp.json();
-      const monsters = monsterData.monsters || monsterData;
-      const monsterMap = Array.isArray(monsters) ? {} : monsters;
-      if (Array.isArray(monsters)) {
-        for (const m of monsters) {
-          if (m.drops && Array.isArray(m.drops)) {
-            for (const drop of m.drops) {
-              const itemId = typeof drop === "string" ? drop : drop.item_id;
-              if (!itemId) continue;
-              if (!ITEM_SOURCE_MAP[itemId]) ITEM_SOURCE_MAP[itemId] = [];
-              if (!ITEM_SOURCE_MAP[itemId].includes("怪物掉落")) {
-                ITEM_SOURCE_MAP[itemId].push("怪物掉落");
-              }
-            }
-          }
-        }
-      } else {
-        for (const [mId, monster] of Object.entries(monsterMap)) {
-          if (monster.drops && Array.isArray(monster.drops)) {
-            for (const drop of monster.drops) {
-              const itemId = typeof drop === "string" ? drop : drop.item_id;
-              if (!itemId) continue;
-              if (!ITEM_SOURCE_MAP[itemId]) ITEM_SOURCE_MAP[itemId] = [];
-              if (!ITEM_SOURCE_MAP[itemId].includes("怪物掉落")) {
-                ITEM_SOURCE_MAP[itemId].push("怪物掉落");
-              }
-            }
+    if (dropMapResp && dropMapResp.ok) {
+      const data = await dropMapResp.json();
+      const dropMap = data.drop_map || {};
+      for (const [itemId, drops] of Object.entries(dropMap)) {
+        if (!ITEM_SOURCE_MAP[itemId]) ITEM_SOURCE_MAP[itemId] = [];
+        for (const drop of drops) {
+          const exists = ITEM_SOURCE_MAP[itemId].some(
+            s => s.type === "monster" && s.monster_id === drop.monster_id
+          );
+          if (!exists) {
+            ITEM_SOURCE_MAP[itemId].push({
+              type: "monster",
+              name: drop.monster_name,
+              monster_id: drop.monster_id,
+              chance: drop.chance,
+            });
           }
         }
       }
@@ -633,11 +623,93 @@ async function buildItemSourceMap() {
   }
 }
 
+async function buildItemForgeMap() {
+  for (const key of Object.keys(ITEM_FORGE_MAP)) {
+    delete ITEM_FORGE_MAP[key];
+  }
+
+  try {
+    const resp = await fetch("/api/forge/recipes_map");
+    if (resp.ok) {
+      const data = await resp.json();
+      const map = data.recipes_map || {};
+      for (const [itemId, recipe] of Object.entries(map)) {
+        ITEM_FORGE_MAP[itemId] = recipe;
+        if (!ITEM_SOURCE_MAP[itemId]) ITEM_SOURCE_MAP[itemId] = [];
+        const exists = ITEM_SOURCE_MAP[itemId].some(s => s.type === "forge");
+        if (!exists) {
+          ITEM_SOURCE_MAP[itemId].push({ type: "forge", name: recipe.recipe_name || "锻造" });
+        }
+      }
+    }
+  } catch (e) {
+    console.error("构建锻造配方映射失败:", e);
+  }
+}
+
 function getItemSourceHtml(itemId) {
   const sources = ITEM_SOURCE_MAP[itemId];
   if (!sources || sources.length === 0) return "";
-  const tags = sources.map(s => `<span class="tt-source-tag">${s}</span>`).join("");
+  const tags = sources.map(s => {
+    if (s.type === "shop") {
+      return `<span class="tt-source-tag tt-source-shop">${s.name}</span>`;
+    } else if (s.type === "monster") {
+      const chanceText = s.chance != null ? ` ${Math.round(s.chance * 100)}%` : "";
+      return `<span class="tt-source-tag tt-source-monster">${s.name}${chanceText}</span>`;
+    } else if (s.type === "forge") {
+      return `<span class="tt-source-tag tt-source-forge">${s.name}</span>`;
+    }
+    return `<span class="tt-source-tag">${s.name}</span>`;
+  }).join("");
   return `<div class="tt-source">来源: ${tags}</div>`;
+}
+
+function getItemForgeHtml(itemId) {
+  const recipe = ITEM_FORGE_MAP[itemId];
+  if (!recipe) return "";
+  const mats = recipe.materials.map(m => `${m.name}x${m.quantity}`).join("  ");
+  const rate = Math.round(recipe.success_rate * 100);
+  return `<div class="tt-forge">
+    <div class="tt-forge-title">锻造配方</div>
+    <div class="tt-forge-mats">材料: ${mats}</div>
+    <div class="tt-forge-cost">费用: ${recipe.gold_cost}金  成功率: ${rate}%</div>
+  </div>`;
+}
+
+function getEffectHtml(item) {
+  const effectType = item.effect_type;
+  if (!effectType) return "";
+  const parts = [];
+  if (effectType === "heal" && item.heal_value) {
+    parts.push(`<div class="tt-effect">回复 <span class="heal-num">${item.heal_value}</span> HP</div>`);
+  }
+  if (effectType === "restore_mp" && item.mp_value) {
+    parts.push(`<div class="tt-effect">回复 <span class="heal-num">${item.mp_value}</span> MP</div>`);
+  }
+  if (effectType === "cure") {
+    const detail = item.effect_detail;
+    const cureLabels = { poison: "中毒", curse: "诅咒", burn: "灼烧", freeze: "冰冻" };
+    const label = cureLabels[detail] || detail || "异常";
+    parts.push(`<div class="tt-effect">解除${label}状态</div>`);
+  }
+  return parts.join("");
+}
+
+function getPriceHtml(item) {
+  const buyPrice = item.buy_price || 0;
+  const sellPrice = item.sell_price || 0;
+  const parts = [];
+  if (buyPrice > 0) {
+    parts.push(`购入: ${buyPrice}金`);
+  } else {
+    parts.push(`<span class="price-unavailable">不可购买</span>`);
+  }
+  if (sellPrice > 0) {
+    parts.push(`出售: ${sellPrice}金`);
+  } else {
+    parts.push(`<span class="price-unavailable">不可出售</span>`);
+  }
+  return `<div class="tt-price">${parts.join("  ")}</div>`;
 }
 
 function showItemTooltip(item, anchorEl) {
@@ -652,20 +724,14 @@ function showItemTooltip(item, anchorEl) {
   const rarityName = getRarityName(item.rarity || "common");
   const tierName = item.tier ? getTierName(item.tier) : "";
   const levelText = getLevelRangeText(item);
+  const stackableText = item.stackable === false ? "唯一" : "可堆叠";
 
   let statsHtml = "";
   if (canEquip && item.stats) {
     statsHtml = `<div class="tt-stats">${formatItemStats(item.stats)}</div>`;
   }
 
-  let healHtml = "";
-  if (item.heal_value && item.heal_value > 0) {
-    healHtml = `<div class="tt-heal">回复 <span class="heal-num">${item.heal_value}</span> HP</div>`;
-  }
-  let mpHtml = "";
-  if (item.mp_value && item.mp_value > 0) {
-    mpHtml = `<div class="tt-heal">回复 <span class="heal-num">${item.mp_value}</span> MP</div>`;
-  }
+  const effectHtml = getEffectHtml(item);
 
   let compareHtml = canEquip && !isEquipped ? buildCompareHtml(item) : "";
   const compareBarHtml = canEquip && !isEquipped ? buildCompareBarHtml(item) : "";
@@ -681,6 +747,8 @@ function showItemTooltip(item, anchorEl) {
     }).join("")}</div>`;
   }
 
+  const forgeHtml = getItemForgeHtml(item.item_id);
+
   const tt = document.createElement("div");
   tt.className = "item-tooltip";
   tt.innerHTML = `
@@ -688,31 +756,33 @@ function showItemTooltip(item, anchorEl) {
       <span class="tt-name" style="color:${rarityColor}">${item.name}</span>
       <span class="tt-qty">x${item.quantity}</span>
     </div>
-    <div class="tt-meta">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} <span style="color:${rarityColor}">[${rarityName}]</span>${classRestrictionHtml}</div>
+    <div class="tt-meta">${getTypeLabel(item.type)}${canEquip ? ` · ${getSlotLabel(item.equip_slot)}` : ""}${tierName ? ` · ${tierName}` : ""}${levelText ? ` · ${levelText}` : ""} · <span class="tt-stackable">${stackableText}</span> <span style="color:${rarityColor}">[${rarityName}]</span>${classRestrictionHtml}</div>
     ${statsHtml}
-    ${healHtml}
-    ${mpHtml}
+    ${effectHtml}
     ${affixesFullHtml}
     ${compareHtml}
     ${compareBarHtml}
     <div class="tt-desc">${item.description}</div>
+    ${forgeHtml}
     ${getItemSourceHtml(item.item_id)}
-    <div class="tt-price">出售价: ${item.sell_price} 金</div>
+    ${getPriceHtml(item)}
   `;
 
   document.body.appendChild(tt);
   tooltipEl = tt;
 
   const rect = anchorEl.getBoundingClientRect();
-  const panelRect = document.getElementById("inventory-panel").getBoundingClientRect();
+  const ttWidth = tt.offsetWidth;
+  const ttHeight = tt.offsetHeight;
   let left = rect.right + 8;
   let top = rect.top;
-  if (left + 268 > window.innerWidth) {
-    left = rect.left - 276;
+  if (left + ttWidth + 8 > window.innerWidth) {
+    left = rect.left - ttWidth - 8;
   }
-  if (top + 200 > window.innerHeight) {
-    top = window.innerHeight - 200;
+  if (top + ttHeight + 8 > window.innerHeight) {
+    top = window.innerHeight - ttHeight - 8;
   }
+  if (top < 0) top = 4;
   tt.style.left = left + "px";
   tt.style.top = top + "px";
 

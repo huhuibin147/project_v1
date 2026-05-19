@@ -22,6 +22,16 @@
       "greed": 0.3,
       "humor": 0.7
     },
+    "appearance": {
+      "body": { "color": "#8b4513", "light": "#a0522d" },
+      "head": { "color": "#d4a574" },
+      "hair": { "color": "#4a3728", "style": "default" },
+      "accessories": [
+        { "type": "beard", "color": "#4a3728" },
+        { "type": "tool", "color": "#666", "accent": "#8b6b4a", "position": "right", "tool_type": "hammer" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop", "forge"],
     "intents": {
       "chat": "闲聊、打招呼、问NPC个人的事情",
       "quest": "玩家想接任务、问有没有需要帮忙的",
@@ -215,6 +225,16 @@
       "greed": 0.4,
       "humor": 0.6
     },
+    "appearance": {
+      "body": { "color": "#c4785a", "light": "#d4987a" },
+      "head": { "color": "#f5d5b8" },
+      "hair": { "color": "#3a2a2a", "style": "default" },
+      "accessories": [
+        { "type": "apron", "color": "#e8d8b0" },
+        { "type": "hat", "color": "#d4a060" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop"],
     "intents": {
       "chat": "闲聊、打听消息、问村里的事",
       "quest": "帮刘婶跑腿、找东西、传话",
@@ -328,6 +348,16 @@
       "greed": 0.2,
       "humor": 0.3
     },
+    "appearance": {
+      "body": { "color": "#2d5a27", "light": "#3d7a37" },
+      "head": { "color": "#d4a574" },
+      "hair": { "color": "#555555", "style": "default" },
+      "accessories": [
+        { "type": "hat", "color": "#2d5a27" },
+        { "type": "tool", "color": "#8b7355", "accent": "#4a7a3a", "position": "right", "tool_type": "staff" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop"],
     "intents": {
       "chat": "闲聊、询问森林的事、打听情报",
       "quest": "委托玩家收集稀有草药、探索森林深处",
@@ -465,6 +495,16 @@
       "greed": 0.1,
       "humor": 0.4
     },
+    "appearance": {
+      "body": { "color": "#f0e6d2", "light": "#fff8ee" },
+      "head": { "color": "#f5d5b8" },
+      "hair": { "color": "#e8c880", "style": "default" },
+      "accessories": [
+        { "type": "hood", "color": "#ffffff", "accent": "#ffd700" },
+        { "type": "tool", "color": "#8b7355", "accent": "#ffd700", "position": "right", "tool_type": "staff" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop", "heal"],
     "intents": {
       "chat": "闲聊、询问神殿的事、打听村里的传闻",
       "quest": "委托玩家寻找神圣遗物、净化被污染的区域",
@@ -547,6 +587,16 @@
       "greed": 0.3,
       "humor": 0.2
     },
+    "appearance": {
+      "body": { "color": "#2e4053", "light": "#3d5a80" },
+      "head": { "color": "#e0c8a8" },
+      "hair": { "color": "#c0c0c0", "style": "default" },
+      "accessories": [
+        { "type": "glasses", "frame_color": "#333333" },
+        { "type": "tool", "color": "#8b4513", "accent": "#f5f5dc", "position": "right", "tool_type": "book" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop", "learn_skill"],
     "intents": {
       "chat": "闲聊、询问战斗技巧、打听学院往事",
       "quest": "委托玩家收集稀有材料、测试新招式",
@@ -663,6 +713,16 @@
       "greed": 0.5,
       "humor": 0.6
     },
+    "appearance": {
+      "body": { "color": "#8b6914", "light": "#a58930" },
+      "head": { "color": "#d4a574" },
+      "hair": { "color": "#5a3a1a", "style": "default" },
+      "accessories": [
+        { "type": "hat", "color": "#8b6914" },
+        { "type": "tool", "color": "#8b7355", "accent": "#ffd700", "position": "right", "tool_type": "staff" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop", "cave_guide"],
     "intents": {
       "chat": "闲聊、询问洞穴情报、分享冒险经历",
       "quest": "委托玩家探索洞穴深处、收集稀有矿石",
@@ -717,6 +777,16 @@
       "greed": 0.6,
       "humor": 0.5
     },
+    "appearance": {
+      "body": { "color": "#c4a35a", "light": "#d4b37a" },
+      "head": { "color": "#d4a574" },
+      "hair": { "color": "#1a1a1a", "style": "default" },
+      "accessories": [
+        { "type": "hat", "color": "#c4a35a" },
+        { "type": "scarf", "color": "#e8d8b0" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop"],
     "intents": {
       "chat": "闲聊、询问沙漠情报、打听古墓位置",
       "quest": "委托玩家寻找沙漠古物、护送货物",
@@ -771,6 +841,16 @@
       "greed": 0.4,
       "humor": 0.8
     },
+    "appearance": {
+      "body": { "color": "#c41e3a", "light": "#e03050" },
+      "head": { "color": "#f5d5b8" },
+      "hair": { "color": "#1a0a0a", "style": "default" },
+      "accessories": [
+        { "type": "apron", "color": "#ffffff" },
+        { "type": "scarf", "color": "#c41e3a" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop", "rest", "rumor"],
     "intents": {
       "chat": "闲聊、打听王城消息、听冒险故事",
       "quest": "委托玩家处理酒馆麻烦、传递消息",
@@ -830,6 +910,17 @@
       "greed": 0.3,
       "humor": 0.2
     },
+    "appearance": {
+      "body": { "color": "#4a4a6a", "light": "#5a5a8a" },
+      "head": { "color": "#d4a574" },
+      "hair": { "color": "#2a2a2a", "style": "default" },
+      "accessories": [
+        { "type": "beard", "color": "#2a2a2a" },
+        { "type": "apron", "color": "#4a4a4a" },
+        { "type": "tool", "color": "#666666", "accent": "#8b6b4a", "position": "right", "tool_type": "hammer" }
+      ]
+    },
+    "interaction_buttons": ["talk", "quest", "shop", "forge"],
     "intents": {
       "chat": "闲聊、询问锻造知识、讨论材料",
       "quest": "委托玩家寻找稀有矿石、测试新武器",

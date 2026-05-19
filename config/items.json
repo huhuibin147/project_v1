@@ -1061,6 +1061,28 @@
     "forge_info": null,
     "required_class": "warrior"
   },
+  "darkgold_dagger": {
+    "id": "darkgold_dagger",
+    "name": "暗金匕首",
+    "type": "weapon",
+    "description": "暗影精华与魔法水晶锻造的暗金匕首，锋利无比。",
+    "buy_price": 960,
+    "sell_price": 480,
+    "stackable": false,
+    "equip_slot": "weapon",
+    "stats": {
+      "attack": 14,
+      "defense": 0,
+      "speed": 12,
+      "max_hp": 0
+    },
+    "rarity": "epic",
+    "tier": "tier3",
+    "level_range": 12,
+    "affixes": [],
+    "forge_info": null,
+    "required_class": "rogue"
+  },
   "mithril_shield": {
     "id": "mithril_shield",
     "name": "秘银盾",
@@ -1894,5 +1916,133 @@
     "buy_price": 60,
     "sell_price": 30,
     "stackable": true
+  },
+  "hard_leather_armor": {
+    "id": "hard_leather_armor",
+    "name": "硬皮甲",
+    "type": "armor",
+    "description": "用狼皮和兽骨锻造的硬皮甲，防护力大增。",
+    "buy_price": 300,
+    "sell_price": 150,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 7,
+      "speed": -1,
+      "max_hp": 15
+    },
+    "rarity": "uncommon",
+    "tier": "tier2",
+    "level_range": 5,
+    "affixes": [],
+    "forge_info": null,
+    "required_class": "rogue"
+  },
+  "dragon_leather_armor": {
+    "id": "dragon_leather_armor",
+    "name": "龙皮衣",
+    "type": "armor",
+    "description": "龙鳞与暗影精华锻造的龙皮衣，坚不可摧。",
+    "buy_price": 1200,
+    "sell_price": 600,
+    "stackable": false,
+    "equip_slot": "body",
+    "stats": {
+      "attack": 0,
+      "defense": 14,
+      "speed": -2,
+      "max_hp": 30
+    },
+    "rarity": "epic",
+    "tier": "tier3",
+    "level_range": 13,
+    "affixes": [],
+    "forge_info": null,
+    "required_class": "rogue"
+  },
+  "life_necklace": {
+    "id": "life_necklace",
+    "name": "生命项链",
+    "type": "accessory",
+    "description": "兽骨与棉布锻造的项链，佩戴后生命力旺盛。",
+    "buy_price": 360,
+    "sell_price": 180,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 0,
+      "defense": 2,
+      "speed": 0,
+      "max_hp": 8
+    },
+    "rarity": "common",
+    "tier": "tier1",
+    "level_range": 2,
+    "affixes": [],
+    "forge_info": null
+  },
+  "guardian_necklace": {
+    "id": "guardian_necklace",
+    "name": "守护项链",
+    "type": "accessory",
+    "description": "精钢与兽骨锻造的项链，守护佩戴者的安全。",
+    "buy_price": 640,
+    "sell_price": 320,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 0,
+      "defense": 4,
+      "speed": 0,
+      "max_hp": 12
+    },
+    "rarity": "uncommon",
+    "tier": "tier2",
+    "level_range": 6,
+    "affixes": [],
+    "forge_info": null
+  },
+  "darkgold_ring": {
+    "id": "darkgold_ring",
+    "name": "暗金戒指",
+    "type": "accessory",
+    "description": "暗影精华与魔法水晶锻造的戒指，蕴含强大魔力。",
+    "buy_price": 1800,
+    "sell_price": 900,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 5,
+      "defense": 3,
+      "speed": 3,
+      "max_hp": 10
+    },
+    "rarity": "epic",
+    "tier": "tier3",
+    "level_range": 14,
+    "affixes": [],
+    "forge_info": null
+  },
+  "eternal_necklace": {
+    "id": "eternal_necklace",
+    "name": "永恒项链",
+    "type": "accessory",
+    "description": "龙鳞与古代碎片锻造的项链，永恒不灭的力量。",
+    "buy_price": 1600,
+    "sell_price": 800,
+    "stackable": false,
+    "equip_slot": "accessory",
+    "stats": {
+      "attack": 2,
+      "defense": 5,
+      "speed": 2,
+      "max_hp": 20
+    },
+    "rarity": "epic",
+    "tier": "tier3",
+    "level_range": 13,
+    "affixes": [],
+    "forge_info": null
   }
 }
