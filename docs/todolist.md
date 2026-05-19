@@ -7,7 +7,34 @@
 ---
 
 ## 随手写（从这里开始）
-
+分析完成。地图重构后"丑"的根本原因不是因为直接推理，而是生成器代码本身的设计问题：
+问题根源
+1. TILES 字典与 tiles.json 不一致（已发现）
+代码中 TILES[11] 定义为"熔岩"，但 config/tiles.json 中 11 是"沙地"。这导致生成器对瓦片属性的判断完全错误。
+2. 建筑与路径的放置顺序错误
+generate_from_template 的执行顺序：
+plaintext
+zones → landmarks → paths → water → buildings → decorations
+问题：paths（道路）在 buildings（建筑）之前绘制，建筑放置时会覆盖道路，导致建筑门口无路可走。
+3. 道路宽度覆盖问题
+_draw_path_segment 中，width=2 的横向道路会覆盖 y 和 y+1 两整行，可能覆盖旁边的建筑或地标。
+4. 随机装饰物放置无逻辑
+python
+# 例如 forest 中随机放 80 棵树
+for _ in range(80):
+    x = random.randint(3, width - 4)
+    y = random.randint(3, height - 4)
+完全随机分布，没有考虑地形、路径、区域划分，导致视觉上杂乱无章。
+5. 模板设计本身简陋
+查看 config/map_templates/village.json，zones 只是简单的矩形区域，landmarks 和 buildings 的布局缺乏美学考量。
+解决方案
+要改进地图美观度，需要：
+修复 TILES 字典：与 tiles.json 保持一致
+调整生成顺序：zones → buildings → paths → water → decorations（先建筑后道路）
+改进道路算法：道路遇到建筑时绕行或停止
+区域化装饰：装饰物只在指定区域内随机放置，避免覆盖重要结构
+优化模板设计：在模板中预定义更美观的建筑布局和景观
+结论：不是"直接推理导致丑"，而是生成器代码的算法和模板设计不够精细。即使完全用代码生成，如果算法本身有缺陷，结果仍然不理想。
 -
 
 ---
