@@ -1,6 +1,12 @@
 let talentPanelOpen = false;
 let talentData = null;
 
+// 注册面板
+PanelManager.register('talent',
+  () => { document.getElementById("talent-panel").style.display = "flex"; talentPanelOpen = true; },
+  () => { document.getElementById("talent-panel").style.display = "none"; talentPanelOpen = false; hideTalentMessage(); }
+);
+
 const TREE_NAMES = {
   berserk: "狂战",
   guard: "守护",
@@ -36,24 +42,15 @@ async function openTalentPanel() {
     closeTalentPanel();
     return;
   }
-  if (dialogueOpen || shopOpen || GameManager.isMenuOpen() || combatOpen || npcInteractOpen || healPanelOpen || skillLearnPanelOpen || skillMenuOpen || (typeof forgePanelOpen !== 'undefined' && forgePanelOpen)) return;
-  if (playerInfoOpen) closePlayerInfo();
-  if (inventoryOpen) closeInventory();
-  if (helpOpen) closeHelp();
-  if (questManagerOpen) closeQuestManager();
-  if (skillMenuOpen) closeSkillMenu();
-  if (typeof worldMapOpen !== 'undefined' && worldMapOpen) closeWorldMap();
+  if (PanelManager.isAnyOpen() || GameManager.isMenuOpen()) return;
   const data = await fetchTalentData();
   if (!data) return;
   renderTalentPanel(data);
-  document.getElementById("talent-panel").style.display = "flex";
-  talentPanelOpen = true;
+  PanelManager.open('talent');
 }
 
 function closeTalentPanel() {
-  document.getElementById("talent-panel").style.display = "none";
-  talentPanelOpen = false;
-  hideTalentMessage();
+  PanelManager.close('talent');
 }
 
 function renderTalentPanel(data) {
@@ -199,15 +196,4 @@ function hideTalentMessage() {
   document.getElementById("talent-message").style.display = "none";
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "t" && !dialogueOpen && !GameManager.isMenuOpen() && !shopOpen && !inventoryOpen && !playerInfoOpen && !combatOpen && !helpOpen && !questManagerOpen && !npcInteractOpen && !healPanelOpen && !skillLearnPanelOpen && !skillMenuOpen) {
-    if (talentPanelOpen) {
-      closeTalentPanel();
-    } else {
-      openTalentPanel();
-    }
-  }
-  if (e.key === "Escape" && talentPanelOpen) {
-    closeTalentPanel();
-  }
-});
+

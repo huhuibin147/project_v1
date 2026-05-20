@@ -2,6 +2,16 @@ let questOpen = false;
 let questNpcId = null;
 let questListData = [];
 let questManagerOpen = false;
+
+// 注册面板
+PanelManager.register('questDialog',
+  () => { questOpen = true; document.getElementById("quest-panel").classList.add("active"); },
+  () => { questOpen = false; questNpcId = null; document.getElementById("quest-panel").classList.remove("active"); }
+);
+PanelManager.register('quest',
+  () => { questManagerOpen = true; document.getElementById("quest-manager-panel").classList.add("active"); },
+  () => { questManagerOpen = false; document.getElementById("quest-manager-panel").classList.remove("active"); }
+);
 let currentQuestTab = 'active';
 
 async function fetchAllQuests() {
@@ -160,28 +170,23 @@ async function completeQuest(questId) {
 
 function openQuestPanel(npcId) {
   questNpcId = npcId;
-  questOpen = true;
-  document.getElementById("quest-panel").classList.add("active");
   document.getElementById("quest-panel-title").textContent = getNpcNameById(npcId) + "的任务";
+  PanelManager.open('questDialog');
   fetchNpcQuests(npcId).then(quests => renderNpcQuests(quests));
 }
 
 function closeQuestPanel() {
-  questOpen = false;
-  questNpcId = null;
-  document.getElementById("quest-panel").classList.remove("active");
+  PanelManager.close('questDialog');
 }
 
 function openQuestList() {
-  questOpen = true;
-  document.getElementById("quest-panel").classList.add("active");
   document.getElementById("quest-panel-title").textContent = "任务列表";
+  PanelManager.open('questDialog');
   fetchAllQuests().then(quests => renderAllQuests(quests));
 }
 
 function closeQuestList() {
-  questOpen = false;
-  document.getElementById("quest-panel").classList.remove("active");
+  PanelManager.close('questDialog');
 }
 
 function getNpcNameById(npcId) {
@@ -422,7 +427,7 @@ let exploreCheckTimer = null;
 function startExploreCheck() {
   if (exploreCheckTimer) return;
   exploreCheckTimer = setInterval(() => {
-    if (!GameManager.isStarted() || combatOpen || dialogueOpen) return;
+    if (!GameManager.isStarted() || PanelManager.isOpen('combat') || PanelManager.isOpen('dialogue')) return;
     const tile = getPlayerTilePosition();
     if (tile && currentMap) {
       fetch("/api/quests/progress", {
@@ -447,9 +452,8 @@ function startExploreCheck() {
 }
 
 function openQuestManager() {
-  questManagerOpen = true;
   currentQuestTab = 'active';
-  document.getElementById("quest-manager-panel").classList.add("active");
+  PanelManager.open('quest');
   updateQuestTabButtons();
   fetchAllQuests().then(() => {
     renderQuestManagerTab('active');
@@ -457,8 +461,7 @@ function openQuestManager() {
 }
 
 function closeQuestManager() {
-  questManagerOpen = false;
-  document.getElementById("quest-manager-panel").classList.remove("active");
+  PanelManager.close('quest');
 }
 
 function switchQuestTab(tab) {
@@ -574,18 +577,4 @@ function buildQuestManagerItemHtml(q) {
   </div>`;
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "q" && GameManager.isStarted() && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen && !skillMenuOpen) {
-    if (questManagerOpen) {
-      closeQuestManager();
-    } else {
-      if (inventoryOpen) closeInventory();
-      if (playerInfoOpen) closePlayerInfo();
-      if (helpOpen) closeHelp();
-      openQuestManager();
-    }
-  }
-  if (e.key === "Escape" && questManagerOpen) {
-    closeQuestManager();
-  }
-});
+

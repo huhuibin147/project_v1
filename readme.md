@@ -116,6 +116,8 @@ project_v1/
 ├── config.json.example         # LLM 配置模板
 ├── config.json                 # LLM 实际配置（不提交）
 ├── config/                     # 游戏数据配置（NPC、物品、怪物、技能、任务、地图、词条、锻造配方等）
+│   ├── maps/                   # 地图数据
+│   └── map_templates/          # 地图模板
 ├── data/                       # 存档数据
 ├── backend/                    # 后端服务（FastAPI）
 │   ├── main.py                 # FastAPI 入口（路由注册 + 异常处理）
@@ -128,37 +130,58 @@ project_v1/
 │   │   ├── combat.py           # 战斗路由
 │   │   ├── forge.py            # 锻造/词条路由
 │   │   └── quest.py            # 任务/天赋路由
-│   └── combat/                 # 战斗引擎模块
-│       ├── session.py          # 战斗会话管理
-│       ├── damage.py           # 伤害计算（含属性克制）
-│       ├── effects.py          # 状态效果系统（策略模式）
-│       ├── events.py           # 事件驱动系统（词条/天赋触发）
-│       ├── monster_ai.py       # 怪物 AI 决策
-│       ├── skills.py           # 技能执行
-│       ├── turn.py             # 回合解析核心
-│       └── engine.py           # 对外统一接口
+│   ├── combat/                 # 战斗引擎模块
+│   │   ├── session.py          # 战斗会话管理
+│   │   ├── damage.py           # 伤害计算（含属性克制）
+│   │   ├── effects.py          # 状态效果系统（策略模式）
+│   │   ├── events.py           # 事件驱动系统（词条/天赋触发）
+│   │   ├── monster_ai.py       # 怪物 AI 决策
+│   │   ├── skills.py           # 技能执行
+│   │   ├── turn.py             # 回合解析核心
+│   │   └── engine.py           # 对外统一接口
+│   ├── npc_agent.py            # NPC Agent
+│   ├── npc_memory.py           # NPC 分层记忆
+│   ├── npc_affinity.py         # NPC 好感度
+│   ├── npc_cache.py            # NPC 对话缓存
+│   ├── player_profile.py       # 玩家档案
+│   ├── item_system.py          # 物品系统
+│   ├── skill_system.py         # 技能系统
+│   ├── talent_system.py        # 天赋系统
+│   ├── quest_manager.py        # 任务系统
+│   ├── forge_system.py         # 锻造系统
+│   ├── affix_system.py         # 词条系统
+│   ├── llm_client.py           # LLM 调用
+│   ├── intent_classifier.py    # 本地意图分类器
+│   └── config.py               # 配置加载
 ├── frontend/                   # 前端界面（HTML5 Canvas + JS）
 │   ├── __tests__/              # 前端自动化测试
-│   │   ├── setup.js              # 全局测试环境配置
-│   │   ├── player.test.js        # 玩家移动/位置测试
-│   │   ├── map.test.js           # 地图碰撞/传送门测试
-│   │   ├── combat.test.js        # 战斗状态管理测试
-│   │   ├── inventory.test.js     # 背包逻辑测试
-│   │   ├── quest.test.js         # 任务状态管理测试
-│   │   ├── talent.test.js        # 天赋数据测试
-│   │   ├── GameManager.test.js   # 游戏管理器测试
-│   │   └── game.test.js          # 游戏主逻辑测试
-│   ├── package.json             # Node.js 依赖配置
-│   ├── jest.config.js           # Jest 测试配置
-│   └── js/
-│       └── managers/           # 管理器模块
-│           ├── GameManager.js    # 游戏核心管理器
-│           ├── InputManager.js   # 输入管理器
-│           ├── RenderManager.js  # 渲染管理器
-│           └── LoadingManager.js # 加载管理器
+│   ├── css/                    # 样式
+│   ├── js/
+│   │   ├── managers/           # 管理器模块
+│   │   │   ├── GameManager.js  # 游戏核心管理器
+│   │   │   ├── InputManager.js # 输入管理器
+│   │   │   ├── RenderManager.js# 渲染管理器
+│   │   │   └── LoadingManager.js# 加载管理器
+│   │   ├── game.js             # 游戏主循环
+│   │   ├── map.js              # 地图系统
+│   │   ├── player.js           # 玩家控制
+│   │   ├── combat.js           # 战斗系统
+│   │   ├── npc.js              # NPC 渲染与交互
+│   │   ├── dialogue.js         # 对话系统
+│   │   ├── inventory.js        # 背包系统
+│   │   ├── quest.js            # 任务系统
+│   │   ├── talent.js           # 天赋面板
+│   │   ├── skill_menu.js       # 技能菜单
+│   │   ├── forge.js            # 锻造系统
+│   │   ├── player_info.js      # 角色信息
+│   │   ├── start_screen.js     # 开始界面
+│   │   └── help.js             # 帮助提示
+│   ├── index.html
+│   ├── package.json
+│   └── jest.config.js
+├── tests/                      # 后端测试
 ├── docs/                       # 设计文档
-│   ├── game_design.md          #   游戏设计与优化方向总览
-└── tools/                      # 工具脚本（物品/NPC/怪物/任务生成器）
+└── tools/                      # 工具脚本（物品/NPC/怪物/任务/地图生成器）
 ```
 
 ## 技术栈

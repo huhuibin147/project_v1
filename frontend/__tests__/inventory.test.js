@@ -15,6 +15,7 @@ function loadScript(relativePath) {
 
 describe('背包模块 (inventory.js)', () => {
   beforeAll(() => {
+    loadScript('managers/PanelManager.js');
     loadScript('managers/GameManager.js');
     loadScript('inventory.js');
   });

@@ -905,6 +905,12 @@ let worldMapCanvas, worldMapCtx;
 let exploredTiles = new Set();
 let pendingExploredTiles = new Set();
 
+// 注册面板
+PanelManager.register('worldMap',
+  () => { worldMapOpen = true; document.getElementById("worldmap-panel").classList.add("active"); renderWorldMap(); },
+  () => { worldMapOpen = false; document.getElementById("worldmap-panel").classList.remove("active"); }
+);
+
 function initWorldMap() {
   worldMapCanvas = document.getElementById("worldmap-canvas");
   worldMapCtx = worldMapCanvas.getContext("2d");
@@ -925,19 +931,15 @@ function openWorldMap() {
     console.log("无法打开大地图：当前地图未加载");
     return;
   }
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen || skillMenuOpen) {
+  if (PanelManager.isAnyOpen() || GameManager.isMenuOpen() || PanelManager.isOpen('combat')) {
     console.log("无法打开大地图：有其他面板打开");
     return;
   }
-  worldMapOpen = true;
-  const panel = document.getElementById("worldmap-panel");
-  panel.classList.add("active");
-  renderWorldMap();
+  PanelManager.open('worldMap');
 }
 
 function closeWorldMap() {
-  worldMapOpen = false;
-  document.getElementById("worldmap-panel").classList.remove("active");
+  PanelManager.close('worldMap');
 }
 
 function renderWorldMap() {

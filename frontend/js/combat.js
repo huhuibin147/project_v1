@@ -75,6 +75,14 @@ let combatItemSelectOpen = false;
 let combatMonsterInstanceId = null;
 let currentTargetIndex = 0;
 
+// 注册战斗面板到 PanelManager（非互斥，因为战斗期间不应关闭）
+// combatOpen 由 PanelManager 管理，内部通过 PanelManager.isOpen('combat') 或 combatOpen 访问
+PanelManager.register('combat',
+  () => { combatOpen = true; },
+  () => { combatOpen = false; },
+  { exclusive: false }
+);
+
 let mapMonsters = [];
 let monstersConfig = {};
 
@@ -527,7 +535,7 @@ function getNearestMonster() {
 }
 
 async function initiateCombat(monsterInstanceId) {
-  if (combatOpen || dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || talentPanelOpen || skillMenuOpen) return;
+  if (combatOpen || PanelManager.isAnyOpen() || GameManager.isMenuOpen()) return;
 
   await savePlayerPosition();
 
@@ -570,7 +578,7 @@ async function initiateCombat(monsterInstanceId) {
       turn_count: 1,
     };
     currentTargetIndex = data.target_index || 0;
-    combatOpen = true;
+    PanelManager.open('combat');
     combatMonsterInstanceId = monsterInstanceId;
 
     const monster = mapMonsters.find(m => m.instance_id === monsterInstanceId);
@@ -1320,7 +1328,7 @@ async function endCombat() {
   }
 
   document.getElementById("combat-panel").classList.remove("active");
-  combatOpen = false;
+  PanelManager.close('combat');
   combatSessionId = null;
   combatState = null;
   combatItemSelectOpen = false;
@@ -1440,38 +1448,4 @@ function enableCombatButtons() {
   document.getElementById("btn-combat-flee").disabled = false;
 }
 
-document.addEventListener("keydown", (e) => {
-  if (!combatOpen || combatAnimating) return;
 
-  if (combatItemSelectOpen) {
-    if (e.key === "Escape") {
-      closeCombatItemSelect();
-    }
-    return;
-  }
-
-  if (combatSkillSelectOpen) {
-    if (e.key === "Escape") {
-      closeCombatSkillSelect();
-    }
-    return;
-  }
-
-  if (combatState && combatState.phase === "player_turn") {
-    if (e.key === "1") combatAction("attack");
-    else if (e.key === "2") combatAction("defend");
-    else if (e.key === "3") openCombatSkillSelect();
-    else if (e.key === "4") openCombatItemSelect();
-    else if (e.key === "5") combatAction("flee");
-    else if (e.key === "Tab") {
-      e.preventDefault();
-      const monsters = combatState.monsters || [];
-      const aliveIndices = monsters.map((m, i) => m.alive ? i : -1).filter(i => i >= 0);
-      if (aliveIndices.length > 1) {
-        const currentPos = aliveIndices.indexOf(currentTargetIndex);
-        const nextPos = (currentPos + 1) % aliveIndices.length;
-        selectTarget(aliveIndices[nextPos]);
-      }
-    }
-  }
-});

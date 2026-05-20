@@ -6,6 +6,13 @@
 
 ## 2026-05-20
 
+### 重构
+- 输入系统解耦：重写 InputManager 支持优先级处理器链（100=战斗/50=NPC交互/10=面板/0=全局/-10=Escape），新建 KeyBindings.js 集中注册所有快捷键，消除 10 个分散的 document.addEventListener("keydown") 调用
+- 面板状态解耦：将 combat 注册到 PanelManager，所有跨模块的 combatOpen/dialogueOpen/inventoryOpen/shopOpen/npcInteractOpen 引用替换为 PanelManager.isOpen()，消除模块间对全局变量的直接依赖
+- 移动系统解耦：player.js 的按键状态追踪从独立 keys 对象迁移到 InputManager.isPressed()，消除重复的 keydown/keyup 监听器
+- InputManager/PanelManager 添加测试辅助方法（simulateKeyDown/clearKeys/_forceOpen/_forceClose）
+- 更新所有前端测试文件适配重构
+
 ### 优化
 - AOE 伤害改为统一乘数（65%），不再随目标数变化
 - 雷霆一击 power 从 2.0 降至 1.6，并修正文档（仅限战士/法师）

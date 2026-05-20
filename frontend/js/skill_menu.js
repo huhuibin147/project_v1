@@ -2,6 +2,12 @@ let skillMenuOpen = false;
 let skillMenuData = null;
 let skillMenuTab = "learned";
 
+// 注册面板
+PanelManager.register('skillMenu',
+  () => { document.getElementById("skill-menu-panel").style.display = "flex"; skillMenuOpen = true; },
+  () => { document.getElementById("skill-menu-panel").style.display = "none"; skillMenuOpen = false; hideSkillMenuMessage(); }
+);
+
 const DAMAGE_TYPE_NAMES = {
   physical: "物理",
   magic: "魔法",
@@ -57,25 +63,16 @@ async function openSkillMenu() {
     closeSkillMenu();
     return;
   }
-  if (dialogueOpen || shopOpen || GameManager.isMenuOpen() || combatOpen || npcInteractOpen || healPanelOpen || skillLearnPanelOpen || (typeof forgePanelOpen !== 'undefined' && forgePanelOpen)) return;
-  if (playerInfoOpen) closePlayerInfo();
-  if (inventoryOpen) closeInventory();
-  if (helpOpen) closeHelp();
-  if (questManagerOpen) closeQuestManager();
-  if (talentPanelOpen) closeTalentPanel();
-  if (typeof worldMapOpen !== 'undefined' && worldMapOpen) closeWorldMap();
+  if (PanelManager.isAnyOpen() || GameManager.isMenuOpen()) return;
   const data = await fetchSkillMenuData();
   if (!data) return;
   skillMenuData = data;
   renderSkillMenu(data);
-  document.getElementById("skill-menu-panel").style.display = "flex";
-  skillMenuOpen = true;
+  PanelManager.open('skillMenu');
 }
 
 function closeSkillMenu() {
-  document.getElementById("skill-menu-panel").style.display = "none";
-  skillMenuOpen = false;
-  hideSkillMenuMessage();
+  PanelManager.close('skillMenu');
 }
 
 function hideSkillMenuMessage() {
@@ -269,15 +266,4 @@ async function learnSkillFromMenu(skillId) {
   showSkillMenuMessage("请前往技能训练师处学习技能", true);
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "k" && !dialogueOpen && !GameManager.isMenuOpen() && !shopOpen && !inventoryOpen && !playerInfoOpen && !combatOpen && !helpOpen && !questManagerOpen && !npcInteractOpen && !healPanelOpen && !skillLearnPanelOpen && !talentPanelOpen && !(typeof forgePanelOpen !== 'undefined' && forgePanelOpen) && !(typeof worldMapOpen !== 'undefined' && worldMapOpen)) {
-    if (skillMenuOpen) {
-      closeSkillMenu();
-    } else {
-      openSkillMenu();
-    }
-  }
-  if (e.key === "Escape" && skillMenuOpen) {
-    closeSkillMenu();
-  }
-});
+

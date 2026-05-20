@@ -52,34 +52,17 @@ async function savePlayerPosition() {
   }
 }
 
-const keys = {};
-
-document.addEventListener("keydown", (e) => {
-  keys[e.key.toLowerCase()] = true;
-  // 方向键也处理
-  if (["arrowup","arrowdown","arrowleft","arrowright"].includes(e.key.toLowerCase())) {
-    keys[e.key.toLowerCase()] = true;
-  }
-});
-
-document.addEventListener("keyup", (e) => {
-  keys[e.key.toLowerCase()] = false;
-  if (["arrowup","arrowdown","arrowleft","arrowright"].includes(e.key.toLowerCase())) {
-    keys[e.key.toLowerCase()] = false;
-  }
-});
-
 function updatePlayer(dt) {
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen || skillMenuOpen || worldMapOpen) return;
+  if (PanelManager.isAnyOpen() || GameManager.isMenuOpen() || PanelManager.isOpen('combat')) return;
 
   const dtSeconds = dt ? dt / 1000 : 1 / 60;
   const PLAYER_SPEED = getPlayerSpeed() * dtSeconds;
   let dx = 0, dy = 0;
 
-  if (keys["w"] || keys["arrowup"])    { dy = -PLAYER_SPEED; player.direction = "up"; }
-  if (keys["s"] || keys["arrowdown"])  { dy = PLAYER_SPEED;  player.direction = "down"; }
-  if (keys["a"] || keys["arrowleft"])  { dx = -PLAYER_SPEED; player.direction = "left"; }
-  if (keys["d"] || keys["arrowright"]) { dx = PLAYER_SPEED;  player.direction = "right"; }
+  if (InputManager.isPressed("w") || InputManager.isPressed("arrowup"))    { dy = -PLAYER_SPEED; player.direction = "up"; }
+  if (InputManager.isPressed("s") || InputManager.isPressed("arrowdown"))  { dy = PLAYER_SPEED;  player.direction = "down"; }
+  if (InputManager.isPressed("a") || InputManager.isPressed("arrowleft"))  { dx = -PLAYER_SPEED; player.direction = "left"; }
+  if (InputManager.isPressed("d") || InputManager.isPressed("arrowright")) { dx = PLAYER_SPEED;  player.direction = "right"; }
 
   if (dx !== 0 || dy !== 0) {
     player.moving = true;

@@ -15,6 +15,7 @@ function loadScript(relativePath) {
 
 describe('天赋模块 (talent.js)', () => {
   beforeAll(() => {
+    loadScript('managers/PanelManager.js');
     loadScript('managers/GameManager.js');
     loadScript('talent.js');
   });

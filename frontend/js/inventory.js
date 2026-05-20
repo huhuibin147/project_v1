@@ -1,5 +1,17 @@
 let inventoryOpen = false;
+
+// 注册面板
+PanelManager.register('inventory',
+  () => { inventoryOpen = true; document.getElementById("inventory-panel").classList.add("active"); },
+  () => { inventoryOpen = false; document.getElementById("inventory-panel").classList.remove("active"); }
+);
 let shopOpen = false;
+
+// 注册面板
+PanelManager.register('shop',
+  () => { shopOpen = true; document.getElementById("shop-panel").classList.add("active"); },
+  () => { shopOpen = false; document.getElementById("shop-panel").classList.remove("active"); }
+);
 let shopNpcId = null;
 let ctxMenuEl = null;
 
@@ -185,8 +197,7 @@ async function fetchShop(npcId) {
 }
 
 function openInventory() {
-  if (dialogueOpen || GameManager.isMenuOpen() || combatOpen) return;
-  inventoryOpen = true;
+  if (PanelManager.isAnyOpen() || GameManager.isMenuOpen()) return;
   inventoryPage.current = 1;
   inventoryDisplay.sort = "default";
   const sortEl = document.getElementById("inventory-sort");
@@ -195,12 +206,11 @@ function openInventory() {
     renderInventory();
     setupEquipSlotDropTargets();
   });
-  document.getElementById("inventory-panel").classList.add("active");
+  PanelManager.open('inventory');
 }
 
 function closeInventory() {
-  inventoryOpen = false;
-  document.getElementById("inventory-panel").classList.remove("active");
+  PanelManager.close('inventory');
 }
 
 function getFilteredItems() {
@@ -818,8 +828,7 @@ function getSlotLabel(slot) {
 }
 
 function openShop(npcId) {
-  if (combatOpen) return;
-  shopOpen = true;
+  if (PanelManager.isOpen('combat')) return;
   shopNpcId = npcId || activeNpcId || "blacksmith";
   shopPage.current = 1;
   shopInvPage.current = 1;
@@ -846,13 +855,12 @@ function openShop(npcId) {
   fetchShop(shopNpcId).then(() => {
     fetchInventory().then(() => renderShop());
   });
-  document.getElementById("shop-panel").classList.add("active");
+  PanelManager.open('shop');
 }
 
 function closeShop() {
-  shopOpen = false;
   shopNpcId = null;
-  document.getElementById("shop-panel").classList.remove("active");
+  PanelManager.close('shop');
 }
 
 function renderShop() {
@@ -1441,19 +1449,4 @@ function showItemCtxMenu(e, item, context) {
   }, 10);
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "i" && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen && !skillMenuOpen) {
-    if (inventoryOpen) {
-      closeInventory();
-    } else {
-      if (shopOpen) closeShop();
-      openInventory();
-    }
-  }
-  if (e.key === "Escape") {
-    if (GameManager.isMenuOpen()) closeGameMenu();
-    else if (npcInteractOpen) closeNpcInteract();
-    else if (shopOpen) closeShop();
-    else if (inventoryOpen) closeInventory();
-  }
-});
+

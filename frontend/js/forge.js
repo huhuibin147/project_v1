@@ -1,4 +1,10 @@
 let forgePanelOpen = false;
+
+// 注册面板
+PanelManager.register('forge',
+  () => { forgePanelOpen = true; document.getElementById("forge-panel").classList.add("active"); },
+  () => { forgePanelOpen = false; forgeNpcId = null; document.getElementById("forge-panel").classList.remove("active"); document.getElementById("forge-message").style.display = "none"; }
+);
 let forgeNpcId = null;
 let forgeRecipes = [];
 let forgeFilter = "all";
@@ -22,8 +28,7 @@ const FORGE_TIER_COLORS = {
 };
 
 function openForgePanel(npcId) {
-  if (combatOpen) return;
-  forgePanelOpen = true;
+  if (PanelManager.isOpen('combat')) return;
   forgeNpcId = npcId || "blacksmith";
   forgePage.current = 1;
   forgeFilter = "all";
@@ -31,15 +36,12 @@ function openForgePanel(npcId) {
   const searchInput = document.getElementById("forge-search");
   if (searchInput) searchInput.value = "";
   fetchForgeRecipes().then(() => renderForgePanel());
-  document.getElementById("forge-panel").classList.add("active");
+  PanelManager.open('forge');
   document.getElementById("player-gold-forge").textContent = inventoryState.gold || 0;
 }
 
 function closeForgePanel() {
-  forgePanelOpen = false;
-  forgeNpcId = null;
-  document.getElementById("forge-panel").classList.remove("active");
-  document.getElementById("forge-message").style.display = "none";
+  PanelManager.close('forge');
 }
 
 async function fetchForgeRecipes() {

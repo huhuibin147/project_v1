@@ -8,6 +8,7 @@
 ---
 
 ## 随手写（从这里开始）
+
 ---
 
 ## AI 整理区
@@ -27,6 +28,13 @@
 ---
 
 ### 已完成（近期，归档见 [changelog.md](changelog.md)）
+
+#### 重构
+- 输入系统解耦：重写 InputManager 支持优先级处理器链，新建 KeyBindings.js 集中注册所有快捷键，消除 10 个分散的 document.addEventListener("keydown") 调用
+- 面板状态解耦：将 combat 注册到 PanelManager，所有跨模块的 combatOpen/dialogueOpen/inventoryOpen/shopOpen/npcInteractOpen 引用替换为 PanelManager.isOpen()，消除模块间对全局变量的直接依赖
+- 移动系统解耦：player.js 的按键状态追踪从独立 keys 对象迁移到 InputManager.isPressed()，消除重复的 keydown/keyup 监听器
+- InputManager/PanelManager 添加测试辅助方法（simulateKeyDown/clearKeys/_forceOpen/_forceClose）
+- 更新所有前端测试文件适配重构（加载 PanelManager、使用新的测试辅助方法）
 
 #### Bug 修复
 - 修复右上角任务不更新状态：endCombat() 未调用 updateQuestTracker()，已添加调用
@@ -49,6 +57,8 @@
 - 战士吸血机制：确认战士无自带吸血，技能中也不含吸血效果
 
 #### 文档整理
+- 根据项目同步最新文档：更新 readme.md 项目结构和 game_design.md 失效链接
+- 前端面板状态解耦：创建 PanelManager 集中管理面板互斥逻辑，迁移 14 个面板，消除散弹枪修改反模式
 - 整合 docs 下同类文档：将优化文档合并到对应核心系统文档的"相关优化记录"章节
   - 战斗系统：combat_engine_refactor / combat_ui_redesign / multi_enemy_boss_design / elemental_system_design → combat_system.md
   - NPC 系统：npc_system_optimization / npc_agent_optimization → npc_system.md

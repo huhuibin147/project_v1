@@ -15,6 +15,7 @@ function loadScript(relativePath) {
 
 describe('任务模块 (quest.js)', () => {
   beforeAll(() => {
+    loadScript('managers/PanelManager.js');
     loadScript('managers/GameManager.js');
     loadScript('player.js');
     loadScript('map.js');

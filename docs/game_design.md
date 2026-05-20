@@ -830,7 +830,7 @@ backend/routes/
 - BOSS 阶段精灵覆盖（`sprite_phases`），骷髅王/暗影树精各 3 阶段变色
 - 向后兼容：无 sprite 字段时使用 `sprite_color`/`sprite_accent` 生成默认配置
 
-详见 → [monster_sprite_config_design.md](monster_sprite_config_design.md)
+详见 → [monster_system.md](monster_system.md)
 
 ---
 
@@ -997,7 +997,7 @@ Phase 1（当前立即执行）         Phase 2（1-2 周内）          Phase 3
 - ✅ 前端日志图标按技能类型区分（`SPECIAL_TYPE_ICONS`）
 - ✅ 前端伤害数字支持吸血回血显示
 - ✅ 10 个单元测试全部通过（`test_backend_logic.py::TestMonsterSkillExpansion`）
-- ✅ 详见设计文档：[monster_skill_expansion.md](monster_skill_expansion.md)
+- ✅ 详见设计文档：[monster_system.md](monster_system.md)
 
 ### 1.5 物品系统与商店UI优化 ✅ 已完成
 - ✅ 商店双栏布局：左侧商店物品 + 右侧背包物品，同时浏览对比
@@ -1014,7 +1014,7 @@ Phase 1（当前立即执行）         Phase 2（1-2 周内）          Phase 3
 - ✅ Tooltip增强：词条完整描述 + 属性条可视化对比 + 装备来源提示
 - ✅ 右键上下文菜单：购买/出售/装备/使用/详情
 - ✅ 9 个单元测试全部通过（`test_backend_logic.py::TestItemShopOptimization`）
-- ✅ 详见设计文档：[item_shop_ui_optimization.md](item_shop_ui_optimization.md)
+- ✅ 详见设计文档：[items_and_economy_system.md](items_and_economy_system.md)
 
 ### Phase 2：世界扩展（优先级：中）
 

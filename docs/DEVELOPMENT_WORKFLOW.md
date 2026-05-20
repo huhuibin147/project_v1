@@ -131,9 +131,9 @@
 ```
 
 **示例文件名**：
-- `combat_engine_refactor.md` — 战斗引擎重构设计
+- `combat_system.md` — 战斗系统设计（含优化记录）
 - `frontend_gamejs_optimization.md` — 前端 game.js 优化设计
-- `npc_agent_optimization.md` — NPC 对话系统优化设计
+- `npc_system.md` — NPC 系统设计（含优化记录）
 
 ---
 
@@ -463,18 +463,12 @@ docs/
 │   ├── npc_system.md               # NPC 系统
 │   ├── quest_and_story_system.md   # 任务与剧情系统
 │   ├── skill_and_talent_system.md  # 技能与天赋系统
+│   ├── monster_system.md           # 怪物系统
 │   └── peripheral_systems.md       # 周边系统
 │
-├── 重构/优化设计文档
-│   ├── combat_engine_refactor.md       # 战斗引擎模块化重构
-│   ├── item_system_optimization.md     # 物品系统优化
+├── 重构/优化设计文档（已整合到核心系统文档的"相关优化记录"章节）
 │   ├── player_profile_refactor.md      # player_profile 重构
-│   ├── npc_agent_optimization.md       # NPC 对话系统优化
 │   ├── frontend_gamejs_optimization.md # 前端 game.js 优化
-│   ├── quest_system_optimization.md    # 任务系统优化
-│   ├── forge_affix_optimization.md      # 锻造与词条优化
-│   ├── combat_ui_redesign.md           # 战斗 UI 重构
-│   ├── multi_enemy_boss_design.md      # 多敌人与 BOSS 战设计
 │   └── game_design.md               # 游戏设计与优化方向总览（定期更新）
 │
 ├── 开发文档
@@ -576,7 +570,7 @@ Closes: #issue-number
 
 **Step 2: 如果需要详细设计 → 新建设计文档**
 
-如果是大功能，新建 `elemental_system_design.md`，包含：
+如果是大功能，在对应核心系统文档（如 `combat_system.md`）中新增章节，包含：
 - 当前问题分析
 - 设计方案
 - 实施计划（分步骤）

@@ -25,6 +25,7 @@ describe('锻造模块 (forge.js)', () => {
         <div id="forge-result-content"></div>
       </div>
     `;
+    loadScript('managers/PanelManager.js');
     loadScript('managers/GameManager.js');
     loadScript('map.js');
     loadScript('player.js');

@@ -9,10 +9,9 @@ from routes.context import (
     ITEMS_DB, ITEM_EFFECTS, format_skill_for_frontend,
 )
 from routes.models import NewGameRequest, LoadSaveRequest, PlayerUpdateRequest, EquipRequest, UnequipRequest, UseItemRequest, PositionRequest
+import player_profile as _player_profile_module
 
 router = APIRouter(prefix="/api", tags=["player"])
-
-DATA_DIR = Path(__file__).parent.parent.parent / "data"
 
 
 @router.get("/inventory")
@@ -95,7 +94,7 @@ async def use_item(req: UseItemRequest):
 @router.get("/saves")
 async def list_saves():
     saves = player_profile.list_saves()
-    last_slot_file = DATA_DIR / "last_slot.json"
+    last_slot_file = _player_profile_module.DATA_DIR / "last_slot.json"
     last_slot = None
     if last_slot_file.exists():
         try:
@@ -124,7 +123,7 @@ async def load_save(req: LoadSaveRequest):
     if not success:
         raise HTTPException(status_code=400, detail="存档不存在或已损坏")
     npc_agents.clear()
-    last_slot_file = DATA_DIR / "last_slot.json"
+    last_slot_file = _player_profile_module.DATA_DIR / "last_slot.json"
     with open(last_slot_file, "w", encoding="utf-8") as f:
         json.dump({"last_slot": req.slot}, f)
     return {"success": True, "player_info": player_profile.get_info()}

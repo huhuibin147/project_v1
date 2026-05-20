@@ -148,14 +148,8 @@ const GameManager = (() => {
       savePlayerPosition().then(() => {
         stopGame();
         
-        if (typeof dialogueOpen !== 'undefined' && dialogueOpen && typeof closeDialogue === 'function') closeDialogue();
-        if (typeof inventoryOpen !== 'undefined' && inventoryOpen && typeof closeInventory === 'function') closeInventory();
-        if (typeof shopOpen !== 'undefined' && shopOpen && typeof closeShop === 'function') closeShop();
-        if (typeof playerInfoOpen !== 'undefined' && playerInfoOpen && typeof closePlayerInfo === 'function') closePlayerInfo();
-        if (typeof talentPanelOpen !== 'undefined' && talentPanelOpen && typeof closeTalentPanel === 'function') closeTalentPanel();
-        if (typeof forgePanelOpen !== 'undefined' && forgePanelOpen && typeof closeForgePanel === 'function') closeForgePanel();
-        if (typeof npcInteractOpen !== 'undefined' && npcInteractOpen && typeof closeNpcInteract === 'function') closeNpcInteract();
-        if (typeof combatOpen !== 'undefined' && combatOpen && typeof endCombat === 'function') endCombat();
+        PanelManager.closeAll();
+        if (PanelManager.isOpen('combat') && typeof endCombat === 'function') endCombat();
 
         const gameContainer = document.getElementById("game-container");
         if (gameContainer) gameContainer.style.display = "none";

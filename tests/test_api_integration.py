@@ -29,7 +29,7 @@ class TestAPIIntegration(unittest.TestCase):
             shutil.rmtree(TEST_DATA_DIR, ignore_errors=True)
 
     def _get_client(self):
-        modules_to_clear = ["main", "player_profile", "npc_agent", "quest_manager", "npc_dialogue", "item_system", "skill_system", "combat_engine"]
+        modules_to_clear = ["main", "player_profile", "npc_agent", "quest_manager", "npc_dialogue", "item_system", "skill_system", "combat_engine", "routes.context", "routes.player", "routes.npc", "routes.map", "routes.combat", "routes.forge", "routes.quest"]
         for mod in modules_to_clear:
             sys.modules.pop(mod, None)
 

@@ -8,6 +8,20 @@ let npcInteractOpen = false;
 let healPanelOpen = false;
 let skillLearnPanelOpen = false;
 
+// 注册面板
+PanelManager.register('npcInteract',
+  () => { npcInteractOpen = true; document.getElementById("npc-interact-panel").classList.add("active"); },
+  () => { npcInteractOpen = false; interactNpcId = null; document.getElementById("npc-interact-panel").classList.remove("active"); }
+);
+PanelManager.register('heal',
+  () => { healPanelOpen = true; document.getElementById("heal-panel").classList.add("active"); },
+  () => { healPanelOpen = false; document.getElementById("heal-panel").classList.remove("active"); document.getElementById("heal-message").style.display = "none"; }
+);
+PanelManager.register('skillLearn',
+  () => { skillLearnPanelOpen = true; document.getElementById("skill-learn-panel").classList.add("active"); },
+  () => { skillLearnPanelOpen = false; document.getElementById("skill-learn-panel").classList.remove("active"); document.getElementById("skill-learn-message").style.display = "none"; }
+);
+
 function initNpcs(npcList) {
   // 从当前地图配置获取 NPC 位置
   const currentMapId = currentMap?.id || "";
@@ -169,7 +183,7 @@ function drawNPC(ctx, npc) {
   ctx.textAlign = "center";
   ctx.fillText(npc.name, x + s / 2, y - 4);
 
-  if (isPlayerNearNpc(npc) && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !GameManager.isMenuOpen() && !combatOpen && !forgePanelOpen) {
+  if (isPlayerNearNpc(npc) && !PanelManager.isAnyOpen() && !GameManager.isMenuOpen() && !PanelManager.isOpen('combat')) {
     npc.showPrompt = true;
     const prompt = "按 E 交互";
     const pw = ctx.measureText(prompt).width + 10;
@@ -189,45 +203,7 @@ function drawAllNpcs(ctx) {
   }
 }
 
-// E 键交互：找最近的 NPC 或物件或怪物
-document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen && !skillMenuOpen) {
-    // 优先检查怪物
-    const nearMonster = typeof getNearestMonster === "function" ? getNearestMonster() : null;
-    if (nearMonster) {
-      initiateCombat(nearMonster.instance_id);
-      return;
-    }
-    // 其次检查 NPC
-    const nearest = getNearestNpc();
-    if (nearest) {
-      openNpcInteract(nearest);
-      return;
-    }
-    // 最后检查地图物件
-    const nearObj = getNearbyInteractableObject();
-    if (nearObj) {
-      interactWithObject(nearObj);
-    }
-  }
-  
-  // NPC交互选项快捷键：1-对话，2-任务，3-商店，4-治疗/技能
-  if (npcInteractOpen) {
-    if (e.key === "1") {
-      interactTalk();
-    } else if (e.key === "2") {
-      interactQuest();
-    } else if (e.key === "3") {
-      interactShop();
-    } else if (e.key === "4") {
-      if (interactNpcId === "priest") {
-        interactHeal();
-      } else if (interactNpcId === "skill_master") {
-        interactLearnSkill();
-      }
-    }
-  }
-});
+
 
 const INTERACTION_BUTTON_MAP = {
   talk: { label: "对话", handler: "interactTalk" },
@@ -244,7 +220,6 @@ const INTERACTION_BUTTON_MAP = {
 function openNpcInteract(npc) {
   interactNpcId = npc.npc_id;
   activeNpcId = npc.npc_id;
-  npcInteractOpen = true;
   document.getElementById("npc-interact-title").textContent = npc.name;
   const actionsDiv = document.getElementById("npc-interact-actions");
   const buttons = npc.interaction_buttons || ["talk", "quest", "shop"];
@@ -256,13 +231,11 @@ function openNpcInteract(npc) {
     }
   });
   actionsDiv.innerHTML = html;
-  document.getElementById("npc-interact-panel").classList.add("active");
+  PanelManager.open('npcInteract');
 }
 
 function closeNpcInteract() {
-  npcInteractOpen = false;
-  interactNpcId = null;
-  document.getElementById("npc-interact-panel").classList.remove("active");
+  PanelManager.close('npcInteract');
 }
 
 function interactTalk() {
@@ -304,17 +277,14 @@ function interactHeal() {
 }
 
 function openHealPanel(npcId) {
-  healPanelOpen = true;
-  document.getElementById("heal-panel").classList.add("active");
   document.getElementById("heal-title").textContent = "治疗服务";
   document.getElementById("player-gold-heal").textContent = inventoryState.gold || 0;
   renderHealServices(npcId);
+  PanelManager.open('heal');
 }
 
 function closeHealPanel() {
-  healPanelOpen = false;
-  document.getElementById("heal-panel").classList.remove("active");
-  document.getElementById("heal-message").style.display = "none";
+  PanelManager.close('heal');
 }
 
 function renderHealServices(npcId) {
@@ -392,17 +362,14 @@ function interactLearnSkill() {
 }
 
 function openSkillLearnPanel(npcId) {
-  skillLearnPanelOpen = true;
-  document.getElementById("skill-learn-panel").classList.add("active");
   document.getElementById("skill-learn-title").textContent = "技能学习";
   document.getElementById("player-gold-skill").textContent = inventoryState.gold || 0;
   fetchAvailableSkills(npcId);
+  PanelManager.open('skillLearn');
 }
 
 function closeSkillLearnPanel() {
-  skillLearnPanelOpen = false;
-  document.getElementById("skill-learn-panel").classList.remove("active");
-  document.getElementById("skill-learn-message").style.display = "none";
+  PanelManager.close('skillLearn');
 }
 
 function interactRest() {

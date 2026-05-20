@@ -5,6 +5,12 @@ let typewriterTimer = null;
 let typewriterNpcId = null;
 let dialogueShowAll = false;
 
+// 注册面板
+PanelManager.register('dialogue',
+  () => { dialogueOpen = true; document.getElementById("dialogue-panel").classList.add("active"); },
+  () => { dialogueOpen = false; document.getElementById("dialogue-panel").classList.remove("active"); }
+);
+
 const dialogueHistory = {};
 
 function getDialogueState(npcId) {
@@ -15,13 +21,12 @@ function getDialogueState(npcId) {
 }
 
 async function openDialogue(npc) {
-  if (combatOpen) return;
-  dialogueOpen = true;
+  if (PanelManager.isOpen('combat')) return;
   dialogueShowAll = false;
   activeNpcId = npc.npc_id;
   const state = getDialogueState(npc.npc_id);
 
-  document.getElementById("dialogue-panel").classList.add("active");
+  PanelManager.open('dialogue');
   document.getElementById("dialogue-title").textContent = npc.name;
   
   // 先清空输入框
@@ -75,12 +80,11 @@ async function openDialogue(npc) {
 function openDialogueWithMessage(npcId, message) {
   const npc = npcs.find(n => n.npc_id === npcId);
   if (!npc) return;
-  dialogueOpen = true;
   dialogueShowAll = false;
   activeNpcId = npcId;
   const state = getDialogueState(npcId);
   state.messages.push({ role: "npc", text: message });
-  document.getElementById("dialogue-panel").classList.add("active");
+  PanelManager.open('dialogue');
   document.getElementById("dialogue-title").textContent = npc.name;
   document.getElementById("dialogue-input").value = "";
   document.getElementById("dialogue-input").focus();
@@ -91,8 +95,7 @@ function openDialogueWithMessage(npcId, message) {
 }
 
 function closeDialogue() {
-  dialogueOpen = false;
-  document.getElementById("dialogue-panel").classList.remove("active");
+  PanelManager.close('dialogue');
 }
 
 function openShopFromDialogue() {
@@ -314,8 +317,4 @@ document.getElementById("dialogue-input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendMessage();
 });
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && dialogueOpen) {
-    closeDialogue();
-  }
-});
+

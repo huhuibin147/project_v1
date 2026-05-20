@@ -13,8 +13,25 @@ function loadScript(relativePath) {
   (0, eval)(code);
 }
 
+// 辅助：模拟按键按下
+function pressKey(key) {
+  InputManager.simulateKeyDown(key);
+}
+
+// 辅助：释放按键
+function releaseKey(key) {
+  InputManager.simulateKeyUp(key);
+}
+
+// 辅助：清除所有按键状态
+function clearAllKeys() {
+  InputManager.clearKeys();
+}
+
 describe('玩家模块 (player.js)', () => {
   beforeAll(() => {
+    loadScript('managers/PanelManager.js');
+    loadScript('managers/InputManager.js');
     loadScript('managers/GameManager.js');
     loadScript('map.js');
     loadScript('player.js');
@@ -67,18 +84,8 @@ describe('玩家模块 (player.js)', () => {
     beforeEach(() => {
       setPlayerPosition(10, 10);
       player.direction = 'down';
-      Object.keys(keys).forEach(k => delete keys[k]);
-      dialogueOpen = false;
-      inventoryOpen = false;
-      shopOpen = false;
-      playerInfoOpen = false;
-      npcInteractOpen = false;
-      combatOpen = false;
-      questOpen = false;
-      healPanelOpen = false;
-      skillLearnPanelOpen = false;
-      talentPanelOpen = false;
-      worldMapOpen = false;
+      clearAllKeys();
+      PanelManager.closeAll();
       currentMap = {
         id: 'test',
         width: 20,
@@ -89,7 +96,7 @@ describe('玩家模块 (player.js)', () => {
     });
 
     it('PLY-04: 按 W 键应向上移动', () => {
-      keys['w'] = true;
+      pressKey('w');
       const beforeY = player.y;
       updatePlayer();
       expect(player.direction).toBe('up');
@@ -97,7 +104,7 @@ describe('玩家模块 (player.js)', () => {
     });
 
     it('PLY-05: 按 S 键应向下移动', () => {
-      keys['s'] = true;
+      pressKey('s');
       const beforeY = player.y;
       updatePlayer();
       expect(player.direction).toBe('down');
@@ -105,7 +112,7 @@ describe('玩家模块 (player.js)', () => {
     });
 
     it('PLY-06: 按 A 键应向左移动', () => {
-      keys['a'] = true;
+      pressKey('a');
       const beforeX = player.x;
       updatePlayer();
       expect(player.direction).toBe('left');
@@ -113,7 +120,7 @@ describe('玩家模块 (player.js)', () => {
     });
 
     it('PLY-07: 按 D 键应向右移动', () => {
-      keys['d'] = true;
+      pressKey('d');
       const beforeX = player.x;
       updatePlayer();
       expect(player.direction).toBe('right');
@@ -121,7 +128,7 @@ describe('玩家模块 (player.js)', () => {
     });
 
     it('方向键 ArrowUp 应与 W 等效', () => {
-      keys['arrowup'] = true;
+      pressKey('ArrowUp');
       const beforeY = player.y;
       updatePlayer();
       expect(player.direction).toBe('up');
@@ -133,18 +140,8 @@ describe('玩家模块 (player.js)', () => {
     beforeEach(() => {
       setPlayerPosition(10, 10);
       player.direction = 'down';
-      Object.keys(keys).forEach(k => delete keys[k]);
-      dialogueOpen = false;
-      inventoryOpen = false;
-      shopOpen = false;
-      playerInfoOpen = false;
-      npcInteractOpen = false;
-      combatOpen = false;
-      questOpen = false;
-      healPanelOpen = false;
-      skillLearnPanelOpen = false;
-      talentPanelOpen = false;
-      worldMapOpen = false;
+      clearAllKeys();
+      PanelManager.closeAll();
       currentMap = {
         id: 'test',
         width: 20,
@@ -161,7 +158,7 @@ describe('玩家模块 (player.js)', () => {
     });
 
     it('PLY-09: 有按键时 moving 应为 true', () => {
-      keys['w'] = true;
+      pressKey('w');
       updatePlayer();
       expect(player.moving).toBe(true);
     });
@@ -171,8 +168,8 @@ describe('玩家模块 (player.js)', () => {
     beforeEach(() => {
       setPlayerPosition(10, 10);
       player.direction = 'down';
-      Object.keys(keys).forEach(k => delete keys[k]);
-      keys['w'] = true;
+      clearAllKeys();
+      pressKey('w');
       currentMap = {
         id: 'test',
         width: 20,
@@ -183,31 +180,32 @@ describe('玩家模块 (player.js)', () => {
     });
 
     const panels = [
-      ['dialogueOpen', '对话面板'],
-      ['inventoryOpen', '背包面板'],
-      ['shopOpen', '商店面板'],
-      ['playerInfoOpen', '角色信息面板'],
-      ['npcInteractOpen', 'NPC交互面板'],
-      ['combatOpen', '战斗面板'],
-      ['questOpen', '任务面板'],
-      ['healPanelOpen', '治疗面板'],
-      ['skillLearnPanelOpen', '技能学习面板'],
-      ['talentPanelOpen', '天赋面板'],
-      ['worldMapOpen', '世界地图面板'],
+      ['dialogue', '对话面板'],
+      ['inventory', '背包面板'],
+      ['shop', '商店面板'],
+      ['playerInfo', '角色信息面板'],
+      ['npcInteract', 'NPC交互面板'],
+      ['combat', '战斗面板'],
+      ['quest', '任务面板'],
+      ['heal', '治疗面板'],
+      ['skillLearn', '技能学习面板'],
+      ['talent', '天赋面板'],
+      ['worldMap', '世界地图面板'],
     ];
 
-    panels.forEach(([panelVar, panelName]) => {
-      it(`${panelName}打开时应阻止移动`, () => {
-        panels.forEach(([p]) => { globalThis[p] = false; });
-        globalThis[panelVar] = true;
+    panels.forEach(([panelName, label]) => {
+      it(`${label}打开时应阻止移动`, () => {
+        PanelManager.closeAll();
+        PanelManager._forceOpen(panelName);
         const beforeY = player.y;
         updatePlayer();
         expect(player.y).toBe(beforeY);
+        PanelManager._forceClose(panelName);
       });
     });
 
     it('GameManager.isMenuOpen() 为 true 时应阻止移动', () => {
-      panels.forEach(([p]) => { globalThis[p] = false; });
+      PanelManager.closeAll();
       GameManager.openGameMenu();
       const beforeY = player.y;
       updatePlayer();
@@ -220,18 +218,8 @@ describe('玩家模块 (player.js)', () => {
     beforeEach(() => {
       setPlayerPosition(10, 10);
       player.direction = 'down';
-      Object.keys(keys).forEach(k => delete keys[k]);
-      dialogueOpen = false;
-      inventoryOpen = false;
-      shopOpen = false;
-      playerInfoOpen = false;
-      npcInteractOpen = false;
-      combatOpen = false;
-      questOpen = false;
-      healPanelOpen = false;
-      skillLearnPanelOpen = false;
-      talentPanelOpen = false;
-      worldMapOpen = false;
+      clearAllKeys();
+      PanelManager.closeAll();
     });
 
     it('PLY-11: isWalkable 返回 false 时不应移动', () => {
@@ -242,7 +230,7 @@ describe('玩家模块 (player.js)', () => {
         layers: { ground: Array.from({ length: 20 }, () => Array(20).fill(1)) },
       };
       tileConfig = { '1': { id: 1, name: 'wall', walkable: false } };
-      keys['w'] = true;
+      pressKey('w');
       const beforeY = player.y;
       updatePlayer();
       expect(player.y).toBe(beforeY);
@@ -256,7 +244,7 @@ describe('玩家模块 (player.js)', () => {
         layers: { ground: Array.from({ length: 20 }, () => Array(20).fill(0)) },
       };
       tileConfig = { '0': { id: 0, name: 'grass', walkable: true } };
-      keys['w'] = true;
+      pressKey('w');
       const beforeY = player.y;
       updatePlayer();
       expect(player.y).toBeLessThan(beforeY);
@@ -265,6 +253,8 @@ describe('玩家模块 (player.js)', () => {
 
   describe('player 对象初始值', () => {
     beforeAll(() => {
+      loadScript('managers/PanelManager.js');
+      loadScript('managers/InputManager.js');
       loadScript('managers/GameManager.js');
       loadScript('map.js');
       loadScript('player.js');

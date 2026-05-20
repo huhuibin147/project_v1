@@ -1,5 +1,11 @@
 let playerInfoOpen = false;
 
+// 注册面板
+PanelManager.register('playerInfo',
+  () => { playerInfoOpen = true; document.getElementById("player-info-panel").classList.add("active"); },
+  () => { playerInfoOpen = false; document.getElementById("player-info-panel").classList.remove("active"); }
+);
+
 const playerInfo = {
   name: "冒险者",
   class_id: "warrior",
@@ -97,15 +103,13 @@ async function fetchEquipmentInfo() {
 }
 
 function openPlayerInfo() {
-  if (dialogueOpen || shopOpen || GameManager.isMenuOpen() || combatOpen) return;
-  playerInfoOpen = true;
+  if (PanelManager.isAnyOpen() || GameManager.isMenuOpen()) return;
   Promise.all([fetchPlayerInfo(), fetchEquipmentInfo()]).then(() => renderPlayerInfo());
-  document.getElementById("player-info-panel").classList.add("active");
+  PanelManager.open('playerInfo');
 }
 
 function closePlayerInfo() {
-  playerInfoOpen = false;
-  document.getElementById("player-info-panel").classList.remove("active");
+  PanelManager.close('playerInfo');
 }
 
 function formatStatsText(stats) {
@@ -284,8 +288,8 @@ async function doEquip(itemId) {
 
       await fetchEquipmentInfo();
       renderPlayerInfo();
-      if (inventoryOpen) renderInventory();
-      if (typeof shopOpen !== "undefined" && shopOpen) renderShop();
+      if (PanelManager.isOpen('inventory')) renderInventory();
+      if (PanelManager.isOpen('shop')) renderShop();
       updatePlayerHUD();
     }
   } catch (e) {
@@ -325,7 +329,7 @@ async function doUnequip(slot) {
 
       await fetchEquipmentInfo();
       renderPlayerInfo();
-      if (inventoryOpen) renderInventory();
+      if (PanelManager.isOpen('inventory')) renderInventory();
       updatePlayerHUD();
     }
   } catch (e) {
@@ -357,17 +361,4 @@ function updatePlayerHUD() {
   if (lvlEl) lvlEl.textContent = `Lv.${playerInfo.level}`;
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "p" && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen && !skillMenuOpen) {
-    if (playerInfoOpen) {
-      closePlayerInfo();
-    } else {
-      if (inventoryOpen) closeInventory();
-      if (shopOpen) closeShop();
-      openPlayerInfo();
-    }
-  }
-  if (e.key === "Escape" && playerInfoOpen) {
-    closePlayerInfo();
-  }
-});
+

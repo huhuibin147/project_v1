@@ -15,6 +15,7 @@ function loadScript(relativePath) {
 
 describe('地图模块 (map.js)', () => {
   beforeAll(() => {
+    loadScript('managers/PanelManager.js');
     loadScript('managers/GameManager.js');
     loadScript('player.js');
     loadScript('map.js');

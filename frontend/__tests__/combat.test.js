@@ -15,6 +15,7 @@ function loadScript(relativePath) {
 
 describe('战斗模块 (combat.js)', () => {
   beforeAll(() => {
+    loadScript('managers/PanelManager.js');
     loadScript('managers/GameManager.js');
     loadScript('player.js');
     loadScript('map.js');
@@ -41,6 +42,7 @@ describe('战斗模块 (combat.js)', () => {
 
   describe('CBT-02~05: checkMonsterCollision 怪物碰撞', () => {
     beforeEach(() => {
+      PanelManager.closeAll();
       combatOpen = false;
       mapMonsters = [];
       setPlayerPosition(10, 10);
@@ -51,6 +53,7 @@ describe('战斗模块 (combat.js)', () => {
     });
 
     it('CBT-03: combatOpen 为 true 时应返回 null', () => {
+      PanelManager._forceOpen('combat');
       combatOpen = true;
       mapMonsters = [{
         monster_id: 'slime',
@@ -116,6 +119,7 @@ describe('战斗模块 (combat.js)', () => {
 
   describe('CBT-06~07: getNearestMonster 最近怪物', () => {
     beforeEach(() => {
+      PanelManager.closeAll();
       combatOpen = false;
       mapMonsters = [];
       setPlayerPosition(10, 10);
@@ -140,6 +144,7 @@ describe('战斗模块 (combat.js)', () => {
     });
 
     it('CBT-07: combatOpen 为 true 时应返回 null', () => {
+      PanelManager._forceOpen('combat');
       combatOpen = true;
       mapMonsters = [{
         monster_id: 'slime', instance_id: 'slime_0',

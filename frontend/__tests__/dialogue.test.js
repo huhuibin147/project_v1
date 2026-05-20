@@ -41,6 +41,7 @@ describe('对话模块 (dialogue.js)', () => {
       </div>
       <div id="game-container"></div>
     `;
+    loadScript('managers/PanelManager.js');
     loadScript('managers/GameManager.js');
     loadScript('map.js');
     loadScript('player.js');

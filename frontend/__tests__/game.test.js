@@ -18,6 +18,7 @@ describe('游戏主逻辑 (game.js)', () => {
     globalThis.initStartScreen = () => {};
     globalThis.initWorldMap = () => {};
     globalThis.getMonsterSprite = () => null;
+    loadScript('managers/PanelManager.js');
     loadScript('managers/GameManager.js');
     loadScript('player.js');
     loadScript('map.js');
@@ -34,9 +35,7 @@ describe('游戏主逻辑 (game.js)', () => {
     beforeEach(() => {
       portalCooldown = 0;
       currentMap = null;
-      worldMapOpen = false;
-      combatOpen = false;
-      dialogueOpen = false;
+      PanelManager.closeAll();
     });
 
     it('冷却中不应触发传送', () => {
@@ -55,6 +54,7 @@ describe('游戏主逻辑 (game.js)', () => {
     });
 
     it('worldMapOpen 时不应触发传送', () => {
+      PanelManager._forceOpen('worldMap');
       worldMapOpen = true;
       portalCooldown = 0;
       currentMap = {
