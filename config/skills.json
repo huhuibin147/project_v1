@@ -9,6 +9,11 @@
     "target": "enemy",
     "damage_type": "physical",
     "power": 1.5,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.8, "upgrade_cost": 50, "description_change": "全力一击，造成 1.8 倍物理伤害"},
+      "3": {"power": 2.0, "upgrade_cost": 120, "description_change": "全力一击，造成 2.0 倍物理伤害，暴击率+10%"}
+    },
     "effects": [],
     "class_requirement": ["warrior"],
     "level_requirement": 1
@@ -23,6 +28,11 @@
     "target": "self",
     "damage_type": "physical",
     "power": 0,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"effects": [{"type": "defense_up", "value": 60, "duration": 3}], "upgrade_cost": 60, "description_change": "举起盾牌防御，3 回合内防御 +60%"},
+      "3": {"effects": [{"type": "defense_up", "value": 75, "duration": 4}], "upgrade_cost": 150, "description_change": "举起盾牌防御，4 回合内防御 +75%"}
+    },
     "effects": [{"type": "defense_up", "value": 50, "duration": 3}],
     "class_requirement": ["warrior"],
     "level_requirement": 3
@@ -37,6 +47,11 @@
     "target": "self",
     "damage_type": "physical",
     "power": 0,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"effects": [{"type": "attack_up", "value": 40, "duration": 3}, {"type": "defense_down", "value": 15, "duration": 3}], "upgrade_cost": 80, "description_change": "激发潜能，3 回合内攻击 +40%，防御 -15%"},
+      "3": {"effects": [{"type": "attack_up", "value": 50, "duration": 4}, {"type": "defense_down", "value": 10, "duration": 4}], "upgrade_cost": 200, "description_change": "激发潜能，4 回合内攻击 +50%，防御 -10%"}
+    },
     "effects": [
       {"type": "attack_up", "value": 30, "duration": 3},
       {"type": "defense_down", "value": 20, "duration": 3}
@@ -54,6 +69,11 @@
     "target": "enemy",
     "damage_type": "physical",
     "power": 1.8,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 2.1, "mp_cost": 10, "upgrade_cost": 50, "description_change": "从背后突袭，造成 2.1 倍物理伤害，暴击率提升"},
+      "3": {"power": 2.5, "mp_cost": 10, "upgrade_cost": 130, "description_change": "从背后突袭，造成 2.5 倍物理伤害，必定暴击"}
+    },
     "effects": [],
     "class_requirement": ["rogue"],
     "level_requirement": 1
@@ -68,6 +88,11 @@
     "target": "enemy",
     "damage_type": "physical",
     "power": 1.2,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.4, "effects": [{"type": "poison", "duration": 3, "chance": 0.65}], "upgrade_cost": 60, "description_change": "涂毒的刀刃，造成 1.4 倍伤害，65% 概率中毒 3 回合"},
+      "3": {"power": 1.6, "effects": [{"type": "poison", "duration": 4, "chance": 0.8}], "upgrade_cost": 150, "description_change": "涂毒的刀刃，造成 1.6 倍伤害，80% 概率中毒 4 回合"}
+    },
     "effects": [{"type": "poison", "duration": 3, "chance": 0.5}],
     "class_requirement": ["rogue"],
     "level_requirement": 3
@@ -82,6 +107,11 @@
     "target": "self",
     "damage_type": "physical",
     "power": 0,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"effects": [{"type": "evasion_up", "value": 40, "duration": 2}], "upgrade_cost": 70, "description_change": "灵活身法，2 回合内闪避率 +40%"},
+      "3": {"effects": [{"type": "evasion_up", "value": 50, "duration": 3}], "cooldown": 3, "upgrade_cost": 180, "description_change": "灵活身法，3 回合内闪避率 +50%"}
+    },
     "effects": [{"type": "evasion_up", "value": 30, "duration": 2}],
     "class_requirement": ["rogue"],
     "level_requirement": 5
@@ -96,6 +126,11 @@
     "target": "enemy",
     "damage_type": "magic",
     "power": 1.5,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.8, "effects": [{"type": "burn", "duration": 3, "chance": 0.45}], "upgrade_cost": 50, "description_change": "发射火球，造成 1.8 倍魔法伤害，45% 概率灼烧"},
+      "3": {"power": 2.2, "effects": [{"type": "burn", "duration": 4, "chance": 0.6}], "upgrade_cost": 130, "description_change": "发射火球，造成 2.2 倍魔法伤害，60% 概率灼烧 4 回合"}
+    },
     "effects": [{"type": "burn", "duration": 3, "chance": 0.3}],
     "element": "fire",
     "class_requirement": ["mage"],
@@ -111,6 +146,11 @@
     "target": "enemy",
     "damage_type": "magic",
     "power": 1.3,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.5, "effects": [{"type": "freeze", "duration": 1, "chance": 0.65}], "upgrade_cost": 60, "description_change": "释放寒冰，造成 1.5 倍魔法伤害，65% 概率冻结 1 回合"},
+      "3": {"power": 1.8, "effects": [{"type": "freeze", "duration": 2, "chance": 0.75}], "upgrade_cost": 150, "description_change": "释放寒冰，造成 1.8 倍魔法伤害，75% 概率冻结 2 回合"}
+    },
     "element": "water",
     "effects": [{"type": "freeze", "duration": 1, "chance": 0.5}],
     "class_requirement": ["mage"],
@@ -126,6 +166,11 @@
     "target": "self",
     "damage_type": "magic",
     "power": 0,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"effects": [{"type": "heal", "value": 60}], "mp_cost": 18, "upgrade_cost": 50, "description_change": "使用魔法恢复 60 点生命值"},
+      "3": {"effects": [{"type": "heal", "value": 90}], "mp_cost": 16, "cooldown": 2, "upgrade_cost": 130, "description_change": "使用魔法恢复 90 点生命值"}
+    },
     "effects": [{"type": "heal", "value": 40}],
     "class_requirement": ["mage"],
     "level_requirement": 1
@@ -140,6 +185,11 @@
     "target": "self",
     "damage_type": "magic",
     "power": 0,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"effects": [{"type": "damage_reduction", "value": 40, "duration": 3}], "upgrade_cost": 70, "description_change": "召唤魔法护盾，3 回合内受到伤害减少 40%"},
+      "3": {"effects": [{"type": "damage_reduction", "value": 50, "duration": 4}], "upgrade_cost": 180, "description_change": "召唤魔法护盾，4 回合内受到伤害减少 50%"}
+    },
     "effects": [{"type": "damage_reduction", "value": 30, "duration": 3}],
     "class_requirement": ["mage"],
     "level_requirement": 5
@@ -154,6 +204,11 @@
     "target": "enemy",
     "damage_type": "magic",
     "power": 1.6,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.9, "effects": [{"type": "defense_ignore", "value": 60, "duration": 0}], "upgrade_cost": 100, "description_change": "召唤天雷轰击敌人，造成 1.9 倍魔法伤害，无视 60% 防御"},
+      "3": {"power": 2.3, "effects": [{"type": "defense_ignore", "value": 75, "duration": 0}], "upgrade_cost": 250, "description_change": "召唤天雷轰击敌人，造成 2.3 倍魔法伤害，无视 75% 防御"}
+    },
     "effects": [{"type": "defense_ignore", "value": 50, "duration": 0}],
     "class_requirement": ["mage"],
     "level_requirement": 8
@@ -169,6 +224,11 @@
     "damage_type": "physical",
     "power": 1.0,
     "aoe": true,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.2, "upgrade_cost": 70, "description_change": "挥舞武器旋转攻击，对所有敌人造成 1.2 倍物理伤害"},
+      "3": {"power": 1.5, "cooldown": 1, "upgrade_cost": 180, "description_change": "挥舞武器旋转攻击，对所有敌人造成 1.5 倍物理伤害"}
+    },
     "effects": [],
     "class_requirement": ["warrior"],
     "level_requirement": 4
@@ -184,6 +244,11 @@
     "damage_type": "physical",
     "power": 0,
     "aoe": true,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"effects": [{"type": "attack_up", "value": 30, "duration": 2}, {"type": "defense_up", "value": 20, "duration": 2}], "upgrade_cost": 90, "description_change": "发出震天战吼，2 回合内攻击 +30%，防御 +20%"},
+      "3": {"effects": [{"type": "attack_up", "value": 40, "duration": 3}, {"type": "defense_up", "value": 25, "duration": 3}], "upgrade_cost": 220, "description_change": "发出震天战吼，3 回合内攻击 +40%，防御 +25%"}
+    },
     "effects": [
       {"type": "attack_up", "value": 20, "duration": 2},
       {"type": "defense_up", "value": 15, "duration": 2}
@@ -202,6 +267,11 @@
     "damage_type": "physical",
     "power": 0.6,
     "aoe": true,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 0.8, "effects": [{"type": "poison", "duration": 3, "chance": 0.7}], "upgrade_cost": 70, "description_change": "释放毒雾笼罩所有敌人，70% 概率中毒并造成伤害"},
+      "3": {"power": 1.0, "effects": [{"type": "poison", "duration": 3, "chance": 0.85}], "upgrade_cost": 180, "description_change": "释放毒雾笼罩所有敌人，85% 概率中毒并造成伤害"}
+    },
     "effects": [{"type": "poison", "duration": 2, "chance": 0.6}],
     "class_requirement": ["rogue"],
     "level_requirement": 4
@@ -217,6 +287,11 @@
     "damage_type": "physical",
     "power": 1.2,
     "aoe": true,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.4, "effects": [{"type": "stun", "duration": 1, "chance": 0.3}], "upgrade_cost": 90, "description_change": "化身暗影突袭所有敌人，30% 概率眩晕"},
+      "3": {"power": 1.7, "effects": [{"type": "stun", "duration": 1, "chance": 0.4}], "upgrade_cost": 220, "description_change": "化身暗影突袭所有敌人，40% 概率眩晕"}
+    },
     "effects": [{"type": "stun", "duration": 1, "chance": 0.2}],
     "class_requirement": ["rogue"],
     "level_requirement": 7
@@ -232,6 +307,11 @@
     "damage_type": "magic",
     "power": 1.3,
     "aoe": true,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.5, "effects": [{"type": "burn", "duration": 3, "chance": 0.55}], "upgrade_cost": 70, "description_change": "召唤烈焰风暴席卷所有敌人，55% 概率灼烧"},
+      "3": {"power": 1.8, "effects": [{"type": "burn", "duration": 3, "chance": 0.7}], "upgrade_cost": 180, "description_change": "召唤烈焰风暴席卷所有敌人，70% 概率灼烧"}
+    },
     "effects": [{"type": "burn", "duration": 2, "chance": 0.4}],
     "element": "fire",
     "class_requirement": ["mage"],
@@ -248,6 +328,11 @@
     "damage_type": "magic",
     "power": 1.1,
     "aoe": true,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"power": 1.3, "effects": [{"type": "freeze", "duration": 1, "chance": 0.5}], "upgrade_cost": 80, "description_change": "召唤暴风雪冰封所有敌人，50% 概率冻结"},
+      "3": {"power": 1.6, "effects": [{"type": "freeze", "duration": 2, "chance": 0.6}], "upgrade_cost": 200, "description_change": "召唤暴风雪冰封所有敌人，60% 概率冻结 2 回合"}
+    },
     "element": "water",
     "effects": [{"type": "freeze", "duration": 1, "chance": 0.35}],
     "class_requirement": ["mage"],
@@ -264,6 +349,11 @@
     "damage_type": "magic",
     "power": 0,
     "aoe": true,
+    "max_level": 3,
+    "level_scaling": {
+      "2": {"effects": [{"type": "heal", "value": 90}], "mp_cost": 30, "upgrade_cost": 100, "description_change": "虔诚祈祷，恢复 90 点生命值"},
+      "3": {"effects": [{"type": "heal", "value": 130}], "mp_cost": 28, "cooldown": 4, "upgrade_cost": 250, "description_change": "虔诚祈祷，恢复 130 点生命值"}
+    },
     "effects": [{"type": "heal", "value": 60}],
     "class_requirement": ["mage"],
     "level_requirement": 8

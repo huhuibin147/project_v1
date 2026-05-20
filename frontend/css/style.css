@@ -1013,6 +1013,12 @@ body {
   margin-left: 4px;
 }
 
+.skill-tag .skill-level {
+  color: #ffd700;
+  font-size: 10px;
+  margin-left: 4px;
+}
+
 .no-effects {
   color: #555;
   font-size: 12px;
@@ -3749,6 +3755,216 @@ body {
   padding: 8px 12px;
   text-align: center;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ===== 技能菜单面板 ===== */
+#skill-menu-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 640px;
+  max-height: 80vh;
+  background: rgba(20, 20, 40, 0.96);
+  border: 2px solid #6bafff;
+  border-radius: 10px;
+  display: none;
+  flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.skill-menu-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.skill-tab {
+  flex: 1;
+  padding: 8px 0;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.skill-tab.active {
+  color: #6bafff;
+  background: rgba(107, 175, 255, 0.08);
+  border-bottom-color: #6bafff;
+}
+
+.skill-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.skill-menu-content {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skill-card {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s;
+}
+
+.skill-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.skill-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.skill-card-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.skill-card-level {
+  font-size: 12px;
+  color: #6bafff;
+  font-weight: bold;
+}
+
+.skill-card-level .max {
+  color: #888;
+}
+
+.skill-card-desc {
+  font-size: 12px;
+  color: #ccc;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.skill-card-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: #aaa;
+  flex-wrap: wrap;
+}
+
+.skill-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.skill-meta-mp { color: #5bc0de; }
+.skill-meta-cd { color: #f0ad4e; }
+.skill-meta-target { color: #bbb; }
+.skill-meta-type { color: #c0a0ff; }
+
+.skill-card-upgrade {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skill-upgrade-preview {
+  font-size: 11px;
+  color: #ffd700;
+  line-height: 1.4;
+}
+
+.skill-upgrade-btn {
+  padding: 4px 16px;
+  font-size: 12px;
+  background: rgba(255, 215, 0, 0.15);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  color: #ffd700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.skill-upgrade-btn:hover {
+  background: rgba(255, 215, 0, 0.3);
+  border-color: #ffd700;
+}
+
+.skill-upgrade-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.skill-card-max {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  text-align: right;
+  font-size: 11px;
+  color: #5cb85c;
+}
+
+.skill-card-learn {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skill-learn-info {
+  font-size: 11px;
+  color: #888;
+}
+
+.skill-learn-btn {
+  padding: 4px 16px;
+  font-size: 12px;
+  background: rgba(92, 184, 92, 0.15);
+  border: 1px solid rgba(92, 184, 92, 0.5);
+  color: #5cb85c;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.skill-learn-btn:hover {
+  background: rgba(92, 184, 92, 0.3);
+  border-color: #5cb85c;
+}
+
+.skill-learn-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.skill-card.locked {
+  opacity: 0.5;
+}
+
+.skill-empty {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+  font-size: 13px;
 }
 
 /* ===== 实时小地图 (HUD) ===== */

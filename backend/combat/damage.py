@@ -89,8 +89,8 @@ def calc_damage(
 
 def calc_flee_chance(player_speed: int, monster_speed: int) -> float:
     speed_ratio = player_speed / max(1, monster_speed)
-    chance = 0.3 + (speed_ratio - 1.0) * 0.3
-    return max(0.1, min(0.9, chance))
+    chance = 0.5 + (speed_ratio - 1.0) * 0.4
+    return max(0.2, min(0.95, chance))
 
 
 def calc_drops(monster_config: dict) -> tuple[list[dict], int]:

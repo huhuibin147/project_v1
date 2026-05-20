@@ -68,6 +68,7 @@ class CombatSession:
         self.base_player_defense = player_snapshot["defense"]
         self.base_player_speed = player_snapshot["speed"]
         self.player_skills = player_snapshot.get("skills", [])
+        self.player_skill_levels = player_snapshot.get("skill_levels", {})
         self.player_defending = False
         self.player_effects: list[StatusEffect] = []
         self.player_shield: int = 0
@@ -113,8 +114,8 @@ def calc_damage(attacker_attack: int, defender_defense: int,
 
 def calc_flee_chance(player_speed: int, monster_speed: int) -> float:
     speed_ratio = player_speed / max(1, monster_speed)
-    chance = 0.3 + (speed_ratio - 1.0) * 0.3
-    return max(0.1, min(0.9, chance))
+    chance = 0.5 + (speed_ratio - 1.0) * 0.4
+    return max(0.2, min(0.95, chance))
 
 
 def calc_drops(monster_config: dict) -> tuple[list[dict], int]:
@@ -443,7 +444,7 @@ def _build_state(session: CombatSession, log_entries: list[dict], fled: bool = F
         "player_shield": session.player_shield,
         "monster_effects": [e.to_dict() for e in session.monster_effects],
         "monster_defending": session.monster_defending,
-        "skills": [format_skill_for_frontend(s, session.skill_cooldowns.get(s, 0)) for s in session.player_skills],
+        "skills": [format_skill_for_frontend(s, session.skill_cooldowns.get(s, 0), skill_level=session.player_skill_levels.get(s, 1)) for s in session.player_skills],
     }
     if session.phase == CombatPhase.VICTORY:
         state["exp_reward"] = session.exp_reward
@@ -897,8 +898,9 @@ def resolve_turn(session: CombatSession, action: str,
 
 
 def _execute_skill(session: CombatSession, skill_id: str) -> dict:
-    from skill_system import get_skill
-    skill = get_skill(skill_id)
+    from skill_system import get_skill_at_level
+    skill_level = session.player_skill_levels.get(skill_id, 1) if hasattr(session, 'player_skill_levels') else 1
+    skill = get_skill_at_level(skill_id, skill_level)
     if not skill:
         return {"type": "skill", "success": False, "text": "未知技能。"}
     if skill_id not in session.player_skills:

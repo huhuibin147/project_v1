@@ -243,6 +243,21 @@ class ConfigValidator:
                 if ref_id and ref_id not in monsters:
                     self.warn(f"交叉引用: 地图 {map_id} 引用怪物 '{ref_id}' 不存在")
 
+        portal_links = {}
+        for map_id, map_data in maps.items():
+            for obj in map_data.get("objects", []):
+                if obj.get("type") == "portal":
+                    target_map = obj.get("properties", {}).get("target_map", "")
+                    if target_map:
+                        if map_id not in portal_links:
+                            portal_links[map_id] = set()
+                        portal_links[map_id].add(target_map)
+        
+        for map_id, targets in portal_links.items():
+            for target in targets:
+                if target in portal_links and map_id not in portal_links[target]:
+                    self.warn(f"交叉引用: 地图 '{map_id}' 有传送门到 '{target}'，但 '{target}' 没有传送门回到 '{map_id}'（缺少双向链接）")
+
         print("  交叉引用验证完成")
 
     def validate_maps(self):
@@ -261,6 +276,23 @@ class ConfigValidator:
                     self.issue(f"地图 {map_id}: player_spawn.x 超出范围")
                 if not (0 <= spawn.get("y", -1) < map_data.get("height", 0)):
                     self.issue(f"地图 {map_id}: player_spawn.y 超出范围")
+            for obj in map_data.get("objects", []):
+                if obj.get("type") == "portal":
+                    target_map = obj.get("properties", {}).get("target_map", "")
+                    if target_map and target_map not in self.maps:
+                        self.issue(f"地图 {map_id}: 传送门 '{obj.get('id', '?')}' 目标地图 '{target_map}' 不存在")
+                    target_x = obj.get("properties", {}).get("target_x", -1)
+                    target_y = obj.get("properties", {}).get("target_y", -1)
+                    if target_map and target_map in self.maps:
+                        target_data = self.maps[target_map]
+                        tw, th = target_data.get("width", 0), target_data.get("height", 0)
+                        if not (0 <= target_x < tw and 0 <= target_y < th):
+                            self.issue(f"地图 {map_id}: 传送门 '{obj.get('id', '?')}' 落点 ({target_x},{target_y}) 超出目标地图 '{target_map}' 范围 ({tw}x{th})")
+            for mg in map_data.get("monster_groups", []):
+                for m in mg.get("monsters", []):
+                    monster_id = m.get("monster_id", "")
+                    if monster_id and monster_id not in self.configs.get("monsters", {}):
+                        self.warn(f"地图 {map_id}: 怪物组 '{mg.get('group_id', '?')}' 引用怪物 '{monster_id}' 不存在")
         print(f"  地图验证: {len(self.maps)} 个地图")
 
     def validate_all(self):

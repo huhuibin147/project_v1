@@ -925,7 +925,7 @@ function openWorldMap() {
     console.log("无法打开大地图：当前地图未加载");
     return;
   }
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen) {
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen || skillMenuOpen) {
     console.log("无法打开大地图：有其他面板打开");
     return;
   }

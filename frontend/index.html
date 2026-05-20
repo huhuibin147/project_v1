@@ -122,6 +122,7 @@
         <button class="btn-interact" onclick="closeGameMenu(); openInventory()">背包 (I)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openPlayerInfo()">角色信息 (P)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openTalentPanel()">天赋 (T)</button>
+        <button class="btn-interact" onclick="closeGameMenu(); openSkillMenu()">技能 (K)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openQuestManager()">任务管理 (Q)</button>
         <button class="btn-interact" onclick="closeGameMenu(); openHelp()">帮助 (H)</button>
         <button class="btn-interact" onclick="saveGame()">保存游戏</button>
@@ -475,6 +476,16 @@
         </div>
 
         <div class="help-section">
+          <div class="help-section-title">技能系统</div>
+          <div class="help-content">
+            <p><b>K</b> — 打开/关闭技能菜单</p>
+            <p>技能菜单可查看已学技能和可学技能</p>
+            <p>已学技能可以花费金币升级，提升威力和效果</p>
+            <p>每个技能最高可升至3级，升级后属性自动在战斗中生效</p>
+          </div>
+        </div>
+
+        <div class="help-section">
           <div class="help-section-title">特殊词条（即将推出）</div>
           <div class="help-content">
             <p>部分高级装备可能附带特殊词条，提供额外效果</p>
@@ -665,6 +676,21 @@
         <button class="btn-interact btn-danger" onclick="resetTalents()">重置天赋</button>
       </div>
     </div>
+
+    <!-- 技能菜单面板 -->
+    <div id="skill-menu-panel" style="display:none">
+      <div class="panel-header">
+        <span class="panel-title">✨ 技能菜单</span>
+        <span id="skill-menu-summary" class="panel-info"></span>
+        <button class="panel-close" onclick="closeSkillMenu()">×</button>
+      </div>
+      <div id="skill-menu-message" class="trade-message" style="display:none"></div>
+      <div class="skill-menu-tabs">
+        <button class="skill-tab active" data-tab="learned">已学技能</button>
+        <button class="skill-tab" data-tab="available">可学技能</button>
+      </div>
+      <div id="skill-menu-content" class="skill-menu-content"></div>
+    </div>
   </div>
 
   <script src="/static/js/managers/LoadingManager.js"></script>
@@ -680,6 +706,7 @@
   <script src="/static/js/combat.js"></script>
   <script src="/static/js/quest.js"></script>
   <script src="/static/js/talent.js"></script>
+  <script src="/static/js/skill_menu.js"></script>
   <script src="/static/js/forge.js"></script>
   <script src="/static/js/help.js"></script>
   <script src="/static/js/start_screen.js"></script>

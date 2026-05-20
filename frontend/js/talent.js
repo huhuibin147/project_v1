@@ -36,11 +36,13 @@ async function openTalentPanel() {
     closeTalentPanel();
     return;
   }
-  if (dialogueOpen || shopOpen || GameManager.isMenuOpen() || combatOpen || inventoryOpen || playerInfoOpen || helpOpen || questManagerOpen || npcInteractOpen || healPanelOpen || skillLearnPanelOpen) return;
+  if (dialogueOpen || shopOpen || GameManager.isMenuOpen() || combatOpen || npcInteractOpen || healPanelOpen || skillLearnPanelOpen || skillMenuOpen || (typeof forgePanelOpen !== 'undefined' && forgePanelOpen)) return;
   if (playerInfoOpen) closePlayerInfo();
   if (inventoryOpen) closeInventory();
   if (helpOpen) closeHelp();
   if (questManagerOpen) closeQuestManager();
+  if (skillMenuOpen) closeSkillMenu();
+  if (typeof worldMapOpen !== 'undefined' && worldMapOpen) closeWorldMap();
   const data = await fetchTalentData();
   if (!data) return;
   renderTalentPanel(data);
@@ -198,7 +200,7 @@ function hideTalentMessage() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "t" && !dialogueOpen && !GameManager.isMenuOpen() && !shopOpen && !inventoryOpen && !playerInfoOpen && !combatOpen && !helpOpen && !questManagerOpen && !npcInteractOpen && !healPanelOpen && !skillLearnPanelOpen) {
+  if (e.key.toLowerCase() === "t" && !dialogueOpen && !GameManager.isMenuOpen() && !shopOpen && !inventoryOpen && !playerInfoOpen && !combatOpen && !helpOpen && !questManagerOpen && !npcInteractOpen && !healPanelOpen && !skillLearnPanelOpen && !skillMenuOpen) {
     if (talentPanelOpen) {
       closeTalentPanel();
     } else {

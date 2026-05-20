@@ -578,6 +578,8 @@ class MapGenerator:
         for wf in tpl.get("water_features", []):
             if wf["type"] == "river":
                 self._draw_river(ground, wf)
+            elif wf["type"] == "pond":
+                self._draw_pond(ground, wf)
         for deco in tpl.get("decorations", []):
             zone_id = deco.get("zone", "")
             zone = next((z for z in tpl.get("zones", []) if z["id"] == zone_id), None)
@@ -592,6 +594,9 @@ class MapGenerator:
             self.fix_connectivity(ground, (spawn["x"], spawn["y"]))
             result2 = self.check_connectivity(ground, (spawn["x"], spawn["y"]))
             print(f"  修复后: {result2['reachable_count']}/{result2['total_walkable']} 可达, {result2['unreachable_regions']} 个不连通区域")
+        monster_groups = tpl.get("monster_groups", [])
+        if not monster_groups:
+            monster_groups = self._auto_place_monsters(ground, tpl)
         map_data = {
             "id": tpl["id"],
             "name": tpl["name"],
@@ -602,9 +607,15 @@ class MapGenerator:
             "layers": {"ground": ground},
             "objects": tpl.get("objects", []),
             "npcs": tpl.get("npcs", []),
-            "monster_groups": tpl.get("monster_groups", []),
+            "monster_groups": monster_groups,
             "player_spawn": spawn,
         }
+        validation = self._validate_generated_map(map_data)
+        if validation["issues"]:
+            print(f"  ⚠ 地图生成后验证发现 {len(validation['issues'])} 个问题:")
+            for issue in validation["issues"]:
+                print(f"    - {issue}")
+            map_data = self._auto_fix_generated_map(map_data, validation["issues"])
         return map_data
 
     def _is_walkable(self, tile_id: int) -> bool:
@@ -613,6 +624,316 @@ class MapGenerator:
         if info is None:
             return False
         return info.get("walkable", True)
+
+    def _auto_place_monsters(self, ground: List[List[int]], tpl: Dict) -> List[Dict]:
+        """根据模板区域配置自动放置怪物组
+        
+        每个区域根据 difficulty 和主题自动选择合适的怪物，
+        确保怪物放在可行走格子上，且不在出生点附近。
+        """
+        MAP_MONSTERS = {
+            "village": ["slime"],
+            "forest": ["slime", "wild_wolf", "forest_spider", "goblin", "dark_bear", "shadow_tree_spirit"],
+            "dark_cave": ["cave_bat", "cave_spider", "skeleton", "zombie", "dark_knight", "skeleton_king"],
+            "desert_oasis": ["scorpion", "sand_worm", "mummy", "desert_basilisk"],
+            "royal_city": ["city_guard", "shadow_mage", "dark_knight", "skeleton", "zombie", "skeleton_king"],
+        }
+        
+        map_id = tpl.get("id", "")
+        available_monsters = MAP_MONSTERS.get(map_id, ["slime"])
+        
+        H = len(ground)
+        W = len(ground[0])
+        spawn = tpl.get("player_spawn", {})
+        spawn_x, spawn_y = spawn.get("x", W // 2), spawn.get("y", H // 2)
+        
+        walkable_positions = []
+        for r in range(3, H - 3):
+            for c in range(3, W - 3):
+                if self._is_walkable(ground[r][c]):
+                    dist = abs(c - spawn_x) + abs(r - spawn_y)
+                    if dist > 8:
+                        walkable_positions.append((c, r, dist))
+        
+        if not walkable_positions:
+            for r in range(3, H - 3):
+                for c in range(3, W - 3):
+                    if self._is_walkable(ground[r][c]):
+                        walkable_positions.append((c, r, 0))
+        
+        if not walkable_positions:
+            return []
+        
+        random.shuffle(walkable_positions)
+        
+        zones = tpl.get("zones", [])
+        monster_groups = []
+        used_positions = set()
+        group_counter = 0
+        
+        zone_monster_map = {
+            "village": {
+                "village_center": ["slime"],
+                "village_farms": ["slime"],
+                "village_graveyard": ["skeleton", "zombie"],
+            },
+            "forest": {
+                "forest_entrance": ["slime", "wild_wolf"],
+                "forest_deep": ["forest_spider", "goblin", "dark_bear"],
+                "forest_dark": ["shadow_tree_spirit", "dark_bear"],
+            },
+            "dark_cave": {
+                "cave_entrance": ["cave_bat", "cave_spider"],
+                "cave_mine": ["skeleton", "zombie"],
+                "cave_abyss": ["dark_knight", "skeleton_king"],
+            },
+            "desert_oasis": {
+                "desert_outer_north": ["scorpion"],
+                "desert_worm_territory": ["sand_worm", "scorpion"],
+                "desert_oasis_core": ["mummy", "desert_basilisk"],
+                "desert_quicksand": ["sand_worm", "mummy"],
+            },
+            "royal_city": {
+                "royal_noble_district": ["city_guard", "shadow_mage"],
+                "royal_palace": ["dark_knight", "shadow_mage", "skeleton_king"],
+                "royal_avenue": ["city_guard", "skeleton"],
+                "royal_dark_alley": ["zombie", "dark_knight", "shadow_mage"],
+            },
+        }
+        
+        map_zone_monsters = zone_monster_map.get(map_id, {})
+        
+        for zone in zones:
+            zone_id = zone.get("id", "")
+            b = zone.get("bounds", {})
+            difficulty = zone.get("difficulty", 1)
+            
+            zone_monster_ids = map_zone_monsters.get(zone_id, available_monsters[:max(1, difficulty)])
+            
+            count = max(1, difficulty + 1)
+            
+            placed = 0
+            attempts = 0
+            while placed < count and attempts < count * 20:
+                attempts += 1
+                if not walkable_positions:
+                    break
+                
+                pos = walkable_positions.pop()
+                px, py, pdist = pos
+                
+                if (px, py) in used_positions:
+                    continue
+                
+                if not (b.get("x", 0) <= px < b.get("x", 0) + b.get("w", W) and
+                        b.get("y", 0) <= py < b.get("y", 0) + b.get("h", H)):
+                    continue
+                
+                mid = random.choice(zone_monster_ids)
+                group_counter += 1
+                group = {
+                    "group_id": f"{mid}_{px}_{py}",
+                    "x": px,
+                    "y": py,
+                    "monsters": [{"monster_id": mid, "count": random.randint(1, min(3, difficulty + 1))}],
+                }
+                
+                if random.random() < 0.3:
+                    patrol_points = []
+                    for _ in range(random.randint(2, 3)):
+                        for _ in range(10):
+                            dx = random.randint(-5, 5)
+                            dy = random.randint(-5, 5)
+                            nx, ny = px + dx, py + dy
+                            if (0 < nx < W - 1 and 0 < ny < H - 1 and
+                                    self._is_walkable(ground[ny][nx]) and
+                                    (nx, ny) not in used_positions):
+                                patrol_points.append({"x": nx, "y": ny})
+                                break
+                    if len(patrol_points) >= 2:
+                        group["patrol"] = patrol_points
+                
+                monster_groups.append(group)
+                used_positions.add((px, py))
+                placed += 1
+        
+        min_groups = max(3, len(zones))
+        while len(monster_groups) < min_groups and walkable_positions:
+            pos = walkable_positions.pop()
+            px, py, _ = pos
+            if (px, py) in used_positions:
+                continue
+            mid = random.choice(available_monsters)
+            group_counter += 1
+            monster_groups.append({
+                "group_id": f"{mid}_{px}_{py}",
+                "x": px,
+                "y": py,
+                "monsters": [{"monster_id": mid, "count": 1}],
+            })
+            used_positions.add((px, py))
+        
+        return monster_groups
+
+    def _validate_generated_map(self, map_data: Dict) -> Dict:
+        """验证生成的地图数据，检查三大问题：怪物缺失、传送门卡死、路径绕路"""
+        issues = []
+        ground = map_data["layers"]["ground"]
+        W = map_data["width"]
+        H = map_data["height"]
+        map_id = map_data["id"]
+        spawn = map_data.get("player_spawn", {})
+        sx, sy = spawn.get("x", 0), spawn.get("y", 0)
+        
+        # 检测1: 怪物组缺失
+        mg = map_data.get("monster_groups", [])
+        if not mg and map_id != "village":
+            issues.append(f"[怪物消失] 地图 '{map_id}' 没有怪物组")
+        else:
+            for g in mg:
+                gx, gy = g.get("x", -1), g.get("y", -1)
+                if 0 <= gx < W and 0 <= gy < H:
+                    if not self._is_walkable(ground[gy][gx]):
+                        issues.append(f"[怪物不可达] 怪物组 '{g.get('group_id')}' 在不可行走格 ({gx},{gy})")
+        
+        # 检测2: 传送门落点不可行走
+        for obj in map_data.get("objects", []):
+            if obj.get("type") != "portal":
+                continue
+            props = obj.get("properties", {})
+            target_map = props.get("target_map", "")
+            tx, ty = props.get("target_x", -1), props.get("target_y", -1)
+            
+            target_path = self.maps_dir / f"{target_map}.json"
+            if not target_path.exists():
+                issues.append(f"[传送目标缺失] 传送门 '{obj.get('id')}' 目标地图 '{target_map}' 不存在")
+                continue
+            
+            with open(target_path, "r", encoding="utf-8") as f:
+                target_data = json.load(f)
+            tg = target_data["layers"]["ground"]
+            tw, th = target_data["width"], target_data["height"]
+            
+            if tx < 0 or tx >= tw or ty < 0 or ty >= th:
+                issues.append(f"[传送越界] 传送门 '{obj.get('id')}' 落点 ({tx},{ty}) 超出 '{target_map}' 范围 ({tw}x{th})")
+            elif not self._is_walkable(tg[ty][tx]):
+                issues.append(f"[传送卡死] 传送门 '{obj.get('id')}' 落点 ({tx},{ty}) 在 '{target_map}' 上不可行走")
+        
+        # 检测3: 传送门从出生点不可达 + 路径效率
+        if self._is_walkable(ground[sy][sx]):
+            visited = set()
+            dist_map = {}
+            queue = deque([(sx, sy, 0)])
+            visited.add((sx, sy))
+            dist_map[(sx, sy)] = 0
+            while queue:
+                cx, cy, d = queue.popleft()
+                for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                    nx, ny = cx + dx, cy + dy
+                    if (nx, ny) not in visited and 0 <= nx < W and 0 <= ny < H:
+                        if self._is_walkable(ground[ny][nx]):
+                            visited.add((nx, ny))
+                            dist_map[(nx, ny)] = d + 1
+                            queue.append((nx, ny, d + 1))
+            
+            for obj in map_data.get("objects", []):
+                if obj.get("type") != "portal":
+                    continue
+                px, py = obj.get("x", 0), obj.get("y", 0)
+                if (px, py) not in visited:
+                    issues.append(f"[传送门不可达] 传送门 '{obj.get('id')}' 从出生点不可达")
+                else:
+                    actual = dist_map.get((px, py), 0)
+                    manhattan = abs(px - sx) + abs(py - sy)
+                    if manhattan > 0 and actual > manhattan * 2.5:
+                        issues.append(f"[路径绕路] 到传送门 '{obj.get('id')}' 路径效率过低: 实际={actual}, 曼哈顿={manhattan}")
+        
+        return {"valid": len(issues) == 0, "issues": issues}
+    
+    def _auto_fix_generated_map(self, map_data: Dict, issues: List[str]) -> Dict:
+        """自动修复生成地图的验证问题"""
+        ground = map_data["layers"]["ground"]
+        W = map_data["width"]
+        H = map_data["height"]
+        
+        for issue in issues:
+            if "[传送卡死]" in issue or "[传送越界]" in issue:
+                for obj in map_data.get("objects", []):
+                    if obj.get("type") != "portal":
+                        continue
+                    props = obj.get("properties", {})
+                    target_map = props.get("target_map", "")
+                    tx, ty = props.get("target_x", -1), props.get("target_y", -1)
+                    
+                    target_path = self.maps_dir / f"{target_map}.json"
+                    if not target_path.exists():
+                        continue
+                    
+                    with open(target_path, "r", encoding="utf-8") as f:
+                        target_data = json.load(f)
+                    tg = target_data["layers"]["ground"]
+                    tw, th = target_data["width"], target_data["height"]
+                    
+                    if tx < 0 or tx >= tw or ty < 0 or ty >= th or not self._is_walkable(tg[ty][tx]):
+                        for radius in range(1, 10):
+                            found = False
+                            for dx in range(-radius, radius + 1):
+                                for dy in range(-radius, radius + 1):
+                                    nx, ny = tx + dx, ty + dy
+                                    if 0 <= nx < tw and 0 <= ny < th:
+                                        if self._is_walkable(tg[ny][nx]):
+                                            props["target_x"] = nx
+                                            props["target_y"] = ny
+                                            found = True
+                                            break
+                                if found:
+                                    break
+                            if found:
+                                print(f"    ✓ 修复传送门 '{obj.get('id')}' 落点: ({tx},{ty}) -> ({props['target_x']},{props['target_y']})")
+                                break
+            
+            elif "[传送门不可达]" in issue:
+                for obj in map_data.get("objects", []):
+                    if obj.get("type") != "portal":
+                        continue
+                    px, py = obj.get("x", 0), obj.get("y", 0)
+                    if not self._is_walkable(ground[py][px]):
+                        for radius in range(1, 10):
+                            found = False
+                            for dx in range(-radius, radius + 1):
+                                for dy in range(-radius, radius + 1):
+                                    nx, ny = px + dx, py + dy
+                                    if 0 <= nx < W and 0 <= ny < H:
+                                        if self._is_walkable(ground[ny][nx]):
+                                            obj["x"] = nx
+                                            obj["y"] = ny
+                                            found = True
+                                            break
+                                if found:
+                                    break
+                            if found:
+                                break
+            
+            elif "[路径绕路]" in issue:
+                spawn = map_data.get("player_spawn", {})
+                sx, sy = spawn.get("x", 0), spawn.get("y", 0)
+                for obj in map_data.get("objects", []):
+                    if obj.get("type") != "portal":
+                        continue
+                    px, py = obj.get("x", 0), obj.get("y", 0)
+                    fx, fy = sx, sy
+                    x_dir = 1 if px > fx else -1
+                    for x in range(fx, px + x_dir, x_dir):
+                        if 0 < x < W - 1 and 0 < fy < H - 1:
+                            if not self._is_walkable(ground[fy][x]):
+                                ground[fy][x] = 1
+                    y_dir = 1 if py > fy else -1
+                    for y in range(fy, py + y_dir, y_dir):
+                        if 0 < px < W - 1 and 0 < y < H - 1:
+                            if not self._is_walkable(ground[y][px]):
+                                ground[y][px] = 1
+        
+        return map_data
 
     def _draw_path_segment(self, ground, start, end, width, tile):
         """绘制路径段，遇到不可行走的瓦片时跳过（不覆盖建筑墙壁等）"""
@@ -675,6 +996,20 @@ class MapGenerator:
                     tx, ty = bx + dw, by + dh
                     if 0 < tx < W - 1 and 0 < ty < H - 1:
                         ground[ty][tx] = 17
+
+    def _draw_pond(self, ground, config):
+        px = config.get("x", 0)
+        py = config.get("y", 0)
+        pw = config.get("width", 4)
+        ph = config.get("height", 3)
+        H = len(ground)
+        W = len(ground[0])
+        for dy in range(ph):
+            for dx in range(pw):
+                tx, ty = px + dx, py + dy
+                if 0 < tx < W - 1 and 0 < ty < H - 1:
+                    edge = dy == 0 or dy == ph - 1 or dx == 0 or dx == pw - 1
+                    ground[ty][tx] = 0 if edge else 16
 
     def _apply_zone_decoration(self, ground, zone, deco):
         """在区域内智能放置装饰物，支持最小间距和避让建筑/道路"""

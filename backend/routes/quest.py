@@ -1,11 +1,24 @@
-"""Quest and talent related routes."""
+"""Quest, talent, and skill related routes."""
 
 from fastapi import APIRouter
 
 from routes.context import player_profile, quest_manager
-from routes.models import TalentLearnRequest, QuestAcceptRequest, QuestAbandonRequest, QuestCompleteRequest, QuestProgressRequest
+from routes.models import TalentLearnRequest, SkillUpgradeRequest, QuestAcceptRequest, QuestAbandonRequest, QuestCompleteRequest, QuestProgressRequest
 
 router = APIRouter(prefix="/api", tags=["quest"])
+
+
+@router.get("/skills")
+async def get_skills():
+    return player_profile.get_skills_info()
+
+
+@router.post("/skills/upgrade")
+async def upgrade_skill(req: SkillUpgradeRequest):
+    result = player_profile.upgrade_skill(req.skill_id)
+    if result["success"]:
+        result["player_info"] = player_profile.get_info()
+    return result
 
 
 @router.get("/talents")

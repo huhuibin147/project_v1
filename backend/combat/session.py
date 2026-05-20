@@ -147,6 +147,7 @@ class CombatSession:
         self.base_player_defense = player_snapshot["defense"]
         self.base_player_speed = player_snapshot["speed"]
         self.player_skills = player_snapshot.get("skills", [])
+        self.player_skill_levels = player_snapshot.get("skill_levels", {})
         self.player_defending = False
         self.player_effects: list[StatusEffect] = []
         self.player_shield: int = 0

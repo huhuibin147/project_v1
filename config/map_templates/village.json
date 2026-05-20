@@ -141,12 +141,18 @@
   ],
   "water_features": [
     {
-      "type": "river",
-      "start": [58, 12],
-      "end": [2, 38],
-      "width": 2,
-      "meander": 4,
-      "bridges": [[30, 25], [15, 30], [45, 20], [20, 35]]
+      "type": "pond",
+      "x": 50,
+      "y": 20,
+      "width": 6,
+      "height": 4
+    },
+    {
+      "type": "pond",
+      "x": 6,
+      "y": 38,
+      "width": 5,
+      "height": 3
     }
   ],
   "buildings": [
@@ -216,8 +222,14 @@
   "player_spawn": {"x": 30, "y": 25},
   "objects": [
     {"id": "portal_forest", "type": "portal", "x": 30, "y": 2, "properties": {"target_map": "forest", "target_x": 40, "target_y": 5, "name": "幽暗森林"}},
-    {"id": "portal_desert", "type": "portal", "x": 58, "y": 25, "properties": {"target_map": "desert_oasis", "target_x": 5, "target_y": 27, "name": "沙漠绿洲"}}
+    {"id": "portal_desert", "type": "portal", "x": 58, "y": 25, "properties": {"target_map": "desert_oasis", "target_x": 5, "target_y": 27, "name": "沙漠绿洲"}},
+    {"id": "portal_royal_city", "type": "portal", "x": 2, "y": 25, "properties": {"target_map": "royal_city", "target_x": 5, "target_y": 35, "name": "王城"}}
   ],
-  "npcs": [],
+  "npcs": [
+    {"npc_id": "blacksmith", "x": 44, "y": 36},
+    {"npc_id": "merchant", "x": 44, "y": 42},
+    {"npc_id": "priest", "x": 8, "y": 22},
+    {"npc_id": "skillmaster", "x": 25, "y": 22}
+  ],
   "monster_groups": []
 }

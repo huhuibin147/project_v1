@@ -1439,7 +1439,7 @@ function showItemCtxMenu(e, item, context) {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "i" && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen) {
+  if (e.key.toLowerCase() === "i" && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen && !skillMenuOpen) {
     if (inventoryOpen) {
       closeInventory();
     } else {

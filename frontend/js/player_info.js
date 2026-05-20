@@ -71,9 +71,6 @@ async function fetchPlayerInfo() {
     if (data.name) {
       player.name = data.name;
     }
-    if (data.player_x !== undefined && data.player_y !== undefined) {
-      setPlayerPosition(data.player_x, data.player_y);
-    }
     updatePlayerHUD();
     if (data.gold !== undefined) {
       inventoryState.gold = data.gold;
@@ -164,7 +161,12 @@ function renderPlayerInfo() {
   const skillsEl = document.getElementById("pi-skills");
   if (playerInfo.skills && playerInfo.skills.length > 0) {
     skillsEl.innerHTML = playerInfo.skills
-      .map(s => `<div class="skill-tag" title="${s.description || ''}\n消耗: ${s.mp_cost || 0} MP"><b>${s.name}</b> <span class="skill-mp">${s.mp_cost}MP</span></div>`)
+      .map(s => {
+        const lvl = s.current_level || 1;
+        const maxLvl = s.max_level || 1;
+        const lvlText = maxLvl > 1 ? ` <span class="skill-level">Lv.${lvl}/${maxLvl}</span>` : "";
+        return `<div class="skill-tag" title="${s.description || ''}\n消耗: ${s.mp_cost || 0} MP"><b>${s.name}</b>${lvlText} <span class="skill-mp">${s.mp_cost}MP</span></div>`;
+      })
       .join("");
   } else {
     skillsEl.innerHTML = '<span class="no-effects">无</span>';
@@ -356,7 +358,7 @@ function updatePlayerHUD() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "p" && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen) {
+  if (e.key.toLowerCase() === "p" && !dialogueOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen && !skillMenuOpen) {
     if (playerInfoOpen) {
       closePlayerInfo();
     } else {

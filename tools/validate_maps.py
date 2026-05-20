@@ -7,6 +7,9 @@
 2. 围成一圈导致无法进入的区域
 3. 传送门卡在无法走的格子上
 4. 四面封闭的区域（被不可行走瓦片完全包围）
+5. 怪物组缺失（怪物消失问题）
+6. 传送门落点不可行走（传送点卡死问题）
+7. 路径效率过低（地图绕路问题）
 """
 
 import json
@@ -23,6 +26,7 @@ if sys.platform == 'win32':
 # 配置
 MAPS_DIR = Path(__file__).parent.parent / "config" / "maps"
 TILES_FILE = Path(__file__).parent.parent / "config" / "tiles.json"
+NPCS_FILE = Path(__file__).parent.parent / "config" / "npcs.json"
 
 # 加载瓦片配置
 with open(TILES_FILE, "r", encoding="utf-8") as f:
@@ -165,6 +169,100 @@ def check_map(map_file):
                     "center": (sum(x for x, y in area) // len(area), sum(y for x, y in area) // len(area))
                 })
     
+    # === 检测5: NPC缺失检测 ===
+    if NPCS_FILE.exists():
+        with open(NPCS_FILE, "r", encoding="utf-8") as f:
+            all_npcs = json.load(f)
+        expected_npcs = [nid for nid, cfg in all_npcs.items() if cfg.get("map_id") == map_id]
+        map_npc_ids = [n.get("npc_id") for n in map_data.get("npcs", [])]
+        for nid in expected_npcs:
+            if nid not in map_npc_ids:
+                issues.append({
+                    "type": "npc_missing",
+                    "id": nid,
+                    "x": 0, "y": 0,
+                    "message": f"NPC '{nid}' 在 npcs.json 中属于地图 '{map_id}'，但地图中未放置"
+                })
+    
+    # === 检测6: 怪物组缺失（怪物消失问题） ===
+    monster_groups = map_data.get("monster_groups", [])
+    if not monster_groups:
+        if map_id != "village":
+            issues.append({
+                "type": "no_monsters",
+                "id": "monster_groups_empty",
+                "x": 0, "y": 0,
+                "message": f"地图 '{map_id}' 没有怪物组，怪物将不会出现"
+            })
+    else:
+        for mg in monster_groups:
+            mx, my = mg.get("x", -1), mg.get("y", -1)
+            if 0 <= mx < width and 0 <= my < height:
+                if my < len(ground) and mx < len(ground[my]):
+                    if not is_walkable(ground[my][mx], tile_config):
+                        issues.append({
+                            "type": "monster_on_unwalkable",
+                            "id": mg.get("group_id", "unknown"),
+                            "x": mx, "y": my,
+                            "tile_id": ground[my][mx],
+                            "tile_name": tile_config.get(str(ground[my][mx]), {}).get("name", "unknown"),
+                            "message": f"怪物组 '{mg.get('group_id')}' 在不可行走格子上"
+                        })
+    
+    # === 检测7: 传送门落点不可行走（传送点卡死问题） ===
+    all_maps_data = {}
+    for mf in MAPS_DIR.glob("*.json"):
+        with open(mf, "r", encoding="utf-8") as f:
+            all_maps_data[mf.stem] = json.load(f)
+    
+    for obj in map_data.get("objects", []):
+        if obj.get("type") != "portal":
+            continue
+        props = obj.get("properties", {})
+        target_map = props.get("target_map", "")
+        tx, ty = props.get("target_x", -1), props.get("target_y", -1)
+        
+        target_data = all_maps_data.get(target_map)
+        if not target_data:
+            issues.append({
+                "type": "portal_target_missing",
+                "id": obj.get("id", "unknown"),
+                "x": obj.get("x", 0), "y": obj.get("y", 0),
+                "message": f"传送门目标地图 '{target_map}' 不存在"
+            })
+            continue
+        
+        tg = target_data.get("layers", {}).get("ground", [])
+        tw = target_data.get("width", 0)
+        th = target_data.get("height", 0)
+        
+        if tx < 0 or tx >= tw or ty < 0 or ty >= th:
+            issues.append({
+                "type": "portal_target_out_of_bounds",
+                "id": obj.get("id", "unknown"),
+                "x": obj.get("x", 0), "y": obj.get("y", 0),
+                "message": f"传送门落点 ({tx},{ty}) 超出目标地图范围 ({tw}x{th})"
+            })
+        elif ty < len(tg) and tx < len(tg[ty]):
+            target_tile = tg[ty][tx]
+            if not is_walkable(target_tile, tile_config):
+                issues.append({
+                    "type": "portal_target_unwalkable",
+                    "id": obj.get("id", "unknown"),
+                    "x": obj.get("x", 0), "y": obj.get("y", 0),
+                    "target_map": target_map,
+                    "target_x": tx, "target_y": ty,
+                    "target_tile_id": target_tile,
+                    "target_tile_name": tile_config.get(str(target_tile), {}).get("name", "unknown"),
+                    "message": f"传送门落点 ({tx},{ty}) 在目标地图 '{target_map}' 上不可行走 (tile={target_tile})"
+                })
+    
+    # === 检测8: 路径效率过低（地图绕路问题） ===
+    if ground and 0 <= spawn_x < width and 0 <= spawn_y < height:
+        if is_walkable(ground[spawn_y][spawn_x], tile_config):
+            path_issues = check_path_efficiency(map_id, map_data, ground, width, height, spawn_x, spawn_y)
+            issues.extend(path_issues)
+    
     if issues:
         print(f"  发现 {len(issues)} 个问题:")
         for issue in issues:
@@ -185,10 +283,106 @@ def check_map(map_file):
                 print(f"    - [传送门太近] {issue['id']} - 距离 {issue['distance']}:")
                 print(f"      * [{p1.get('id', 'unknown')}] 在 ({p1.get('x', 0)}, {p1.get('y', 0)}) -> {p1.get('properties', {}).get('target_map', 'unknown')}")
                 print(f"      * [{p2.get('id', 'unknown')}] 在 ({p2.get('x', 0)}, {p2.get('y', 0)}) -> {p2.get('properties', {}).get('target_map', 'unknown')}")
+            elif issue["type"] == "no_monsters":
+                print(f"    - [怪物消失] {issue['id']} - {issue['message']}")
+            elif issue["type"] == "npc_missing":
+                print(f"    - [NPC缺失] {issue['id']} - {issue['message']}")
+            elif issue["type"] == "monster_on_unwalkable":
+                print(f"    - [怪物不可达] {issue['id']} 在 ({issue['x']}, {issue['y']}) - {issue['message']}")
+            elif issue["type"] == "portal_target_missing":
+                print(f"    - [传送目标缺失] {issue['id']} - {issue['message']}")
+            elif issue["type"] == "portal_target_out_of_bounds":
+                print(f"    - [传送越界] {issue['id']} - {issue['message']}")
+            elif issue["type"] == "portal_target_unwalkable":
+                print(f"    - [传送卡死] {issue['id']} -> {issue.get('target_map','?')}({issue.get('target_x',0)},{issue.get('target_y',0)}) - {issue['message']}")
+            elif issue["type"] == "path_inefficient":
+                print(f"    - [路径绕路] {issue['id']} - {issue['message']}")
+            elif issue["type"] == "portal_unreachable":
+                print(f"    - [传送门不可达] {issue['id']} 在 ({issue['x']}, {issue['y']}) - {issue['message']}")
             else:
                 print(f"    - [{issue['type']}] {issue['id']} 在 ({issue['x']}, {issue['y']}) - 瓦片: {issue['tile_name']} (ID: {issue['tile_id']})")
     else:
         print("  ✓ 所有位置都正确")
+    
+    return issues
+
+def check_path_efficiency(map_id, map_data, ground, width, height, spawn_x, spawn_y):
+    """检测路径效率：传送门是否从出生点可达，以及传送门之间的路径是否过长
+    
+    使用BFS计算实际路径长度，与曼哈顿距离比较，
+    如果实际路径长度超过曼哈顿距离的2倍，则认为路径效率过低。
+    """
+    issues = []
+    
+    visited = set()
+    dist_map = {}
+    queue = deque([(spawn_x, spawn_y, 0)])
+    visited.add((spawn_x, spawn_y))
+    dist_map[(spawn_x, spawn_y)] = 0
+    
+    while queue:
+        cx, cy, d = queue.popleft()
+        for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+            nx, ny = cx + dx, cy + dy
+            if (nx, ny) not in visited and 0 <= nx < width and 0 <= ny < height:
+                if ny < len(ground) and nx < len(ground[ny]):
+                    if is_walkable(ground[ny][nx], tile_config):
+                        visited.add((nx, ny))
+                        dist_map[(nx, ny)] = d + 1
+                        queue.append((nx, ny, d + 1))
+    
+    portals = [obj for obj in map_data.get("objects", []) if obj.get("type") == "portal"]
+    
+    for portal in portals:
+        px, py = portal.get("x", 0), portal.get("y", 0)
+        
+        if (px, py) not in visited:
+            issues.append({
+                "type": "portal_unreachable",
+                "id": portal.get("id", "unknown"),
+                "x": px, "y": py,
+                "message": f"传送门 '{portal.get('id')}' 从出生点不可达"
+            })
+            continue
+        
+        actual_dist = dist_map.get((px, py), 0)
+        manhattan = abs(px - spawn_x) + abs(py - spawn_y)
+        
+        if manhattan > 0 and actual_dist > manhattan * 2.5:
+            efficiency = manhattan / actual_dist
+            issues.append({
+                "type": "path_inefficient",
+                "id": f"path_to_{portal.get('id', 'unknown')}",
+                "x": px, "y": py,
+                "actual_dist": actual_dist,
+                "manhattan": manhattan,
+                "efficiency": round(efficiency, 2),
+                "message": f"到传送门 '{portal.get('id')}' 路径效率过低: 实际距离={actual_dist}, 曼哈顿距离={manhattan}, 效率={efficiency:.0%}"
+            })
+    
+    for i in range(len(portals)):
+        for j in range(i + 1, len(portals)):
+            p1, p2 = portals[i], portals[j]
+            p1x, p1y = p1.get("x", 0), p1.get("y", 0)
+            p2x, p2y = p2.get("x", 0), p2.get("y", 0)
+            
+            if (p1x, p1y) not in dist_map or (p2x, p2y) not in dist_map:
+                continue
+            
+            dist_between = abs(dist_map[(p1x, p1y)] - dist_map[(p2x, p2y)])
+            manhattan_between = abs(p1x - p2x) + abs(p1y - p2y)
+            
+            if manhattan_between > 0 and dist_between > manhattan_between * 3:
+                efficiency = manhattan_between / dist_between
+                issues.append({
+                    "type": "path_inefficient",
+                    "id": f"path_between_{p1.get('id', 'unknown')}_and_{p2.get('id', 'unknown')}",
+                    "x": (p1x + p2x) // 2, "y": (p1y + p2y) // 2,
+                    "actual_dist": dist_between,
+                    "manhattan": manhattan_between,
+                    "efficiency": round(efficiency, 2),
+                    "message": f"传送门间路径效率过低: {p1.get('id')} <-> {p2.get('id')}, 实际={dist_between}, 曼哈顿={manhattan_between}, 效率={efficiency:.0%}"
+                })
     
     return issues
 
@@ -295,9 +489,8 @@ def fix_map(map_file, issues):
         issue_id = issue["id"]
         
         if issue_type == "enclosed_area":
-            # 处理封闭区域：将封闭区域内的物件移动到外部可行走格子
             area = issue["area"]
-            objects = issue["objects"]
+            objects = issue.get("objects", [])
             
             for obj in objects:
                 obj_x, obj_y = obj.get("x", 0), obj.get("y", 0)
@@ -306,25 +499,23 @@ def fix_map(map_file, issues):
                 if new_x is not None:
                     print(f"  移动 [{obj.get('type', 'unknown')}] {obj.get('id', 'unknown')} 从封闭区域 ({obj_x}, {obj_y}) 到 ({new_x}, {new_y})")
                     
-                    # 更新物件位置
                     for map_obj in map_data["objects"]:
                         if map_obj.get("id") == obj.get("id"):
                             map_obj["x"] = new_x
                             map_obj["y"] = new_y
                             fixed_count += 1
                             break
-                    
-                    # 将封闭区域的瓦片改为可行走瓦片（打开封闭区域）
-                    open_enclosed_area(area, ground, tile_config)
                 else:
                     print(f"  ⚠ 无法为 [{obj.get('type', 'unknown')}] {obj.get('id', 'unknown')} 找到合适的外部位置")
+            
+            open_enclosed_area(area, ground, tile_config)
+            fixed_count += 1
+            print(f"  打通封闭区域 {issue_id}（{len(area)}个格子）")
         elif issue_type == "portal_too_close":
-            # 处理传送门太近：移动第二个传送门到更远的位置
             p1 = issue["portal1"]
             p2 = issue["portal2"]
             min_distance = 5
             
-            # 移动第二个传送门
             p2_x, p2_y = p2.get("x", 0), p2.get("y", 0)
             new_x, new_y = find_nearest_walkable_far_from(p2_x, p2_y, p1.get("x", 0), p1.get("y", 0), map_data["objects"], ground, width, height, tile_config, min_distance)
             
@@ -340,10 +531,8 @@ def fix_map(map_file, issues):
             else:
                 print(f"  ⚠ 无法为 [{p2.get('id', 'unknown')}] 找到合适的位置")
         elif issue_type == "overlapping_objects":
-            # 处理重叠物件：移动非传送门物件到其他位置
             objects = issue["objects"]
             
-            # 优先保留传送门，移动其他物件
             portal_objects = []
             other_objects = []
             for obj in objects:
@@ -352,15 +541,12 @@ def fix_map(map_file, issues):
                 else:
                     other_objects.append(obj)
             
-            # 如果有多个传送门重叠，保留第一个，移动其他传送门
             if len(portal_objects) > 1:
                 other_objects.extend(portal_objects[1:])
             
-            # 如果没有传送门，保留第一个物件
             if not portal_objects and objects:
                 other_objects = objects[1:]
             
-            # 移动其他物件
             for obj in other_objects:
                 obj_x, obj_y = obj.get("x", 0), obj.get("y", 0)
                 new_x, new_y = find_nearest_walkable_not_occupied(obj_x, obj_y, map_data["objects"], ground, width, height, tile_config)
@@ -376,6 +562,71 @@ def fix_map(map_file, issues):
                             break
                 else:
                     print(f"  ⚠ 无法为 [{obj.get('type', 'unknown')}] {obj.get('id', 'unknown')} 找到合适的空位置")
+        elif issue_type == "no_monsters":
+            print(f"  ⚠ [怪物消失] {issue_id} - {issue.get('message', '')}，请运行 monster_generator.py 重新生成怪物组")
+        elif issue_type == "npc_missing":
+            spawn = map_data.get("player_spawn", {"x": width // 2, "y": height // 2})
+            sx, sy = spawn.get("x", width // 2), spawn.get("y", height // 2)
+            nx, ny = find_nearest_walkable(sx, sy, ground, width, height, tile_config)
+            if nx is not None:
+                map_data.setdefault("npcs", []).append({"npc_id": issue_id, "x": nx, "y": ny})
+                print(f"  添加缺失NPC [{issue_id}] 到 ({nx}, {ny})")
+                fixed_count += 1
+            else:
+                print(f"  ⚠ 无法为NPC [{issue_id}] 找到合适的可行走位置")
+        elif issue_type == "monster_on_unwalkable":
+            mx, my = issue["x"], issue["y"]
+            new_x, new_y = find_nearest_walkable(mx, my, ground, width, height, tile_config)
+            if new_x is not None:
+                for mg in map_data.get("monster_groups", []):
+                    if mg.get("group_id") == issue_id:
+                        print(f"  移动怪物组 [{issue_id}] 从 ({mx}, {my}) 到 ({new_x}, {new_y})")
+                        mg["x"] = new_x
+                        mg["y"] = new_y
+                        if "patrol" in mg:
+                            mg["patrol"] = [{"x": px + (new_x - mx), "y": py + (new_y - my)} for px, py in mg["patrol"]]
+                        fixed_count += 1
+                        break
+            else:
+                print(f"  ⚠ 无法为怪物组 [{issue_id}] 找到合适的可行走位置")
+        elif issue_type == "portal_target_unwalkable":
+            target_map = issue.get("target_map", "")
+            target_x = issue.get("target_x", -1)
+            target_y = issue.get("target_y", -1)
+            
+            target_file = MAPS_DIR / f"{target_map}.json"
+            if target_file.exists():
+                with open(target_file, "r", encoding="utf-8") as tf:
+                    target_data = json.load(tf)
+                tg = target_data.get("layers", {}).get("ground", [])
+                tw = target_data.get("width", 0)
+                th = target_data.get("height", 0)
+                new_tx, new_ty = find_nearest_walkable(target_x, target_y, tg, tw, th, tile_config)
+                
+                if new_tx is not None:
+                    for obj in map_data.get("objects", []):
+                        if obj.get("id") == issue_id:
+                            print(f"  修复传送门 [{issue_id}] 落点: ({target_x},{target_y}) -> ({new_tx},{new_ty}) 在目标地图 '{target_map}'")
+                            obj["properties"]["target_x"] = new_tx
+                            obj["properties"]["target_y"] = new_ty
+                            fixed_count += 1
+                            break
+                    
+                    with open(target_file, "w", encoding="utf-8") as tf:
+                        json.dump(target_data, tf, ensure_ascii=False, indent=2)
+                else:
+                    print(f"  ⚠ 无法为传送门 [{issue_id}] 在目标地图 '{target_map}' 找到合适的可行走落点")
+            else:
+                print(f"  ⚠ 目标地图文件不存在: {target_file}")
+        elif issue_type == "portal_target_missing":
+            print(f"  ⚠ [传送目标缺失] {issue_id} - {issue.get('message', '')}，请手动检查传送门配置")
+        elif issue_type == "portal_target_out_of_bounds":
+            target_map = issue.get("target_map", "")
+            print(f"  ⚠ [传送越界] {issue_id} - {issue.get('message', '')}，目标地图 '{target_map}' 的落点超出范围，请手动修正")
+        elif issue_type == "portal_unreachable":
+            print(f"  ⚠ [传送门不可达] {issue_id} - {issue.get('message', '')}，传送门从出生点无法到达，可能存在路径阻断")
+        elif issue_type == "path_inefficient":
+            print(f"  ⚠ [路径绕路] {issue_id} - {issue.get('message', '')}，建议优化地图布局减少绕路")
         else:
             old_x, old_y = issue["x"], issue["y"]
             new_x, new_y = find_nearest_walkable(old_x, old_y, ground, width, height, tile_config)

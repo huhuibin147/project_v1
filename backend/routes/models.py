@@ -73,6 +73,10 @@ class TalentLearnRequest(BaseModel):
     talent_id: str
 
 
+class SkillUpgradeRequest(BaseModel):
+    skill_id: str
+
+
 class QuestAcceptRequest(BaseModel):
     quest_id: str
 

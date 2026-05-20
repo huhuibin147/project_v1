@@ -96,6 +96,7 @@ class PlayerProfile:
         self.explored_tiles = {}
         self.skills = list(defaults.get("skills", {}).get(self.class_id, []))
         self.learned_skills = []
+        self.skill_levels = {}
         self.talents = []
         self.quests = {"active": {}, "completed": [], "daily_reset": ""}
         self.forge_streaks = {}
@@ -134,6 +135,7 @@ class PlayerProfile:
             "equipment": self.equipment,
             "skills": self.skills,
             "learned_skills": self.learned_skills,
+            "skill_levels": self.skill_levels,
             "talents": self.talents,
             "player_x": self.player_x,
             "player_y": self.player_y,
@@ -211,6 +213,7 @@ class PlayerProfile:
         self.equipment = data.get("equipment", dict(DEFAULT_EQUIPMENT))
         self.skills = data.get("skills", [])
         self.learned_skills = data.get("learned_skills", [])
+        self.skill_levels = data.get("skill_levels", {})
         self.talents = data.get("talents", [])
         for s in EQUIP_SLOTS:
             if s not in self.equipment:
@@ -492,6 +495,7 @@ class PlayerProfile:
         self.speed = cls["base_speed"]
         self.skills = list(defaults.get("skills", {}).get(class_id, []))
         self.learned_skills = []
+        self.skill_levels = {}
         self.current_slot = slot
         self._save()
         return True
@@ -623,7 +627,7 @@ class PlayerProfile:
             "status_effects": self.status_effects,
             "gold": self.gold,
             "equipment": self._get_equipment_detail(),
-            "skills": [format_skill_for_frontend(s) for s in self.skills],
+            "skills": [format_skill_for_frontend(s, skill_level=self.skill_levels.get(s, 1)) for s in self.skills],
             "talents": self.talents,
             "player_x": self.player_x,
             "player_y": self.player_y,
@@ -641,6 +645,37 @@ class PlayerProfile:
 
     def get_classes(self) -> dict:
         return self.classes
+
+    # ===== 技能升级系统 =====
+
+    def get_skills_info(self) -> dict:
+        from skill_system import get_player_skills_info
+        all_known = self.skills + self.learned_skills
+        return get_player_skills_info(self.class_id, self.level, all_known, self.skill_levels)
+
+    def upgrade_skill(self, skill_id: str) -> dict:
+        from skill_system import can_upgrade_skill
+        current_level = self.skill_levels.get(skill_id, 1)
+        if skill_id not in self.skills and skill_id not in self.learned_skills:
+            return {"success": False, "message": "尚未学会该技能"}
+        can_up, reason, cost = can_upgrade_skill(skill_id, current_level, self.gold)
+        if not can_up:
+            return {"success": False, "message": reason}
+        self.spend_gold(cost)
+        self.skill_levels[skill_id] = current_level + 1
+        self._save()
+        from skill_system import get_skill_at_level
+        new_info = get_skill_at_level(skill_id, current_level + 1)
+        return {
+            "success": True,
+            "message": f"{new_info['name']} 升级到 Lv.{current_level + 1}！",
+            "cost": cost,
+            "skill_info": {
+                "skill_id": skill_id,
+                "current_level": current_level + 1,
+                "power": new_info.get("power", 0),
+            },
+        }
 
     # ===== 天赋系统 =====
 

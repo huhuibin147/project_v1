@@ -191,7 +191,7 @@ function drawAllNpcs(ctx) {
 
 // E 键交互：找最近的 NPC 或物件或怪物
 document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen) {
+  if (e.key.toLowerCase() === "e" && !dialogueOpen && !inventoryOpen && !shopOpen && !npcInteractOpen && !GameManager.isMenuOpen() && !combatOpen && !talentPanelOpen && !skillMenuOpen) {
     // 优先检查怪物
     const nearMonster = typeof getNearestMonster === "function" ? getNearestMonster() : null;
     if (nearMonster) {

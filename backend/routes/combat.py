@@ -117,6 +117,7 @@ async def combat_start(req: CombatStartRequest):
         "defense": player_profile.defense,
         "speed": player_profile.speed,
         "skills": getattr(player_profile, "skills", []),
+        "skill_levels": getattr(player_profile, "skill_levels", {}),
         "talent_passives": player_profile.get_talent_passives() if hasattr(player_profile, "get_talent_passives") else {},
         "equipment_affixes": player_profile.get_equipment_affixes() if hasattr(player_profile, "get_equipment_affixes") else [],
         "element": player_profile.element if hasattr(player_profile, "element") else "none",
@@ -124,7 +125,7 @@ async def combat_start(req: CombatStartRequest):
 
     session = create_combat_session(monster_configs, player_snapshot)
 
-    formatted_skills = [format_skill_for_frontend(s) for s in session.player_skills]
+    formatted_skills = [format_skill_for_frontend(s, skill_level=session.player_skill_levels.get(s, 1)) for s in session.player_skills]
     formatted_skills = [s for s in formatted_skills if s is not None]
 
     from combat.monster_ai import decide_action

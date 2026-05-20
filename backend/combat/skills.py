@@ -17,12 +17,13 @@ def _get_aoe_multiplier(target_count: int) -> float:
 
 
 def execute_skill(session: "CombatSession", skill_id: str) -> dict:
-    from skill_system import get_skill
+    from skill_system import get_skill_at_level
     from .session import StatusEffect
     from .effects import add_effect, _recalculate_player_buffs, STAT_BUFF_MAP
     from .damage import calc_damage
 
-    skill = get_skill(skill_id)
+    skill_level = session.player_skill_levels.get(skill_id, 1) if hasattr(session, 'player_skill_levels') else 1
+    skill = get_skill_at_level(skill_id, skill_level)
     if not skill:
         return {"type": "skill", "success": False, "text": "未知技能。"}
     if skill_id not in session.player_skills:

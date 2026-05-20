@@ -70,7 +70,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function updatePlayer(dt) {
-  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen || worldMapOpen) return;
+  if (dialogueOpen || inventoryOpen || shopOpen || playerInfoOpen || npcInteractOpen || GameManager.isMenuOpen() || combatOpen || questOpen || healPanelOpen || skillLearnPanelOpen || talentPanelOpen || skillMenuOpen || worldMapOpen) return;
 
   const dtSeconds = dt ? dt / 1000 : 1 / 60;
   const PLAYER_SPEED = getPlayerSpeed() * dtSeconds;
