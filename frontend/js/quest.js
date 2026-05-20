@@ -39,6 +39,12 @@ async function fetchNpcQuests(npcId) {
 }
 
 async function acceptQuest(questId) {
+  if (!questNpcId) {
+    if (typeof showToast === "function") {
+      showToast("请到对应NPC处接取任务", "info");
+    }
+    return;
+  }
   try {
     const resp = await fetch("/api/quests/accept", {
       method: "POST",
@@ -93,6 +99,12 @@ async function abandonQuest(questId) {
 }
 
 async function completeQuest(questId) {
+  if (!questNpcId) {
+    if (typeof showToast === "function") {
+      showToast("请到对应NPC处交付任务", "info");
+    }
+    return;
+  }
   try {
     const resp = await fetch("/api/quests/complete", {
       method: "POST",
@@ -105,7 +117,6 @@ async function completeQuest(questId) {
       showQuestMessage(msg, true);
       if (data.rewards) {
         const r = data.rewards;
-        let rewardText = "奖励：";
         const parts = [];
         if (r.exp > 0) parts.push(`${r.exp}经验`);
         if (r.gold > 0) parts.push(`${r.gold}金币`);
@@ -115,8 +126,13 @@ async function completeQuest(questId) {
           }
         }
         if (r.affinity > 0) parts.push(`${r.affinity_npc || "NPC"}好感+${r.affinity}`);
-        rewardText += parts.join("、");
-        showQuestMessage(rewardText, true);
+        if (parts.length > 0) {
+          const rewardText = parts.join("、");
+          showQuestMessage("奖励：" + rewardText, true);
+          if (typeof showToast === "function") {
+            showToast("任务完成！获得：" + rewardText, "reward", 3500);
+          }
+        }
       }
       if (data.player_info) {
         Object.assign(playerInfo, data.player_info);
@@ -489,6 +505,9 @@ function buildQuestManagerItemHtml(q) {
     statusClass = "quest-active";
     if (q.can_complete) {
       actionsHtml = `<button class="qm-btn qm-btn-complete" onclick="completeQuest('${q.id}')">交付任务</button>`;
+      if (q.npc_name) {
+        actionsHtml += `<span class="qm-hint">请找 ${q.npc_name} 交付</span>`;
+      }
     }
     actionsHtml += ` <button class="qm-btn qm-btn-abandon" onclick="abandonQuest('${q.id}')">放弃任务</button>`;
 
@@ -501,6 +520,9 @@ function buildQuestManagerItemHtml(q) {
   } else if (q.status === "available") {
     statusClass = "quest-available";
     actionsHtml = `<button class="qm-btn qm-btn-accept" onclick="acceptQuest('${q.id}')">接取任务</button>`;
+    if (q.npc_name) {
+      actionsHtml += `<span class="qm-hint">请找 ${q.npc_name} 接取</span>`;
+    }
   } else if (q.status === "completed") {
     statusClass = "quest-completed";
   } else {

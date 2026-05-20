@@ -1350,6 +1350,9 @@ async function endCombat() {
   if (typeof updatePlayerHUD === "function") {
     updatePlayerHUD();
   }
+  if (typeof updateQuestTracker === "function") {
+    updateQuestTracker();
+  }
 }
 
 let combatSkillSelectOpen = false;

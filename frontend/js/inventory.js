@@ -1167,6 +1167,9 @@ async function doTrade(action, itemId, quantity = 1) {
 }
 
 function showTradeMessage(msg, success) {
+  if (typeof showToast === "function") {
+    showToast(msg, success ? "success" : "error");
+  }
   const el = document.getElementById("trade-message");
   el.textContent = msg;
   el.className = `trade-message ${success ? "success" : "fail"}`;

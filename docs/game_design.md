@@ -165,7 +165,7 @@ RPG 系统
 - 技能元素：火系技能覆盖为 fire，水系技能覆盖为 water
 - 前端显示：怪物卡片显示元素图标，战斗日志显示克制/被克制提示
 
-详见 → [elemental_system_design.md](elemental_system_design.md)
+详见 → [combat_system.md](combat_system.md)
 
 ### 战斗引擎模块
 

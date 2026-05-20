@@ -1,5 +1,16 @@
 // 游戏主循环 - 使用管理器模块
 
+// ===== Toast 通知 =====
+function showToast(message, type = "info", duration = 2600) {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => { if (toast.parentNode) toast.remove(); }, duration);
+}
+
 // ===== 辅助函数 =====
 
 function updateHudMapName() {

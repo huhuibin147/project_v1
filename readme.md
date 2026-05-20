@@ -178,22 +178,20 @@ project_v1/
 - 物品与药水系统、装备系统
 - 任务系统、扩展方向
 
-其他专项文档：
+专项文档：
+- [战斗系统](docs/combat_system.md) — 含引擎重构、UI重设计、多敌人BOSS、属性克制
+- [NPC 系统](docs/npc_system.md) — 含对话优化、外观配置化、交互配置化
+- [探索与地图系统](docs/exploration_and_map_system.md) — 含地图改版、系统优化、生成器优化
+- [锻造与词条系统](docs/forge_and_affix_system.md) — 含词条优化
+- [物品与经济系统](docs/items_and_economy_system.md) — 含物品优化、商店UI优化
+- [技能与天赋系统](docs/skill_and_talent_system.md) — 含技能菜单与升级
+- [任务与剧情系统](docs/quest_and_story_system.md) — 含任务系统优化
+- [怪物系统](docs/monster_system.md) — 含技能扩展、精灵配置化
+- [外围系统](docs/peripheral_systems.md) — 存档、成就、新手引导
+- [玩家档案优化](docs/player_profile_refactor.md)
+- [前端游戏主循环优化](docs/frontend_gamejs_optimization.md)
 - [自动化测试方案](docs/test_plan.md)
-- [物品与装备系统](docs/items_equipment.md)
-- [战斗系统设计](docs/combat_system.md)
-- [锻造与词条系统](docs/forge_and_affix_system.md)
-- [锻造与词条优化设计](docs/forge_affix_optimization.md)
-- [战斗引擎重构设计](docs/combat_engine_refactor.md)
-- [玩家档案优化设计](docs/player_profile_refactor.md)
-- [NPC 对话优化设计](docs/npc_agent_optimization.md)
-- [物品系统优化设计](docs/item_system_optimization.md)
-- [任务系统优化设计](docs/quest_system_optimization.md)
-- [前端游戏主循环优化设计](docs/frontend_gamejs_optimization.md)
-- [多敌人与 BOSS 战设计](docs/multi_enemy_boss_design.md)
-- [物品生成器](docs/item_generator.md)
-- [地图生成器](docs/map_generator.md)
-- [游戏设计与优化方向](docs/game_design.md)
+- [项目开发流程规范](docs/DEVELOPMENT_WORKFLOW.md)
 
 ## 更新日志
 

@@ -197,5 +197,30 @@ python npc_generator.py apply              # 应用到 npcs.json
 | `config/npcs.json` | NPC 定义 |
 | `backend/npc_agent.py` | NPC Agent |
 | `backend/llm_client.py` | LLM 调用 |
+| `backend/intent_classifier.py` | 本地意图分类器 |
+| `backend/npc_memory.py` | 分层记忆管理器 |
+| `backend/npc_affinity.py` | 好感度系统 |
+| `backend/npc_cache.py` | 对话缓存 |
 | `frontend/js/dialogue.js` | 对话系统 |
+| `frontend/js/npc.js` | NPC 渲染与交互 |
 | `tools/npc_generator.py` | NPC 生成工具 |
+
+---
+
+## 相关优化记录
+
+> 以下内容整合自已完成的优化设计文档。
+
+### NPC 对话系统优化 ✅ 已完成
+
+- **本地意图分类器**：`IntentClassifier` 支持 trade/quest/chat/unknown 四种意图，交易意图完全本地处理，降低 LLM 调用频率 50%+
+- **分层记忆系统**：短期记忆（最近 10 条对话）+ 长期记忆（关键事件，最多 50 条）
+- **好感度深度影响**：5 个等级（敌对→亲密），影响商店折扣（+20%→-20%）和对话风格
+- **常见问题缓存**：TTL 1 小时，最大 100 条，相同好感度等级下返回缓存
+
+### NPC 外观与交互配置化 ✅ 已完成
+
+- **外观配置化**：`npcs.json` 中 `appearance` 配置驱动渲染，消除 `drawNPC` 中的 if-else，9/9 NPC 配置化外观
+- **交互面板配置化**：`services` 字段驱动交互按钮生成，新增 NPC 零前端改动
+- **好感度影响任务奖励**：高好感度获得更多金币/经验奖励（敌对 0.8x → 亲密 1.2x）
+- **记忆摘要生成**：长期记忆超过 30 条时自动压缩低重要性记忆为摘要

@@ -720,9 +720,40 @@ class StatusEffect:
 
 **当前模块结构**：
 - 后端：`backend/combat/` 8 文件（session/damage/effects/events/monster_ai/skills/turn/engine）
-- 前端：[`combat.js`](file:///Users/huhuibin/code/aiproj/project_v1/frontend/js/combat.js) — 战斗 UI 完整实现
+- 前端：`frontend/js/combat.js` — 战斗 UI 完整实现
 
-**剩余未完成**：
-- 属性克制未接入战斗流程（P0）
-- 怪物精灵硬编码（P0）
-- 技能施法动画 / 战斗背景主题 / 怪物待机动画 / 战斗速度调节（P1）
+---
+
+## 相关优化记录
+
+> 以下内容整合自已完成的优化设计文档。
+
+### 战斗引擎模块化重构 ✅ 已完成
+
+将 `combat_engine.py`（约 1050 行）拆分为模块化结构：
+
+```
+backend/combat/
+├── session.py     # CombatSession + MonsterInstance + 会话管理
+├── damage.py      # 伤害计算（含属性克制）
+├── effects.py     # 状态效果系统（策略模式）
+├── events.py      # 事件驱动系统（词条/天赋触发）
+├── monster_ai.py  # 怪物 AI 决策
+├── skills.py      # 技能执行
+├── turn.py        # 回合解析核心
+└── engine.py      # 对外暴露统一接口
+```
+
+关键设计：策略模式效果系统（`EffectHandler` 注册机制）、事件驱动系统（`EventDispatcher` + `CombatEvent`）、向后兼容层（`engine.py` 重新导出）。
+
+### 战斗 UI 重构 ✅ 已完成
+
+面板从 520px 扩展到 640px，怪物卡片从 120px 到 160px。新增：等级/类型标记/意图图标/状态效果中文化/玩家头像/护盾条/HP颜色渐变/战斗统计/战斗结果面板增强。
+
+### 多敌人与 BOSS 战 ✅ 已完成
+
+`CombatSession` 支持 1-3 个怪物，BOSS 阶段转换（HP 阈值触发），BOSS 免疫机制，AOE 群体技能（伤害递减），目标选择系统。
+
+### 属性克制系统 ✅ 已完成
+
+火 > 草 > 水 > 火 三角克制（克制 ×1.5，被克制 ×0.67）。所有伤害计算调用点已传入元素参数，怪物/技能配置已添加 element 字段，前端显示元素图标和克制提示。

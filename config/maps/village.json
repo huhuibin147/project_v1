@@ -3186,11 +3186,6 @@
       "y": 22
     },
     {
-      "npc_id": "skillmaster",
-      "x": 25,
-      "y": 22
-    },
-    {
       "npc_id": "skill_master",
       "x": 29,
       "y": 26

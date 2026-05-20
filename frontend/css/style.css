@@ -3392,6 +3392,67 @@ body {
   margin-top: 4px;
 }
 
+/* ===== Toast 通知 ===== */
+#toast-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  animation: toastIn 0.3s ease, toastOut 0.4s ease 2.2s forwards;
+  pointer-events: auto;
+  white-space: nowrap;
+  max-width: 400px;
+}
+
+.toast-success {
+  background: rgba(46, 125, 50, 0.92);
+  border: 1px solid #66BB6A;
+  box-shadow: 0 2px 12px rgba(102, 187, 106, 0.4);
+}
+
+.toast-reward {
+  background: rgba(255, 152, 0, 0.92);
+  border: 1px solid #FFB74D;
+  box-shadow: 0 2px 12px rgba(255, 183, 77, 0.4);
+}
+
+.toast-error {
+  background: rgba(198, 40, 40, 0.92);
+  border: 1px solid #EF5350;
+  box-shadow: 0 2px 12px rgba(239, 83, 80, 0.4);
+}
+
+.toast-info {
+  background: rgba(30, 64, 120, 0.92);
+  border: 1px solid #6bafff;
+  box-shadow: 0 2px 12px rgba(107, 175, 255, 0.4);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
 /* ===== 任务管理面板 ===== */
 #quest-manager-panel {
   display: none;
@@ -3556,6 +3617,13 @@ body {
 .qm-actions {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.qm-hint {
+  font-size: 11px;
+  color: #f0c060;
+  font-style: italic;
 }
 
 .qm-btn {
